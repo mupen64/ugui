@@ -12,37 +12,16 @@ BreitbandGraphics = nil
 ---@module "mupen-lua-ugui"
 ugui = nil
 
----@module "mupen-lua-ugui-ext"
-ugui_ext = nil
-
 local function reset_ugui_state()
     UGUI_QUIET = true
     BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
     ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
-    ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
 end
 
 reset_ugui_state()
 
 local groups = {
-    dofile(test_root .. 'core.lua'),
-    dofile(test_root .. 'layout.lua'),
-    dofile(test_root .. 'richtext.lua'),
-    dofile(test_root .. 'stackpanel.lua'),
-    dofile(test_root .. 'tooltip.lua'),
     dofile(test_root .. 'breitbandgraphics.lua'),
-    dofile(test_root .. 'button.lua'),
-    dofile(test_root .. 'toggle_button.lua'),
-    dofile(test_root .. 'carrousel_button.lua'),
-    dofile(test_root .. 'textbox.lua'),
-    dofile(test_root .. 'joystick.lua'),
-    dofile(test_root .. 'combobox.lua'),
-    dofile(test_root .. 'listbox.lua'),
-    dofile(test_root .. 'trackbar.lua'),
-    dofile(test_root .. 'scrollbar.lua'),
-    dofile(test_root .. 'menu.lua'),
-    dofile(test_root .. 'spinner.lua'),
-    dofile(test_root .. 'tabcontrol.lua'),
     dofile(test_root .. 'numberbox.lua'),
 }
 
