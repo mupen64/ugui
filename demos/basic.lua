@@ -12,26 +12,23 @@ local stackpanel = ugui.add(nil, {
     y_align = ugui.ALIGNMENTS.center,
 })
 
--- local button = ugui.add(stackpanel, {
---     class = ugui.BUTTON,
---     x_align = ugui.ALIGNMENTS.stretch,
---     y_align = ugui.ALIGNMENTS.stretch,
--- })
-
 local textblock = ugui.add(stackpanel, {
     class = ugui.TEXTBLOCK,
     x_align = ugui.ALIGNMENTS.start,
+    margin = {50, 0, 0, 0},
     text = 'Hello!',
 })
 
 local textblock = ugui.add(stackpanel, {
     class = ugui.TEXTBLOCK,
+    margin = {0, 0, 50, 0},
     text = 'Hello World!',
 })
 
 local textblock = ugui.add(stackpanel, {
     class = ugui.TEXTBLOCK,
     x_align = ugui.ALIGNMENTS['end'],
+    margin = {50, 50, 50, 50},
     text = 'Hello!',
 })
 

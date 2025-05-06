@@ -24,7 +24,7 @@ ugui.ALIGNMENTS = {
 
 ---@class ControlClass
 ---@field name string The class name.
----@field measure fun(self: InternalControl): Vector2 Returns the control's desired size.
+---@field measure fun(self: InternalControl): Vector2 Returns the control's desired size. Class implementations should only call this via [ugui.internal.call_measure](lua://ugui.internal.call_measure).
 ---@field arrange fun(self: InternalControl): Rectangle[] Returns the desired layout bounds for the control's children.
 ---@field paint fun(self: InternalControl, bounds: Rectangle)
 ---Represents a control's prototype.
@@ -45,7 +45,8 @@ ugui.ALIGNMENTS = {
 ---@field image number The control's rendered texture.
 ---The framework's internal control representation.
 
----@alias Margin { l: number, t: number, r: number, b: number }
+---@alias Margin { [1]: number, [2]: number, [3]: number, [4]: number }
+---Left, Top, Right, Bottom
 
 --#endregion
 
@@ -118,18 +119,19 @@ function ugui.internal.align_rect(rect1, rect2, x_align, y_align)
 end
 
 function ugui.internal.do_layout()
+    local function apply_margin(control, rect)
+        rect.x = rect.x + control.margin[1]
+        rect.y = rect.y + control.margin[2]
+    end
     local window_rect = {x = 0, y = 0, width = ugui.internal.available_size.x, height = ugui.internal.available_size.y}
 
     for _, control in pairs(ugui.internal.layout_queue) do
         ugui.internal.foreach_child(control, function(control, class)
-            control.desired_size = class.measure(control)
-        end)
-    end
+            control.desired_size = ugui.internal.call_measure(control)
 
-    for _, control in pairs(ugui.internal.layout_queue) do
-        ugui.internal.foreach_child(control, function(control, class)
             local parent_render_bounds = control.parent and control.parent.render_bounds or window_rect
             control.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = control.desired_size.x, height = control.desired_size.y}, parent_render_bounds, control.x_align, control.y_align)
+            apply_margin(control, control.render_bounds)
         end)
     end
 
@@ -145,8 +147,8 @@ function ugui.internal.do_layout()
             end
 
             for i, child in pairs(control.children) do
-                local child_rect = {x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y}
-                child.render_bounds = ugui.internal.align_rect(child_rect, child_bounds[i], child.x_align, child.y_align)
+                child.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y}, child_bounds[i], child.x_align, child.y_align)
+                apply_margin(child, child.render_bounds)
             end
         end)
     end
@@ -154,12 +156,7 @@ function ugui.internal.do_layout()
     ugui.internal.layout_queue = {}
 end
 
----Performs a system tick.
-function ugui.internal.tick()
-    ugui.internal.handle_window_sizing()
-
-    ugui.internal.do_layout()
-
+function ugui.internal.do_render()
     for _, control in pairs(ugui.internal.visual_queue) do
         ugui.internal.foreach_child(control, function(control, class)
             control.image = d2d.draw_to_image(control.render_bounds.width, control.render_bounds.height, function()
@@ -196,6 +193,14 @@ function ugui.internal.tick()
     ugui.internal.visual_queue = {}
 end
 
+---Performs a system tick.
+function ugui.internal.tick()
+    ugui.internal.handle_window_sizing()
+
+    ugui.internal.do_layout()
+    ugui.internal.do_render()
+end
+
 ---Gets the class for the specified control.
 ---@param control InternalControl
 ---@return ControlClass #
@@ -229,12 +234,23 @@ function ugui.internal.foreach_child(control, callback)
     end
 end
 
+---Calls a control's `measure` implementation and applies margins. Must be used instead of a direct call to `measure`.
+---@param control InternalControl
+function ugui.internal.call_measure(control)
+    local desired_size = ugui.internal.get_class(control).measure(control)
+
+    desired_size.x = desired_size.x + control.margin[1] + control.margin[3]
+    desired_size.y = desired_size.y + control.margin[2] + control.margin[4]
+
+    return desired_size
+end
+
 ---Default `measure` implementation which returns the size of the biggest child.
 ---@param self InternalControl
 function ugui.internal.measure_max_child_size(self)
     local desired_size = {x = 0, y = 0}
     for _, child in pairs(self.children) do
-        local size = ugui.internal.get_class(child).measure(child)
+        local size = ugui.internal.call_measure(child)
         if size.x > desired_size.x then
             desired_size.x = size.x
         end
@@ -316,7 +332,7 @@ function ugui.add(parent, control)
 
     control.x_align = control.x_align or ugui.ALIGNMENTS.center
     control.y_align = control.y_align or ugui.ALIGNMENTS.center
-    control.margin = control.margin or {l = 0, t = 0, r = 0, b = 0}
+    control.margin = control.margin or {0, 0, 0, 0}
     control.parent = parent
     control.children = {}
     control.desired_size = {x = 0, y = 0}
@@ -382,7 +398,7 @@ ugui.register(ugui.PANEL, {
 ugui.register(ugui.TEXTBLOCK, {
     name = 'textblock',
     measure = function(self)
-        local desired_size = BreitbandGraphics.get_text_size(self.text, 11, 'MS Shell Dlg')
+        local desired_size = BreitbandGraphics.get_text_size(self.text, 20, 'MS Shell Dlg')
         return {x = desired_size.width + 1, y = desired_size.height}
     end,
     arrange = ugui.internal.arrange_fill,
@@ -392,8 +408,9 @@ ugui.register(ugui.TEXTBLOCK, {
             rectangle = bounds,
             color = BreitbandGraphics.colors.red,
             font_name = 'MS Shell Dlg',
-            font_size = 11,
+            font_size = 20,
             grayscale = true,
+            fit = true,
         })
     end,
 })
@@ -404,7 +421,7 @@ ugui.register(ugui.STACKPANEL, {
         local desired_size = {x = 0, y = 0}
 
         for _, child in pairs(self.children) do
-            local size = ugui.internal.get_class(child).measure(child)
+            local size = ugui.internal.call_measure(child)
 
             if size.x > desired_size.x then
                 desired_size.x = size.x
