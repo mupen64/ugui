@@ -514,8 +514,9 @@ ugui.register_class(ugui.TEXTBLOCK, {
     measure = function(self)
         local font_name = ugui.get_prop(self, 'font_name')
         local font_size = ugui.get_prop(self, 'font_size')
+        local text = ugui.get_prop(self, 'text')
 
-        local desired_size = BreitbandGraphics.get_text_size(self.text, font_size, font_name)
+        local desired_size = BreitbandGraphics.get_text_size(text, font_size, font_name)
         return {x = desired_size.width + 1, y = desired_size.height}
     end,
     arrange = ugui.internal.arrange_fill,
