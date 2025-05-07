@@ -539,35 +539,72 @@ ugui.register_class(ugui.TEXTBLOCK, {
 
 ugui.register_class(ugui.STACKPANEL, {
     name = 'stackpanel',
-    props = {},
+    props = {
+        horizontal = {
+            default = false,
+            cascading = false,
+            invalidate_layout = true,
+            invalidate_visual = false,
+        },
+    },
     measure = function(self)
+        local horizontal = ugui.get_prop(self, 'horizontal')
+
         local desired_size = {x = 0, y = 0}
 
-        for _, child in pairs(self.children) do
-            local size = ugui.internal.call_measure(child)
+        if horizontal then
+            for _, child in pairs(self.children) do
+                local size = ugui.internal.call_measure(child)
 
-            if size.x > desired_size.x then
-                desired_size.x = size.x
+                if size.y > desired_size.y then
+                    desired_size.y = size.y
+                end
+
+                desired_size.x = desired_size.x + size.x
             end
+        else
+            for _, child in pairs(self.children) do
+                local size = ugui.internal.call_measure(child)
 
-            desired_size.y = desired_size.y + size.y
+                if size.x > desired_size.x then
+                    desired_size.x = size.x
+                end
+
+                desired_size.y = desired_size.y + size.y
+            end
         end
+
 
         return desired_size
     end,
     arrange = function(self)
-        local bounds = {}
+        local horizontal = ugui.get_prop(self, 'horizontal')
 
-        local y = 0
-        for _, child in pairs(self.children) do
-            bounds[#bounds + 1] = {
-                x = 0,
-                y = y,
-                width = self.desired_size.x,
-                height = child.desired_size.y,
-            }
-            y = y + child.desired_size.y
+        local bounds = {}
+        local accumulator = 0
+
+        if horizontal then
+            for _, child in pairs(self.children) do
+                bounds[#bounds + 1] = {
+                    x = accumulator,
+                    y = 0,
+                    width = child.desired_size.x,
+                    height = self.desired_size.y,
+                }
+                accumulator = accumulator + child.desired_size.x
+            end
+        else
+            for _, child in pairs(self.children) do
+                bounds[#bounds + 1] = {
+                    x = 0,
+                    y = accumulator,
+                    width = self.desired_size.x,
+                    height = child.desired_size.y,
+                }
+                accumulator = accumulator + child.desired_size.y
+            end
         end
+
 
         return bounds
     end,
