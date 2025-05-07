@@ -57,9 +57,7 @@ emu.atdrawd2d(function()
 
     if new_keys['up'] then
         local margin = ugui.get_prop(b, 'margin')
-        margin[2] = margin[2] + 5
-        margin[4] = margin[4] + 5
-        ugui.set_prop(b, 'margin', margin)
+        ugui.set_prop(b, 'margin', {margin[1], margin[2] + 100, margin[3], margin[4]})
     end
 
     prev_keys = ugui.internal.deep_clone(keys)
