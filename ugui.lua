@@ -22,12 +22,22 @@ ugui.ALIGNMENTS = {
 
 ---@alias ClassId number
 
+---@alias PropertyKey string
+
 ---@class ControlClass
 ---@field name string The class name.
+---@field props { [PropertyKey]: PropertyClass } The class properties.
 ---@field measure fun(self: InternalControl): Vector2 Returns the control's desired size. Class implementations should only call this via [ugui.internal.call_measure](lua://ugui.internal.call_measure).
 ---@field arrange fun(self: InternalControl): Rectangle[] Returns the desired layout bounds for the control's children.
 ---@field paint fun(self: InternalControl, bounds: Rectangle)
 ---Represents a control's prototype.
+
+---@class PropertyClass
+---@field default any The property's default value.
+---@field cascading boolean Whether the property's value cascades downwards to controls which don't set the property.
+---@field invalidate_layout boolean Whether the containing control's layout should be invalidated when the property changes.
+---@field invalidate_visual boolean Whether the containing control's visuals should be invalidated when the property changes.
+---Represents a user-defined property on a control.
 
 ---@class Control
 ---@field class ClassId
@@ -63,15 +73,34 @@ ugui.internal = {
     available_size = {x = 0, y = 0},
 
     ---@type { [ClassId]: ControlClass }
-    ---The control registry. Associates a control
     classes = {},
+
+    ---@type { [PropertyKey]: PropertyClass }
+    properties = {},
 
     ---@type InternalControl[]
     layout_queue = {},
 
-    ---@type InternalControl[]
+    ---@type { cascading: boolean, control: InternalControl}[]
     visual_queue = {},
+
 }
+
+---Deeply clones a table.
+---@param obj table The table to clone.
+---@param seen table? Internal. Pass nil as a caller.
+---@return table A cloned instance of the table.
+function ugui.internal.deep_clone(obj, seen)
+    if type(obj) ~= 'table' then return obj end
+    if seen and seen[obj] then return seen[obj] end
+    local s = seen or {}
+    local res = setmetatable({}, getmetatable(obj))
+    s[obj] = res
+    for k, v in pairs(obj) do
+        res[ugui.internal.deep_clone(k, s)] = ugui.internal.deep_clone(v, s)
+    end
+    return res
+end
 
 function ugui.internal.handle_window_sizing()
     local size = wgui.info()
@@ -297,7 +326,7 @@ end
 ---Returns whether any parent of the control (up to the root) or the control itself is present in the specified list.
 ---@param control InternalControl
 ---@param list InternalControl[]
-function ugui.internal.is_any_parent_or_self_in_list(control, list)
+function ugui.internal.is_control_or_any_parent_in_list(control, list)
     local parents = ugui.internal.get_parents(control)
     for _, existing in pairs(list) do
         if existing == control then
@@ -312,6 +341,18 @@ function ugui.internal.is_any_parent_or_self_in_list(control, list)
     return false
 end
 
+---Returns whether the control is present in the specified list.
+---@param control InternalControl
+---@param list InternalControl[]
+function ugui.internal.is_control_in_list(control, list)
+    for _, v in pairs(list) do
+        if control == v then
+            return true
+        end
+    end
+    return false
+end
+
 --#endregion
 
 --#region Public API
@@ -319,8 +360,12 @@ end
 ---Registers a control class with the specified id.
 ---@param id ClassId
 ---@param class ControlClass
-function ugui.register(id, class)
+function ugui.register_class(id, class)
+    -- Because we need the default values for props to be deep-cloned, it's easiest to just deep-clone the entire prop table
+    local props = ugui.internal.deep_clone(class.props)
+
     ugui.internal.classes[id] = class
+    ugui.internal.classes[id].props = props
 end
 
 ---Adds the specified control to the parent.
@@ -350,19 +395,70 @@ function ugui.add(parent, control)
     return control
 end
 
+---Gets the value of the specified property on a control.
+---@param control Control
+---@param key PropertyKey
+---@return any?
+function ugui.get_prop(control, key)
+    ---@cast control InternalControl
+    local class = ugui.internal.get_class(control)
+    local prop = class.props[key]
+
+    if not prop.cascading then
+        return control[key] or prop.default
+    end
+
+    if control[key] then
+        return control[key] or prop.default
+    end
+
+    local parents = ugui.internal.get_parents(control)
+    for _, parent in pairs(parents) do
+        if parent[key] then
+            return parent[key]
+        end
+    end
+
+    return prop.default
+end
+
+---Sets the value of the specified property on a control.
+---@param control Control
+---@param key PropertyKey
+---@param value any
+function ugui.set_prop(control, key, value)
+    ---@cast control InternalControl
+    local class = ugui.internal.get_class(control)
+    local prop = class.props[key]
+
+    control[key] = value
+
+    if prop.invalidate_layout then
+        ugui.invalidate_layout(control)
+    end
+
+    if prop.invalidate_visual then
+        ugui.invalidate_visual(control)
+    end
+end
+
 ---Invalidates the layout of the specified control.
+---
+---Calling this function from user code shouldn't be required, as the class property system manages repaints and relayouts automatically.
 ---@param control InternalControl
 function ugui.invalidate_layout(control)
-    if ugui.internal.is_any_parent_or_self_in_list(control, ugui.internal.layout_queue) then
+    if ugui.internal.is_control_or_any_parent_in_list(control, ugui.internal.layout_queue) then
         return
     end
     ugui.internal.layout_queue[#ugui.internal.layout_queue + 1] = control
 end
 
 ---Invalidates the visuals of the specified control.
+---
+---Calling this function from user code shouldn't be required, as the class property system manages repaints and relayouts automatically.
 ---@param control InternalControl
 function ugui.invalidate_visual(control)
-    if ugui.internal.is_any_parent_or_self_in_list(control, ugui.internal.visual_queue) then
+    if ugui.internal.is_control_in_list(control, ugui.internal.visual_queue) then
         return
     end
     ugui.internal.visual_queue[#ugui.internal.visual_queue + 1] = control
@@ -386,8 +482,9 @@ ugui.TEXTBLOCK = 1
 ugui.STACKPANEL = 2
 ugui.BUTTON = 3
 
-ugui.register(ugui.PANEL, {
+ugui.register_class(ugui.PANEL, {
     name = 'panel',
+    props = {},
     measure = ugui.internal.measure_max_child_size,
     arrange = ugui.internal.arrange_fill,
     paint = function(self, bounds)
@@ -395,28 +492,53 @@ ugui.register(ugui.PANEL, {
     end,
 })
 
-ugui.register(ugui.TEXTBLOCK, {
+ugui.register_class(ugui.TEXTBLOCK, {
     name = 'textblock',
+    props = {
+        font_name = {
+            cascading = true,
+            invalidate_layout = true,
+            invalidate_visual = true,
+        },
+        font_size = {
+            cascading = true,
+            invalidate_layout = true,
+            invalidate_visual = true,
+        },
+        text = {
+            cascading = false,
+            invalidate_layout = true,
+            invalidate_visual = true,
+        },
+    },
     measure = function(self)
-        local desired_size = BreitbandGraphics.get_text_size(self.text, 20, 'MS Shell Dlg')
+        local font_name = ugui.get_prop(self, 'font_name')
+        local font_size = ugui.get_prop(self, 'font_size')
+
+        local desired_size = BreitbandGraphics.get_text_size(self.text, font_size, font_name)
         return {x = desired_size.width + 1, y = desired_size.height}
     end,
     arrange = ugui.internal.arrange_fill,
     paint = function(self, bounds)
+        local font_name = ugui.get_prop(self, 'font_name')
+        local font_size = ugui.get_prop(self, 'font_size')
+        local text = ugui.get_prop(self, 'text')
+
         BreitbandGraphics.draw_text2({
-            text = self.text,
+            text = text,
             rectangle = bounds,
             color = BreitbandGraphics.colors.red,
-            font_name = 'MS Shell Dlg',
-            font_size = 20,
+            font_name = font_name,
+            font_size = font_size,
             grayscale = true,
             fit = true,
         })
     end,
 })
 
-ugui.register(ugui.STACKPANEL, {
+ugui.register_class(ugui.STACKPANEL, {
     name = 'stackpanel',
+    props = {},
     measure = function(self)
         local desired_size = {x = 0, y = 0}
 
@@ -453,8 +575,9 @@ ugui.register(ugui.STACKPANEL, {
     end,
 })
 
-ugui.register(ugui.BUTTON, {
+ugui.register_class(ugui.BUTTON, {
     name = 'button',
+    props = {},
     measure = ugui.internal.measure_max_child_size,
     arrange = ugui.internal.arrange_fill,
     paint = function(self, bounds)
