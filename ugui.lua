@@ -41,9 +41,6 @@ ugui.ALIGNMENTS = {
 
 ---@class Control
 ---@field class ClassId
----@field x_align LayoutAlignment?
----@field y_align LayoutAlignment?
----@field margin Margin?
 ---Represents a control.
 
 ---@package
@@ -75,8 +72,30 @@ ugui.internal = {
     ---@type { [ClassId]: ControlClass }
     classes = {},
 
-    ---@type { [PropertyKey]: PropertyClass }
-    properties = {},
+    ---System properties. Same as user properties, but can't be modified by users.
+    props = {
+        ---@type PropertyClass
+        margin = {
+            default = {0, 0, 0, 0},
+            cascading = false,
+            invalidate_layout = true,
+            invalidate_visual = true,
+        },
+        ---@type PropertyClass
+        x_align = {
+            default = ugui.ALIGNMENTS.center,
+            cascading = false,
+            invalidate_layout = true,
+            invalidate_visual = false,
+        },
+        ---@type PropertyClass
+        y_align = {
+            default = ugui.ALIGNMENTS.center,
+            cascading = false,
+            invalidate_layout = true,
+            invalidate_visual = false,
+        },
+    },
 
     ---@type InternalControl[]
     layout_queue = {},
@@ -148,19 +167,23 @@ function ugui.internal.align_rect(rect1, rect2, x_align, y_align)
 end
 
 function ugui.internal.do_layout()
-    local function apply_margin(control, rect)
-        rect.x = rect.x + control.margin[1]
-        rect.y = rect.y + control.margin[2]
+    local function apply_margin(control, rect, margin)
+        rect.x = rect.x + margin[1]
+        rect.y = rect.y + margin[2]
     end
     local window_rect = {x = 0, y = 0, width = ugui.internal.available_size.x, height = ugui.internal.available_size.y}
 
     for _, control in pairs(ugui.internal.layout_queue) do
         ugui.internal.foreach_child(control, function(control, class)
+            local x_align = ugui.get_prop(control, 'x_align')
+            local y_align = ugui.get_prop(control, 'y_align')
+            local margin = ugui.get_prop(control, 'margin')
+
             control.desired_size = ugui.internal.call_measure(control)
 
             local parent_render_bounds = control.parent and control.parent.render_bounds or window_rect
-            control.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = control.desired_size.x, height = control.desired_size.y}, parent_render_bounds, control.x_align, control.y_align)
-            apply_margin(control, control.render_bounds)
+            control.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = control.desired_size.x, height = control.desired_size.y}, parent_render_bounds, x_align, y_align)
+            apply_margin(control, control.render_bounds, margin)
         end)
     end
 
@@ -176,8 +199,11 @@ function ugui.internal.do_layout()
             end
 
             for i, child in pairs(control.children) do
-                child.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y}, child_bounds[i], child.x_align, child.y_align)
-                apply_margin(child, child.render_bounds)
+                local x_align = ugui.get_prop(child, 'x_align')
+                local y_align = ugui.get_prop(child, 'y_align')
+                local margin = ugui.get_prop(child, 'margin')
+                child.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y}, child_bounds[i], x_align, y_align)
+                apply_margin(child, child.render_bounds, margin)
             end
         end)
     end
@@ -267,9 +293,10 @@ end
 ---@param control InternalControl
 function ugui.internal.call_measure(control)
     local desired_size = ugui.internal.get_class(control).measure(control)
+    local margin = ugui.get_prop(control, 'margin')
 
-    desired_size.x = desired_size.x + control.margin[1] + control.margin[3]
-    desired_size.y = desired_size.y + control.margin[2] + control.margin[4]
+    desired_size.x = desired_size.x + margin[1] + margin[3]
+    desired_size.y = desired_size.y + margin[2] + margin[4]
 
     return desired_size
 end
@@ -323,6 +350,16 @@ function ugui.internal.get_parents(control)
     return parents
 end
 
+---Gets a control's first-order parent. If the control has no parent, the control itself is returned.
+---@param control InternalControl
+---@return InternalControl
+function ugui.internal.get_first_parent(control)
+    if not control.parent then
+        return control
+    end
+    return control.parent
+end
+
 ---Returns whether any parent of the control (up to the root) or the control itself is present in the specified list.
 ---@param control InternalControl
 ---@param list InternalControl[]
@@ -353,6 +390,17 @@ function ugui.internal.is_control_in_list(control, list)
     return false
 end
 
+---Gets a reference to a property on the specified control.
+---@param control InternalControl
+---@param key PropertyKey
+---@return PropertyClass
+function ugui.internal.get_prop_by_key(control, key)
+    if ugui.internal.props[key] then
+        return ugui.internal.props[key]
+    end
+    return ugui.internal.get_class(control).props[key]
+end
+
 --#endregion
 
 --#region Public API
@@ -375,9 +423,6 @@ function ugui.add(parent, control)
     ---@cast control InternalControl
     ---@cast parent InternalControl
 
-    control.x_align = control.x_align or ugui.ALIGNMENTS.center
-    control.y_align = control.y_align or ugui.ALIGNMENTS.center
-    control.margin = control.margin or {0, 0, 0, 0}
     control.parent = parent
     control.children = {}
     control.desired_size = {x = 0, y = 0}
@@ -401,8 +446,7 @@ end
 ---@return any?
 function ugui.get_prop(control, key)
     ---@cast control InternalControl
-    local class = ugui.internal.get_class(control)
-    local prop = class.props[key]
+    local prop = ugui.internal.get_prop_by_key(control, key)
 
     if not prop.cascading then
         return control[key] or prop.default
@@ -428,8 +472,7 @@ end
 ---@param value any
 function ugui.set_prop(control, key, value)
     ---@cast control InternalControl
-    local class = ugui.internal.get_class(control)
-    local prop = class.props[key]
+    local prop = ugui.internal.get_prop_by_key(control, key)
 
     control[key] = value
 
@@ -447,6 +490,12 @@ end
 ---Calling this function from user code shouldn't be required, as the class property system manages repaints and relayouts automatically.
 ---@param control InternalControl
 function ugui.invalidate_layout(control)
+    -- FIXME: 
+    ugui.internal.layout_queue[#ugui.internal.layout_queue + 1] = ugui.internal.root
+    do
+        return
+    end
+
     if ugui.internal.is_control_or_any_parent_in_list(control, ugui.internal.layout_queue) then
         return
     end
@@ -477,10 +526,18 @@ end
 
 --#region Default Controls
 
-ugui.PANEL = 0
-ugui.TEXTBLOCK = 1
-ugui.STACKPANEL = 2
-ugui.BUTTON = 3
+---The built-in ugui properties.
+ugui.PROPS = {
+    margin = 'margin',
+    x_align = 'x_align',
+    y_align = 'y_align',
+}
+
+ugui.RESERVED = 1
+ugui.PANEL = 2
+ugui.TEXTBLOCK = 3
+ugui.STACKPANEL = 4
+ugui.BUTTON = 5
 
 ugui.register_class(ugui.PANEL, {
     name = 'panel',
