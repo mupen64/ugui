@@ -27,7 +27,7 @@ ugui.add(hstackpanel, {
     text = 'A',
 })
 
-ugui.add(hstackpanel, {
+local b = ugui.add(hstackpanel, {
     class = ugui.TEXTBLOCK,
     text = 'B',
 })
@@ -43,3 +43,24 @@ ugui.add(vstackpanel, {
 })
 
 ugui.start()
+
+local keys = {}
+local prev_keys = {}
+
+emu.atdrawd2d(function()
+    keys = input.get()
+    local new_keys = input.diff(keys, prev_keys)
+
+    if new_keys['R'] then
+        ugui.set_prop(hstackpanel, 'horizontal', not ugui.get_prop(hstackpanel, 'horizontal'))
+    end
+
+    if new_keys['up'] then
+        local margin = ugui.get_prop(b, 'margin')
+        margin[2] = margin[2] + 5
+        margin[4] = margin[4] + 5
+        ugui.set_prop(b, 'margin', margin)
+    end
+
+    prev_keys = ugui.internal.deep_clone(keys)
+end)

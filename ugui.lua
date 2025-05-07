@@ -490,7 +490,7 @@ end
 ---Calling this function from user code shouldn't be required, as the class property system manages repaints and relayouts automatically.
 ---@param control InternalControl
 function ugui.invalidate_layout(control)
-    -- FIXME: 
+    -- FIXME: Selective invalidation
     ugui.internal.layout_queue[#ugui.internal.layout_queue + 1] = ugui.internal.root
     do
         return
@@ -507,6 +507,12 @@ end
 ---Calling this function from user code shouldn't be required, as the class property system manages repaints and relayouts automatically.
 ---@param control InternalControl
 function ugui.invalidate_visual(control)
+    -- FIXME: Selective invalidation
+    ugui.internal.visual_queue[#ugui.internal.visual_queue + 1] = ugui.internal.root
+    do
+        return
+    end
+
     if ugui.internal.is_control_in_list(control, ugui.internal.visual_queue) then
         return
     end
