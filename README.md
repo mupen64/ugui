@@ -4,30 +4,22 @@
 
 
 <h1 align="center">
-  mupen-lua-ugui
+  ugui
 </h1>
 <p align="center">
-  Flexible immediate-mode GUI library for Mupen Lua
+  Flexible immediate-mode GUI library for Lua
 </p>
 
 # 🚀 Quickstart
 
 ```lua
-dofile("mupen-lua-ugui.lua")
+---@module "mupen-lua-ugui"
+ugui = dofile('mupen-lua-ugui.lua')
 ```
 
 That's it. Don't forget to pass an absolute path, not a relative one.
 
 Read the [demo scripts](https://github.com/Aurumaker72/mupen-lua-ugui/tree/main/demos) and function documentation for usage information.
-
-# 🏗️ Projects
-
-Cool projects using `mupen-lua-ugui`
-
-- [SM64Lua Redux](https://github.com/Mupen64-Rewrite/SM64Lua)
-- [mupen-lua-ugui-ext](https://github.com/Aurumaker72/mupen-lua-ugui-ext)
-- [TASInput Lua](https://github.com/Aurumaker72/tasinput-lua)
-
 
 # 📈 Advantages
 
