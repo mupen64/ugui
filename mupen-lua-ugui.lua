@@ -10,6 +10,8 @@ if not BreitbandGraphics then
     return
 end
 
+--#region Types
+
 ---@alias UID number
 ---Unique identifier for a control. Must be unique within a frame.
 
@@ -146,6 +148,10 @@ end
 ---@field public places integer The amount of digits the value is padded to.
 ---@field public show_negative boolean? Whether a button for viewing and toggling the value's sign is shown. If nil, false is assumed.
 ---A numberbox, which allows modifying a number by typing or by adjusting its individual digits.
+
+--#endregion
+
+--#region ugui.internal
 
 ugui.internal = {
     ---@type table<UID, any>
@@ -576,6 +582,10 @@ ugui.internal = {
         return segments
     end,
 }
+
+--#endregion
+
+--#region Visualisation and Styles
 
 ---@type table<string, ControlRectangleComputationDelegate>
 ---Map of layout section names to their control rectangle computation delegates.
@@ -1859,6 +1869,10 @@ ugui.begin_frame = function(environment)
     end
 end
 
+--#endregion
+
+--#region Main API
+
 --- Ends the current frame.
 ugui.end_frame = function()
     if not ugui.internal.frame_in_progress then
@@ -2130,7 +2144,7 @@ ugui.joystick = function(control)
         if control.y_snap and position.y > -control.y_snap and position.y < control.y_snap then
             position.y = 0
         end
-        
+
     end
 
     ugui.internal.handle_tooltip(control)
@@ -3003,5 +3017,7 @@ ugui.numberbox = function(control)
     ugui.internal.handle_tooltip(control)
     return math.floor(control.value) * (is_positive and 1 or -1)
 end
+
+--#endregion
 
 return ugui
