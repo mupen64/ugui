@@ -615,19 +615,6 @@ ugui.internal = {
         ugui.internal.captured_control = captured_control and captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
-
-    -- TODO: make this public as `ugui.control`, cool huh?
-    ---Adds a control to the scene and returns the stored return value associated with the control.
-    ---@param control Control
-    ---@param type ControlType
-    ---@return any?
-    add_to_scene_and_return_stored_value = function(control, type)
-        ugui.internal.scene[#ugui.internal.scene + 1] = {
-            control = control,
-            type = type,
-        }
-        return ugui.internal.return_values[control.uid]
-    end,
 }
 
 --#endregion
@@ -2380,46 +2367,58 @@ ugui.pop = function()
     table.remove(ugui.internal.layout_stack, #ugui.internal.layout_stack)
 end
 
+---Places a Control of the specified type.
+---@param control Control The control.
+---@param type ControlType The control's type.
+---@return any # The control's return value.
+ugui.control = function(control, type)
+    ugui.internal.scene[#ugui.internal.scene + 1] = {
+        control = control,
+        type = type,
+    }
+    return ugui.internal.return_values[control.uid]
+end
+
 ---Places a Button.
 ---@param control Button The control table.
 ---@return boolean # Whether the button has been pressed.
 ugui.button = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, 'button')
+    return ugui.control(control, 'button')
 end
 
 ---Places a ToggleButton.
 ---@param control ToggleButton The control table.
 ---@return boolean # The new check state.
 ugui.toggle_button = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, 'toggle_button')
+    return ugui.control(control, 'toggle_button')
 end
 
 ---Places a CarrouselButton.
 ---@param control CarrouselButton The control table.
 ---@return integer # The new selected index.
 ugui.carrousel_button = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, 'carrousel_button')
+    return ugui.control(control, 'carrousel_button')
 end
 
 ---Places a TextBox.
 ---@param control TextBox The control table.
 ---@return string # The new text.
 ugui.textbox = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, 'textbox')
+    return ugui.control(control, 'textbox')
 end
 
 ---Places a Joystick.
 ---@param control Joystick The control table.
 ---@return Vector2 # The joystick's new position.
 ugui.joystick = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, 'joystick')
+    return ugui.control(control, 'joystick')
 end
 
 ---Places a Trackbar.
 ---@param control Trackbar The control table.
 ---@return number # The trackbar's new value.
 ugui.trackbar = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, 'trackbar')
+    return ugui.control(control, 'trackbar')
 end
 
 ---Places a ComboBox.
@@ -2523,7 +2522,7 @@ ugui.listbox = function(control)
     local x_overflow = content_bounds.width > control.rectangle.width
     local y_overflow = content_bounds.height > control.rectangle.height
 
-    local result = ugui.internal.add_to_scene_and_return_stored_value(control, 'listbox')
+    local result = ugui.control(control, 'listbox')
 
     if x_overflow then
         data.scroll_x = ugui.scrollbar({
@@ -2564,7 +2563,7 @@ end
 ---@param control ScrollBar The control table.
 ---@return number # The new value.
 ugui.scrollbar = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, 'scrollbar')
+    return ugui.control(control, 'scrollbar')
 end
 
 ---Places a Menu.
