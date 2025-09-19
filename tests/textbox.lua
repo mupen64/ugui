@@ -32,10 +32,10 @@ group.tests[#group.tests + 1] = {
             })
 
             if i == 3 then
-                ctx.assert(ugui.internal.active_control == 5, 'Textbox not activated')
+                ctx.assert(ugui.internal.capturing_control == 5, 'Textbox not activated')
             end
 
-            ctx.log((ugui.internal.active_control or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
+            ctx.log((ugui.internal.capturing_control or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
 
             ugui.end_frame()
         end
@@ -86,10 +86,10 @@ group.tests[#group.tests + 1] = {
             })
 
             if i == 5 then
-                ctx.assert(ugui.internal.active_control == 10, 'Button not activated')
+                ctx.assert(ugui.internal.capturing_control == 10, 'Button not activated')
             end
 
-            ctx.log((ugui.internal.active_control or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
+            ctx.log((ugui.internal.capturing_control or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
 
             ugui.end_frame()
         end
@@ -263,7 +263,7 @@ group.tests[#group.tests + 1] = {
             is_primary_down = false,
             held_keys = {},
         })
-        ugui.internal.active_control = 5
+        ugui.internal.capturing_control = 5
         ugui.textbox({
             uid = 5,
             rectangle = rect,
@@ -368,7 +368,7 @@ group.tests[#group.tests + 1] = {
             is_primary_down = false,
             held_keys = {},
         })
-        ugui.internal.active_control = 5
+        ugui.internal.capturing_control = 5
         text = ugui.textbox({
             uid = 5,
             rectangle = rect,

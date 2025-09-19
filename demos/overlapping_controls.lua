@@ -31,15 +31,19 @@ emu.atdrawd2d(function()
         is_primary_down = keys.leftclick,
         held_keys = keys,
     })
-    ugui.button({
+    if ugui.button({
         uid = 1,
         rectangle = {x = 10, y = 10, width = 100, height = 100},
         text = 'Hello, world!',
-    })
-    ugui.button({
+    }) then
+        print("1")
+    end
+    if ugui.button({
         uid = 2,
         rectangle = {x = 80, y = 80, width = 100, height = 50},
         text = 'Hello, world!',
-    })
+    }) then
+        print("2")
+    end
     ugui.end_frame()
 end)
