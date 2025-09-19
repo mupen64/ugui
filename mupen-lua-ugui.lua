@@ -2370,55 +2370,56 @@ end
 ---Places a Control of the specified type.
 ---@param control Control The control.
 ---@param type ControlType The control's type.
+---@param default_return_value any? The default return value. Returned on the first frame of the control existing.
 ---@return any # The control's return value.
-ugui.control = function(control, type)
+ugui.control = function(control, type, default_return_value)
     ugui.internal.scene[#ugui.internal.scene + 1] = {
         control = control,
         type = type,
     }
-    return ugui.internal.return_values[control.uid]
+    return ugui.internal.return_values[control.uid] or default_return_value
 end
 
 ---Places a Button.
 ---@param control Button The control table.
 ---@return boolean # Whether the button has been pressed.
 ugui.button = function(control)
-    return ugui.control(control, 'button')
+    return ugui.control(control, 'button', false)
 end
 
 ---Places a ToggleButton.
 ---@param control ToggleButton The control table.
 ---@return boolean # The new check state.
 ugui.toggle_button = function(control)
-    return ugui.control(control, 'toggle_button')
+    return ugui.control(control, 'toggle_button', control.is_checked)
 end
 
 ---Places a CarrouselButton.
 ---@param control CarrouselButton The control table.
 ---@return integer # The new selected index.
 ugui.carrousel_button = function(control)
-    return ugui.control(control, 'carrousel_button')
+    return ugui.control(control, 'carrousel_button', control.selected_index)
 end
 
 ---Places a TextBox.
 ---@param control TextBox The control table.
 ---@return string # The new text.
 ugui.textbox = function(control)
-    return ugui.control(control, 'textbox')
+    return ugui.control(control, 'textbox', control.text)
 end
 
 ---Places a Joystick.
 ---@param control Joystick The control table.
 ---@return Vector2 # The joystick's new position.
 ugui.joystick = function(control)
-    return ugui.control(control, 'joystick')
+    return ugui.control(control, 'joystick', control.position)
 end
 
 ---Places a Trackbar.
 ---@param control Trackbar The control table.
 ---@return number # The trackbar's new value.
 ugui.trackbar = function(control)
-    return ugui.control(control, 'trackbar')
+    return ugui.control(control, 'trackbar', control.value)
 end
 
 ---Places a ComboBox.
@@ -2563,7 +2564,7 @@ end
 ---@param control ScrollBar The control table.
 ---@return number # The new value.
 ugui.scrollbar = function(control)
-    return ugui.control(control, 'scrollbar')
+    return ugui.control(control, 'scrollbar', control.value)
 end
 
 ---Places a Menu.
