@@ -10,6 +10,7 @@ ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
 ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
 
 local checked = true
+local text = 'Hello World!'
 
 emu.atdrawd2d(function()
     local window_size = wgui.info()
@@ -61,8 +62,11 @@ emu.atdrawd2d(function()
         text = 'Hello, world!',
         is_checked = checked,
     })
-
-    
+    text = ugui.textbox({
+        uid = 5,
+        rectangle = {x = 20, y = 20, width = 100, height = 20},
+        text = text,
+    })
 
     ugui.end_frame()
 end)

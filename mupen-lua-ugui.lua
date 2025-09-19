@@ -153,7 +153,7 @@ end
 
 --#region ugui.internal
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox"
 
 ugui.internal = {
     ---@alias SceneEntry { control: Control, type: ControlType }
@@ -557,17 +557,27 @@ ugui.internal = {
         ---@type Control?
         local clicked_control = nil
 
+        ---@type SceneEntry?
+        local captured_control = nil
+        for i = 1, #ugui.internal.scene, 1 do
+            local entry = ugui.internal.scene[i]
+            if entry.control.uid == ugui.internal.captured_control then
+                captured_control = entry
+            end
+        end
+
         ugui.internal.hovered_control = nil
 
         for i = #ugui.internal.scene, 1, -1 do
-            local control = ugui.internal.scene[i].control
+            local entry = ugui.internal.scene[i]
+            local control = entry.control
 
             -- Determine the clicked control if we haven't already
             if clicked_control == nil then
                 if ugui.internal.is_mouse_just_down() then
                     if BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
-                        ugui.internal.captured_control = control.uid
+                        captured_control = entry
                     end
                 end
             end
@@ -582,12 +592,19 @@ ugui.internal = {
 
         -- Clear the captured control if we released the mouse
         if not ugui.internal.environment.is_primary_down then
-            ugui.internal.captured_control = nil
+            -- We only want to do this for controls that actually demand this behaviourz
+            if captured_control then
+                local registry_entry = ugui.registry[captured_control.type]
+
+                if not registry_entry.keep_capture_after_release then
+                    captured_control = nil
+                end
+            end
         end
 
         -- If we have a captured control, the hovered control must be locked to that as well.
-        if ugui.internal.captured_control ~= nil then
-            ugui.internal.hovered_control = ugui.internal.captured_control
+        if captured_control ~= nil then
+            ugui.internal.hovered_control = captured_control.control.uid
         end
 
         -- If the clicked control is disabled, we clear it now at the end of input processing, effectively "swallowing" the click.
@@ -595,6 +612,7 @@ ugui.internal = {
             clicked_control = nil
         end
 
+        ugui.internal.captured_control = captured_control and captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 
@@ -1565,6 +1583,7 @@ ugui.standard_styler = {
     ---Draws a TextBox with the specified parameters.
     ---@param control TextBox The control table.
     draw_textbox = function(control)
+        local data = ugui.internal.control_data[control.uid]
         local visual_state = ugui.get_visual_state(control)
         local text = control.text or ''
 
@@ -1575,15 +1594,16 @@ ugui.standard_styler = {
         ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
 
         local should_visualize_selection = not (ugui.internal.control_data[control.uid].selection_start == nil) and
-            not (ugui.internal.control_data[control.uid].selection_end == nil) and
+            not (data.selection_end == nil) and
             control.is_enabled ~= false and
-            not (ugui.internal.control_data[control.uid].selection_start == ugui.internal.control_data[control.uid].selection_end)
+            not (data.selection_start == data.selection_end)
+            and ugui.internal.captured_control == control.uid
 
         if should_visualize_selection then
             local string_to_selection_start = text:sub(1,
-                ugui.internal.control_data[control.uid].selection_start - 1)
+                data.selection_start - 1)
             local string_to_selection_end = text:sub(1,
-                ugui.internal.control_data[control.uid].selection_end - 1)
+                data.selection_end - 1)
 
             BreitbandGraphics.fill_rectangle({
                     x = control.rectangle.x +
@@ -1625,11 +1645,11 @@ ugui.standard_styler = {
         })
 
         if should_visualize_selection then
-            local lower = ugui.internal.control_data[control.uid].selection_start
-            local higher = ugui.internal.control_data[control.uid].selection_end
-            if ugui.internal.control_data[control.uid].selection_start > ugui.internal.control_data[control.uid].selection_end then
-                lower = ugui.internal.control_data[control.uid].selection_end
-                higher = ugui.internal.control_data[control.uid].selection_start
+            local lower = data.selection_start
+            local higher = data.selection_end
+            if data.selection_start > data.selection_end then
+                lower = data.selection_end
+                higher = data.selection_start
             end
 
             local string_to_selection_start = text:sub(1,
@@ -1679,7 +1699,7 @@ ugui.standard_styler = {
         end
 
 
-        local string_to_caret = text:sub(1, ugui.internal.control_data[control.uid].caret_index - 1)
+        local string_to_caret = text:sub(1, data.caret_index - 1)
         local caret_x = BreitbandGraphics.get_text_size(string_to_caret,
                 ugui.standard_styler.params.font_size,
                 ugui.standard_styler.params.font_name).width +
@@ -1865,6 +1885,7 @@ ugui.standard_styler = {
 }
 
 ---@class ControlRegistryEntry
+---@field public keep_capture_after_release boolean? Whether to keep input capture after releasing LMB on the control. Defaults to `false`.
 ---@field public logic fun(control: Control, data: any): any
 ---@field public draw fun(control: Control)
 
@@ -1925,6 +1946,102 @@ ugui.registry = {
         draw = function(control)
             ---@cast control CarrouselButton
             ugui.standard_styler.draw_carrousel_button(control)
+        end,
+    },
+    textbox = {
+        keep_capture_after_release = true,
+        logic = function(control, data)
+            ---@cast control TextBox
+
+            if data.text == nil then
+                data.text = control.text
+            end
+            if data.caret_index == nil then
+                data.caret_index = 1
+            end
+            if data.caret_index == nil then
+                data.caret_index = 1
+            end
+
+            local function sel_hi()
+                return math.max(data.selection_start, data.selection_end)
+            end
+
+            local function sel_lo()
+                return math.min(data.selection_start, data.selection_end)
+            end
+
+            if ugui.internal.captured_control == control.uid then
+                local theoretical_caret_index = ugui.internal.get_caret_index(data.text,
+                    ugui.internal.environment.mouse_position.x - control.rectangle.x)
+
+                -- start a new selection
+                if ugui.internal.is_mouse_just_down() and ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
+                    data.caret_index = theoretical_caret_index
+                    data.selection_start = theoretical_caret_index
+                end
+
+                -- already has selection, move end to appropriate index
+                if ugui.internal.environment.is_primary_down and ugui.internal.is_point_inside_control(ugui.internal.mouse_down_position, control) then
+                    data.selection_end = theoretical_caret_index
+                end
+
+                local just_pressed_keys = ugui.internal.get_just_pressed_keys()
+                local has_selection = data.selection_start ~=
+                    data.selection_end
+
+                for key, _ in pairs(just_pressed_keys) do
+                    local result = ugui.internal.handle_special_key(key, has_selection, data.text,
+                        data.selection_start,
+                        data.selection_end,
+                        data.caret_index)
+
+
+                    -- special key press wasn't handled, we proceed to just insert the pressed character (or replace the selection)
+                    if not result.handled then
+                        if #key ~= 1 then
+                            goto continue
+                        end
+
+                        if has_selection then
+                            local lower_selection = sel_lo()
+                            data.text = ugui.internal.remove_range(data.text, sel_lo(), sel_hi())
+                            data.caret_index = lower_selection
+                            data.selection_start = lower_selection
+                            data.selection_end = lower_selection
+                            data.text = ugui.internal.insert_at(data.text, key,
+                                data.caret_index - 1)
+                            data.caret_index = ugui.internal
+                                .control_data[control.uid]
+                                .caret_index + 1
+                        else
+                            data.text = ugui.internal.insert_at(data.text, key,
+                                data.caret_index - 1)
+                            data.caret_index = ugui.internal
+                                .control_data[control.uid]
+                                .caret_index + 1
+                        end
+
+                        goto continue
+                    end
+
+                    data.caret_index = result.caret_index
+                    data.selection_start = result.selection_start
+                    data.selection_end = result.selection_end
+                    data.text = result.text
+
+                    ::continue::
+                end
+            end
+
+            data.caret_index = ugui.internal.clamp(
+                data.caret_index, 1, #data.text + 1)
+
+            return data.text
+        end,
+        draw = function(control)
+            ---@cast control TextBox
+            ugui.standard_styler.draw_textbox(control)
         end,
     },
 }
@@ -2069,110 +2186,7 @@ end
 ---@param control TextBox The control table.
 ---@return string # The new text.
 ugui.textbox = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_control(control)
-
-    ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
-    if ugui.internal.control_data[control.uid].caret_index == nil then
-        ugui.internal.control_data[control.uid].caret_index = 1
-    end
-    if ugui.internal.control_data[control.uid].caret_index == nil then
-        ugui.internal.control_data[control.uid].caret_index = 1
-    end
-
-    local pushed = ugui.internal.process_push(control)
-    local text = control.text or ''
-
-    -- if active and user clicks elsewhere, deactivate
-    if ugui.internal.captured_control == control.uid
-        and ugui.internal.is_mouse_just_down()
-        and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
-        -- deactivate, then clear selection
-        ugui.internal.captured_control = nil
-        ugui.internal.control_data[control.uid].selection_start = nil
-        ugui.internal.control_data[control.uid].selection_end = nil
-    end
-
-    local function sel_hi()
-        return math.max(ugui.internal.control_data[control.uid].selection_start,
-            ugui.internal.control_data[control.uid].selection_end)
-    end
-
-    local function sel_lo()
-        return math.min(ugui.internal.control_data[control.uid].selection_start,
-            ugui.internal.control_data[control.uid].selection_end)
-    end
-
-
-    if ugui.internal.captured_control == control.uid and control.is_enabled ~= false then
-        local theoretical_caret_index = ugui.internal.get_caret_index(text,
-            ugui.internal.environment.mouse_position.x - control.rectangle.x)
-
-        -- start a new selection
-        if ugui.internal.is_mouse_just_down() and ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
-            ugui.internal.control_data[control.uid].caret_index = theoretical_caret_index
-            ugui.internal.control_data[control.uid].selection_start = theoretical_caret_index
-        end
-
-        -- already has selection, move end to appropriate index
-        if ugui.internal.environment.is_primary_down and ugui.internal.is_point_inside_control(ugui.internal.mouse_down_position, control) then
-            ugui.internal.control_data[control.uid].selection_end = theoretical_caret_index
-        end
-
-        local just_pressed_keys = ugui.internal.get_just_pressed_keys()
-        local has_selection = ugui.internal.control_data[control.uid].selection_start ~=
-            ugui.internal.control_data[control.uid].selection_end
-
-        for key, _ in pairs(just_pressed_keys) do
-            local result = ugui.internal.handle_special_key(key, has_selection, control.text,
-                ugui.internal.control_data[control.uid].selection_start,
-                ugui.internal.control_data[control.uid].selection_end,
-                ugui.internal.control_data[control.uid].caret_index)
-
-
-            -- special key press wasn't handled, we proceed to just insert the pressed character (or replace the selection)
-            if not result.handled then
-                if #key ~= 1 then
-                    goto continue
-                end
-
-                if has_selection then
-                    local lower_selection = sel_lo()
-                    text = ugui.internal.remove_range(text, sel_lo(), sel_hi())
-                    ugui.internal.control_data[control.uid].caret_index = lower_selection
-                    ugui.internal.control_data[control.uid].selection_start = lower_selection
-                    ugui.internal.control_data[control.uid].selection_end = lower_selection
-                    text = ugui.internal.insert_at(text, key,
-                        ugui.internal.control_data[control.uid].caret_index - 1)
-                    ugui.internal.control_data[control.uid].caret_index = ugui.internal
-                        .control_data[control.uid]
-                        .caret_index + 1
-                else
-                    text = ugui.internal.insert_at(text, key,
-                        ugui.internal.control_data[control.uid].caret_index - 1)
-                    ugui.internal.control_data[control.uid].caret_index = ugui.internal
-                        .control_data[control.uid]
-                        .caret_index + 1
-                end
-
-                goto continue
-            end
-
-            ugui.internal.control_data[control.uid].caret_index = result.caret_index
-            ugui.internal.control_data[control.uid].selection_start = result.selection_start
-            ugui.internal.control_data[control.uid].selection_end = result.selection_end
-            text = result.text
-
-            ::continue::
-        end
-    end
-
-    ugui.internal.control_data[control.uid].caret_index = ugui.internal.clamp(
-        ugui.internal.control_data[control.uid].caret_index, 1, #text + 1)
-
-    ugui.standard_styler.draw_textbox(control)
-    ugui.internal.handle_tooltip(control)
-    return text
+    return ugui.internal.add_to_scene_and_return_stored_value(control, 'textbox')
 end
 
 ---Places a Joystick.

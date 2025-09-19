@@ -24,6 +24,8 @@ local function rainbow(progress)
     end
 end
 
+local text = 'Hello World!'
+
 emu.atdrawd2d(function()
     local window_size = wgui.info()
     BreitbandGraphics.fill_rectangle({
@@ -52,15 +54,9 @@ emu.atdrawd2d(function()
     ugui.standard_styler.params.textbox.selection = selection_color
     ugui.standard_styler.params.numberbox.selection = selection_color
 
-    ugui.textbox({
+    text = ugui.textbox({
         uid = 1,
         rectangle = {x = 10, y = 10, width = 100, height = 20},
-        text = 'Hello, world!',
-    })
-    ugui.numberbox({
-        uid = 2,
-        rectangle = {x = 10, y = 35, width = 100, height = 20},
-        value = 100,
-        places = 5,
+        text = text,
     })
 end)
