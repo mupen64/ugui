@@ -153,7 +153,7 @@ end
 
 --#region ugui.internal
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar"
 
 ugui.internal = {
     ---@alias SceneEntry { control: Control, type: ControlType }
@@ -1810,6 +1810,7 @@ ugui.standard_styler = {
     ---@param control Trackbar The control table.
     draw_trackbar = function(control)
         local visual_state = ugui.get_visual_state(control)
+        local data = ugui.internal.control_data[control.uid]
 
         if ugui.internal.captured_control == control.uid and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
@@ -1818,8 +1819,7 @@ ugui.standard_styler = {
         local is_horizontal = control.rectangle.width > control.rectangle.height
 
         ugui.standard_styler.draw_track(control, visual_state, is_horizontal)
-        ugui.standard_styler.draw_thumb(control, visual_state, is_horizontal, control
-            .value)
+        ugui.standard_styler.draw_thumb(control, visual_state, is_horizontal, data.value)
     end,
 
     ---Draws a ComboBox with the specified parameters.
@@ -2074,7 +2074,31 @@ ugui.registry = {
             ugui.standard_styler.draw_joystick(control)
         end,
     },
+    trackbar = {
+        logic = function(control, data)
+            ---@cast control Trackbar
 
+            if data.value == nil then
+                data.value = control.value
+            end
+
+            if ugui.internal.captured_control == control.uid then
+                if control.rectangle.width > control.rectangle.height then
+                    data.value = (ugui.internal.environment.mouse_position.x - control.rectangle.x) / control.rectangle.width
+                else
+                    data.value = (ugui.internal.environment.mouse_position.y - control.rectangle.y) / control.rectangle.height
+                end
+            end
+
+            data.value = ugui.internal.clamp(data.value, 0, 1)
+
+            return data.value
+        end,
+        draw = function(control)
+            ---@cast control Trackbar
+            ugui.standard_styler.draw_trackbar(control)
+        end,
+    },
 }
 
 --#endregion
@@ -2231,35 +2255,7 @@ end
 ---@param control Trackbar The control table.
 ---@return number # The trackbar's new value.
 ugui.trackbar = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_control(control)
-
-    ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
-    if ugui.internal.control_data[control.uid].active == nil then
-        ugui.internal.control_data[control.uid].active = false
-    end
-
-    local pushed = ugui.internal.process_push(control)
-    local value = control.value
-
-    if ugui.internal.captured_control == control.uid then
-        if control.rectangle.width > control.rectangle.height then
-            value = ugui.internal.clamp(
-                (ugui.internal.environment.mouse_position.x - control.rectangle.x) /
-                control.rectangle.width,
-                0, 1)
-        else
-            value = ugui.internal.clamp(
-                (ugui.internal.environment.mouse_position.y - control.rectangle.y) /
-                control.rectangle.height,
-                0, 1)
-        end
-    end
-
-    ugui.standard_styler.draw_trackbar(control)
-
-    ugui.internal.handle_tooltip(control)
-    return value
+    return ugui.internal.add_to_scene_and_return_stored_value(control, 'trackbar')
 end
 
 ---Places a ComboBox.

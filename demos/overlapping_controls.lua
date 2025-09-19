@@ -12,6 +12,7 @@ ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
 local checked = true
 local text = 'Hello World!'
 local position = {x = 0, y = 0}
+local value = 0.5
 
 emu.atdrawd2d(function()
     local window_size = wgui.info()
@@ -72,6 +73,11 @@ emu.atdrawd2d(function()
         uid = 6,
         rectangle = {x = 20, y = 200, width = 50, height = 50},
         position = position,
+    })
+    value = ugui.trackbar({
+        uid = 7,
+        rectangle = {x = 20, y = 260, width = 120, height = 20},
+        value = value,
     })
 
     ugui.end_frame()
