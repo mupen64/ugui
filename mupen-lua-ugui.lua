@@ -153,7 +153,7 @@ end
 
 --#region ugui.internal
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick"
 
 ugui.internal = {
     ---@alias SceneEntry { control: Control, type: ControlType }
@@ -2044,6 +2044,37 @@ ugui.registry = {
             ugui.standard_styler.draw_textbox(control)
         end,
     },
+    joystick = {
+        logic = function(control, data)
+            ---@cast control Joystick
+
+            if not data.position then
+                data.position = control.position or {x = 0, y = 0}
+            end
+
+            if ugui.internal.captured_control == control.uid then
+                data.position.x = ugui.internal.clamp(
+                    ugui.internal.remap(ugui.internal.environment.mouse_position.x - control.rectangle.x, 0,
+                        control.rectangle.width, -128, 128), -128, 128)
+                data.position.y = ugui.internal.clamp(
+                    ugui.internal.remap(ugui.internal.environment.mouse_position.y - control.rectangle.y, 0,
+                        control.rectangle.height, -128, 128), -128, 128)
+                if control.x_snap and data.position.x > -control.x_snap and data.position.x < control.x_snap then
+                    data.position.x = 0
+                end
+                if control.y_snap and data.position.y > -control.y_snap and data.position.y < control.y_snap then
+                    data.position.y = 0
+                end
+            end
+
+            return data.position
+        end,
+        draw = function(control)
+            ---@cast control Joystick
+            ugui.standard_styler.draw_joystick(control)
+        end,
+    },
+
 }
 
 --#endregion
@@ -2193,35 +2224,7 @@ end
 ---@param control Joystick The control table.
 ---@return Vector2 # The joystick's new position.
 ugui.joystick = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_control(control)
-
-    ugui.standard_styler.draw_joystick(control)
-
-    local position = control.position and ugui.internal.deep_clone(control.position) or {x = 0, y = 0}
-
-    local pushed = ugui.internal.process_push(control)
-    local ignored = BreitbandGraphics.is_point_inside_any_rectangle(
-            ugui.internal.environment.mouse_position, ugui.internal.hittest_free_rects) and
-        not control.topmost
-
-    if ugui.internal.captured_control == control.uid and not ignored then
-        position.x = ugui.internal.clamp(
-            ugui.internal.remap(ugui.internal.environment.mouse_position.x - control.rectangle.x, 0,
-                control.rectangle.width, -128, 128), -128, 128)
-        position.y = ugui.internal.clamp(
-            ugui.internal.remap(ugui.internal.environment.mouse_position.y - control.rectangle.y, 0,
-                control.rectangle.height, -128, 128), -128, 128)
-        if control.x_snap and position.x > -control.x_snap and position.x < control.x_snap then
-            position.x = 0
-        end
-        if control.y_snap and position.y > -control.y_snap and position.y < control.y_snap then
-            position.y = 0
-        end
-    end
-
-    ugui.internal.handle_tooltip(control)
-    return position
+    return ugui.internal.add_to_scene_and_return_stored_value(control, 'joystick')
 end
 
 ---Places a Trackbar.

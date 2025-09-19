@@ -11,6 +11,7 @@ ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
 
 local checked = true
 local text = 'Hello World!'
+local position = {x = 0, y = 0}
 
 emu.atdrawd2d(function()
     local window_size = wgui.info()
@@ -36,7 +37,7 @@ emu.atdrawd2d(function()
     })
     if ugui.button({
             uid = 1,
-            rectangle = {x = 10, y = 10, width = 200, height = 300},
+            rectangle = {x = 10, y = 10, width = 200, height = 400},
             text = 'Hello, world!',
         }) then
         print('1')
@@ -66,6 +67,11 @@ emu.atdrawd2d(function()
         uid = 5,
         rectangle = {x = 20, y = 20, width = 100, height = 20},
         text = text,
+    })
+    position = ugui.joystick({
+        uid = 6,
+        rectangle = {x = 20, y = 200, width = 50, height = 50},
+        position = position,
     })
 
     ugui.end_frame()
