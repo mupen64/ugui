@@ -1910,13 +1910,33 @@ ugui.end_frame = function()
         local control = ugui.internal.scene[i].control
         local type = ugui.internal.scene[i].type
 
-        if type == 'button' then
+        -- Ensure control data exists
+        if not ugui.internal.control_data[control.uid] then
+            ugui.internal.control_data[control.uid] = {}
+        end
 
+        ---@type any
+        local return_value = nil
+
+        if type == 'button' then
+            ---@cast control Button
+            return_value = ugui.internal.clicked_control == control.uid
+        elseif type == 'toggle_button' then
+            ---@cast control ToggleButton
+            if ugui.internal.control_data[control.uid].is_checked == nil then
+                ugui.internal.control_data[control.uid].is_checked = control.is_checked
+            end
+
+            if ugui.internal.clicked_control == control.uid then
+                ugui.internal.control_data[control.uid].is_checked = not ugui.internal.control_data[control.uid].is_checked
+            end
+
+            return_value = ugui.internal.control_data[control.uid].is_checked
         else
             error('Unknown control type: ' .. type)
         end
-        ---@cast control Button
-        ugui.internal.return_values[control.uid] = ugui.internal.clicked_control == control.uid
+
+        ugui.internal.return_values[control.uid] = return_value
     end
 
     -- 4. Rendering pass

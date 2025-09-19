@@ -9,6 +9,8 @@ ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
 ---@module "mupen-lua-ugui-ext"
 ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
 
+local checked = true
+
 emu.atdrawd2d(function()
     local window_size = wgui.info()
     BreitbandGraphics.fill_rectangle({
@@ -53,12 +55,12 @@ emu.atdrawd2d(function()
         }) then
         print('3')
     end
-    if ugui.button({
-            uid = 4,
-            rectangle = {x = 80, y = 200, width = 200, height = 50},
-            text = 'Hello, world!',
-        }) then
-        print('4')
-    end
+    checked = ugui.toggle_button({
+        uid = 4,
+        rectangle = {x = 80, y = 200, width = 200, height = 50},
+        text = 'Hello, world!',
+        is_checked = checked,
+    })
+
     ugui.end_frame()
 end)
