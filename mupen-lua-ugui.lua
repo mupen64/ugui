@@ -153,7 +153,7 @@ end
 
 --#region ugui.internal
 
----@alias ControlType "button"
+---@alias ControlType "button" | "toggle_button"
 
 ugui.internal = {
     ---@alias SceneEntry { control: Control, type: ControlType }
@@ -198,44 +198,34 @@ ugui.internal = {
     ---The control that is currently capturing mouse and keyboard inputs.
     captured_control = nil,
 
-    ---@type { [UID]: boolean }
-    -- Map of uids used in an active section (between begin_frame and end_frame). Used to prevent uid collisions.
-    used_uids = {},
-
     ---@type LayoutSection[]
     ---The current layout stack.
     layout_stack = {},
 
-    ---@type Rectangle
-    ---The rectangle of the most recently shown control. Reset on frame end.
-    last_control_rectangle = nil,
-
     ---Whether a frame is currently in progress.
     frame_in_progress = false,
 
-    ---Validates the structure of a control. Must be called in every control function.
-    ---@param control Control A control which may or may not abide by the mupen-lua-ugui control contract
-    validate_control = function(control)
-        if not control.uid
-            or not control.rectangle
-            or not control.rectangle.x
-            or not control.rectangle.y
-            or not control.rectangle.width
-            or not control.rectangle.height
-        then
-            error('Attempted to show a malformed control.\r\n' .. debug.traceback())
-        end
-    end,
+    ---Validates all controls in the current scene.
+    validate_scene = function()
+        ---@type { [UID]: boolean }
+        local known_uids = {}
 
-    ---Validates the structure of a control and registers its uid. Must be called in every control function.
-    ---@param control Control A control which may or may not abide by the mupen-lua-ugui control contract
-    validate_and_register_control = function(control)
-        ugui.internal.validate_control(control)
-        -- if ugui.internal.used_uids[control.uid] then
-        --     error(string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', control.uid))
-        -- end
-        ugui.internal.used_uids[control.uid] = true
-        ugui.internal.last_control_rectangle = control.rectangle
+        for i = 1, #ugui.internal.scene, 1 do
+            local control = ugui.internal.scene[i].control
+            if not control.uid
+                or not control.rectangle
+                or not control.rectangle.x
+                or not control.rectangle.y
+                or not control.rectangle.width
+                or not control.rectangle.height
+            then
+                error('Attempted to show a malformed control.\r\n' .. debug.traceback())
+            end
+            if known_uids[control.uid] then
+                error(string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', control.uid))
+            end
+            known_uids[control.uid] = true
+        end
     end,
 
     ---Deeply clones a table.
@@ -1909,20 +1899,27 @@ ugui.end_frame = function()
         error("Tried to call end_frame() while a frame wasn't already in progress. Start a frame with begin_frame() before ending an in-progress one.")
     end
 
-    -- 1. Input processing pass
+    -- 1. Scene validation pass
+    ugui.internal.validate_scene()
+
+    -- 2. Input processing pass
     ugui.internal.do_input_processing()
 
-    -- 2. Control logic pass
+    -- 3. Control logic pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
+        local type = ugui.internal.scene[i].type
 
-        ugui.internal.validate_and_register_control(control)
+        if type == 'button' then
 
+        else
+            error('Unknown control type: ' .. type)
+        end
         ---@cast control Button
         ugui.internal.return_values[control.uid] = ugui.internal.clicked_control == control.uid
     end
 
-    -- 3. Rendering pass
+    -- 4. Rendering pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
 
@@ -1939,7 +1936,6 @@ ugui.end_frame = function()
         ugui.internal.scene_2 = {}
     end
 
-    ugui.internal.used_uids = {}
     ugui.internal.last_control_rectangle = nil
 
     ugui.internal.frame_in_progress = false
@@ -1986,27 +1982,14 @@ end
 ---@param control Button The control table.
 ---@return boolean # Whether the button has been pressed.
 ugui.button = function(control)
-    return ugui.internal.add_to_scene_and_return_stored_value(control, "button")
+    return ugui.internal.add_to_scene_and_return_stored_value(control, 'button')
 end
 
 ---Places a ToggleButton.
 ---@param control ToggleButton The control table.
 ---@return boolean # The new check state.
 ugui.toggle_button = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
-
-    local pushed = ugui.internal.process_push(control)
-    ugui.standard_styler.draw_togglebutton(control)
-
-    local checked = control.is_checked or false
-    if pushed then
-        checked = not checked
-    end
-
-    ugui.internal.handle_tooltip(control)
-
-    return checked
+    return ugui.internal.add_to_scene_and_return_stored_value(control, 'toggle_button')
 end
 
 ---Places a CarrouselButton.
@@ -2014,7 +1997,7 @@ end
 ---@return integer # The new selected index.
 ugui.carrousel_button = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     local pushed = ugui.internal.process_push(control)
     local selected_index = control.selected_index
@@ -2045,7 +2028,7 @@ end
 ---@return string # The new text.
 ugui.textbox = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
     if ugui.internal.control_data[control.uid].caret_index == nil then
@@ -2155,7 +2138,7 @@ end
 ---@return Vector2 # The joystick's new position.
 ugui.joystick = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     ugui.standard_styler.draw_joystick(control)
 
@@ -2190,7 +2173,7 @@ end
 ---@return number # The trackbar's new value.
 ugui.trackbar = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
     if ugui.internal.control_data[control.uid].active == nil then
@@ -2225,7 +2208,7 @@ end
 ---@return integer # The new selected index.
 ugui.combobox = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
     if ugui.internal.control_data[control.uid].is_open == nil then
@@ -2304,7 +2287,7 @@ end
 ---@return integer # The new selected index.
 ugui.listbox = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
     if ugui.internal.control_data[control.uid].scroll_x == nil then
@@ -2442,7 +2425,7 @@ end
 ---@return number # The new value.
 ugui.scrollbar = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     local pushed = ugui.internal.process_push(control)
     local is_horizontal = control.rectangle.width > control.rectangle.height
@@ -2531,7 +2514,7 @@ ugui.menu = function(control)
     end
 
     -- NOTE: Menus are exempt from the layout engine.
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     if not ugui.internal.control_data[control.uid] then
         print('Top-level menu')
@@ -2652,8 +2635,6 @@ end
 ---@param control Spinner The control table.
 ---@return number # The new value.
 ugui.spinner = function(control)
-    ugui.internal.validate_control(control)
-
     local increment = control.increment or 1
     local value = control.value or 0
 
@@ -2776,7 +2757,7 @@ end
 ---@return TabControlResult # The result.
 ugui.tabcontrol = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
 
@@ -2844,7 +2825,7 @@ end
 ---@return integer # The new value.
 ugui.numberbox = function(control)
     ugui.internal.do_layout(control)
-    ugui.internal.validate_and_register_control(control)
+    ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
     if ugui.internal.control_data[control.uid].caret_index == nil then
