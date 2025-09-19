@@ -153,8 +153,10 @@ end
 
 --#region ugui.internal
 
+---@alias ControlType "button"
+
 ugui.internal = {
-    ---@alias SceneEntry { control: Control }
+    ---@alias SceneEntry { control: Control, type: ControlType }
 
     ---@type SceneEntry[]
     scene = {},
@@ -604,6 +606,18 @@ ugui.internal = {
         end
 
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
+    end,
+
+    ---Adds a control to the scene and returns the stored return value associated with the control.
+    ---@param control Control
+    ---@param type ControlType
+    ---@return any?
+    add_to_scene_and_return_stored_value = function(control, type)
+        ugui.internal.scene[#ugui.internal.scene + 1] = {
+            control = control,
+            type = type,
+        }
+        return ugui.internal.return_values[control.uid]
     end,
 }
 
@@ -1972,11 +1986,7 @@ end
 ---@param control Button The control table.
 ---@return boolean # Whether the button has been pressed.
 ugui.button = function(control)
-    ugui.internal.scene[#ugui.internal.scene + 1] = {
-        control = control,
-    }
-
-    return ugui.internal.return_values[control.uid]
+    return ugui.internal.add_to_scene_and_return_stored_value(control, "button")
 end
 
 ---Places a ToggleButton.
