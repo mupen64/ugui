@@ -154,7 +154,7 @@ end
 --#region ugui.internal
 
 ugui.internal = {
-    ---@alias SceneEntry { control: Control, return_value: any? }
+    ---@alias SceneEntry { control: Control }
 
     ---@type SceneEntry[]
     scene = {},
@@ -164,6 +164,9 @@ ugui.internal = {
 
     ---@type SceneEntry[]
     scene_2 = {},
+
+    ---@type { [UID]: any }
+    return_values = {},
 
     ---@type table<UID, any>
     ---Map of control UIDs to their data.
@@ -1902,7 +1905,7 @@ ugui.end_frame = function()
         ugui.internal.validate_and_register_control(control)
 
         ---@cast control Button
-        ugui.internal.scene[i].return_value = ugui.internal.clicked_control == control.uid
+        ugui.internal.return_values[control.uid] = ugui.internal.clicked_control == control.uid
     end
 
     -- 3. Rendering pass
@@ -1971,16 +1974,9 @@ end
 ugui.button = function(control)
     ugui.internal.scene[#ugui.internal.scene + 1] = {
         control = control,
-        return_value = false,
     }
 
-    for key, value in pairs(ugui.internal.scene) do
-        if value.control.uid == control.uid then
-            return value.return_value
-        end
-    end
-
-    assert(false)
+    return ugui.internal.return_values[control.uid]
 end
 
 ---Places a ToggleButton.
