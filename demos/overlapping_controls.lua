@@ -76,19 +76,19 @@ emu.atdrawd2d(function()
         rectangle = {x = 20, y = 200, width = 150, height = 150},
         position = position,
     })
-    -- value = ugui.trackbar({
-    --     uid = 7,
-    --     rectangle = {x = 20, y = 260, width = 120, height = 20},
-    --     value = value,
-    -- })
-    index = ugui.listbox({
+    value = ugui.trackbar({
         uid = 35,
+        rectangle = {x = 20, y = 260, width = 120, height = 20},
+        value = value,
+    })
+    index = ugui.listbox({
+        uid = 40,
         rectangle = {x = 20, y = 300, width = 120, height = 200},
         items = items,
         selected_index = index,
     })
     value = ugui.scrollbar({
-        uid = 40,
+        uid = 45,
         rectangle = {x = 230, y = 10, width = 20, height = 300},
         value = value,
         ratio = 0.2,
