@@ -32,18 +32,33 @@ emu.atdrawd2d(function()
         held_keys = keys,
     })
     if ugui.button({
-        uid = 1,
-        rectangle = {x = 10, y = 10, width = 100, height = 100},
-        text = 'Hello, world!',
-    }) then
-        print("1")
+            uid = 1,
+            rectangle = {x = 10, y = 10, width = 200, height = 300},
+            text = 'Hello, world!',
+        }) then
+        print('1')
     end
     if ugui.button({
-        uid = 2,
-        rectangle = {x = 80, y = 80, width = 100, height = 50},
-        text = 'Hello, world!',
-    }) then
-        print("2")
+            uid = 2,
+            rectangle = {x = 80, y = 80, width = 100, height = 50},
+            text = 'Hello, world!',
+        }) then
+        print('2')
+    end
+    if ugui.button({
+            uid = 3,
+            rectangle = {x = 80, y = 140, width = 100, height = 30},
+            text = 'Hello, world!',
+            is_enabled = false,
+        }) then
+        print('3')
+    end
+    if ugui.button({
+            uid = 4,
+            rectangle = {x = 80, y = 200, width = 200, height = 50},
+            text = 'Hello, world!',
+        }) then
+        print('4')
     end
     ugui.end_frame()
 end)

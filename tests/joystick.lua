@@ -98,7 +98,7 @@ group.tests[#group.tests + 1] = {
             is_primary_down = true,
             held_keys = {},
         })
-        ugui.internal.capturing_control = 5
+        ugui.internal.captured_control = 5
         position = ugui.joystick({
             uid = 5,
             rectangle = ctx.data.rect,
@@ -129,7 +129,7 @@ group.tests[#group.tests + 1] = {
             is_primary_down = true,
             held_keys = {},
         })
-        ugui.internal.capturing_control = 5
+        ugui.internal.captured_control = 5
         ugui.joystick({
             uid = 5,
             rectangle = rect,

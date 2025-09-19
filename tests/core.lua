@@ -204,7 +204,7 @@ group.tests[#group.tests + 1] = {
                     rectangle = {x = -10, y = -10, width = 100, height = 20},
                     text = "Hi",
                 })
-                return ugui.internal.capturing_control == 5
+                return ugui.internal.captured_control == 5
             end,
         },
         {
