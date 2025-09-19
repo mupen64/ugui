@@ -153,7 +153,7 @@ end
 
 --#region ugui.internal
 
----@alias ControlType "button" | "toggle_button"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button"
 
 ugui.internal = {
     ---@alias SceneEntry { control: Control, type: ControlType }
@@ -1864,6 +1864,71 @@ ugui.standard_styler = {
     end,
 }
 
+---@class ControlRegistryEntry
+---@field public logic fun(control: Control, data: any): any
+---@field public draw fun(control: Control)
+
+---@type { [ControlType]: ControlRegistryEntry }
+ugui.registry = {
+    button = {
+        logic = function(control, data)
+            ---@cast control Button
+            return ugui.internal.clicked_control == control.uid
+        end,
+        draw = function(control)
+            ---@cast control Button
+            ugui.standard_styler.draw_button(control)
+        end,
+    },
+    toggle_button = {
+        logic = function(control, data)
+            ---@cast control ToggleButton
+            if data.is_checked == nil then
+                data.is_checked = control.is_checked
+            end
+
+            if ugui.internal.clicked_control == control.uid then
+                data.is_checked = not data.is_checked
+            end
+
+            return data.is_checked
+        end,
+        draw = function(control)
+            ---@cast control ToggleButton
+            ugui.standard_styler.draw_togglebutton(control)
+        end,
+    },
+    carrousel_button = {
+        logic = function(control, data)
+            ---@cast control CarrouselButton
+            if data.selected_index == nil then
+                data.selected_index = control.selected_index
+            end
+
+            if ugui.internal.clicked_control == control.uid then
+                local relative_x = ugui.internal.environment.mouse_position.x - control.rectangle.x
+                if relative_x > control.rectangle.width / 2 then
+                    data.selected_index = data.selected_index + 1
+                    if data.selected_index > #control.items then
+                        data.selected_index = 1
+                    end
+                else
+                    data.selected_index = data.selected_index - 1
+                    if data.selected_index < 1 then
+                        data.selected_index = #control.items
+                    end
+                end
+            end
+
+            return control.items and ugui.internal.clamp(data.selected_index, 1, #control.items) or nil
+        end,
+        draw = function(control)
+            ---@cast control CarrouselButton
+            ugui.standard_styler.draw_carrousel_button(control)
+        end,
+    },
+}
+
 --#endregion
 
 --#region Main API
@@ -1915,26 +1980,7 @@ ugui.end_frame = function()
             ugui.internal.control_data[control.uid] = {}
         end
 
-        ---@type any
-        local return_value = nil
-
-        if type == 'button' then
-            ---@cast control Button
-            return_value = ugui.internal.clicked_control == control.uid
-        elseif type == 'toggle_button' then
-            ---@cast control ToggleButton
-            if ugui.internal.control_data[control.uid].is_checked == nil then
-                ugui.internal.control_data[control.uid].is_checked = control.is_checked
-            end
-
-            if ugui.internal.clicked_control == control.uid then
-                ugui.internal.control_data[control.uid].is_checked = not ugui.internal.control_data[control.uid].is_checked
-            end
-
-            return_value = ugui.internal.control_data[control.uid].is_checked
-        else
-            error('Unknown control type: ' .. type)
-        end
+        local return_value = ugui.registry[type].logic(control, ugui.internal.control_data[control.uid])
 
         ugui.internal.return_values[control.uid] = return_value
     end
@@ -1942,9 +1988,9 @@ ugui.end_frame = function()
     -- 4. Rendering pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
+        local type = ugui.internal.scene[i].type
 
-        ---@cast control Button
-        ugui.standard_styler.draw_button(control)
+        ugui.registry[type].draw(control)
     end
 
     -- Swap scene buffers
@@ -2016,31 +2062,7 @@ end
 ---@param control CarrouselButton The control table.
 ---@return integer # The new selected index.
 ugui.carrousel_button = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_control(control)
-
-    local pushed = ugui.internal.process_push(control)
-    local selected_index = control.selected_index
-
-    if pushed then
-        local relative_x = ugui.internal.environment.mouse_position.x - control.rectangle.x
-        if relative_x > control.rectangle.width / 2 then
-            selected_index = selected_index + 1
-            if selected_index > #control.items then
-                selected_index = 1
-            end
-        else
-            selected_index = selected_index - 1
-            if selected_index < 1 then
-                selected_index = #control.items
-            end
-        end
-    end
-
-    ugui.standard_styler.draw_carrousel_button(control)
-
-    ugui.internal.handle_tooltip(control)
-    return control.items and ugui.internal.clamp(selected_index, 1, #control.items) or nil
+    return ugui.internal.add_to_scene_and_return_stored_value(control, 'carrousel_button')
 end
 
 ---Places a TextBox.
