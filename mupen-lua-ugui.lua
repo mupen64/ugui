@@ -153,7 +153,7 @@ end
 
 --#region ugui.internal
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar"
 
 ugui.internal = {
     ---@alias SceneEntry { control: Control, type: ControlType }
@@ -616,6 +616,7 @@ ugui.internal = {
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 
+    -- TODO: make this public as `ugui.control`, cool huh?
     ---Adds a control to the scene and returns the stored return value associated with the control.
     ---@param control Control
     ---@param type ControlType
@@ -1325,19 +1326,15 @@ ugui.standard_styler = {
     ---@param rectangle Rectangle The list item's bounds.
     draw_list = function(control, rectangle)
         local visual_state = ugui.get_visual_state(control)
-        ugui.standard_styler.draw_list_frame(rectangle, visual_state)
+        local data = ugui.internal.control_data[control.uid]
 
-        if not control.items then
-            return
-        end
+        ugui.standard_styler.draw_list_frame(rectangle, visual_state)
 
         local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
         -- item y position:
         -- y = (20 * (i - 1)) - (scroll_y * ((20 * #control.items) - control.rectangle.height))
-        local scroll_x = ugui.internal.control_data[control.uid].scroll_x and
-            ugui.internal.control_data[control.uid].scroll_x or 0
-        local scroll_y = ugui.internal.control_data[control.uid].scroll_y and
-            ugui.internal.control_data[control.uid].scroll_y or 0
+        local scroll_x = data.scroll_x and data.scroll_x or 0
+        local scroll_y = data.scroll_y and data.scroll_y or 0
 
         local index_begin = (scroll_y *
                 (content_bounds.height - rectangle.height)) /
@@ -1363,7 +1360,7 @@ ugui.standard_styler = {
                 item_visual_state = ugui.visual_states.disabled
             end
 
-            if control.selected_index == i then
+            if data.selected_index == i then
                 item_visual_state = ugui.visual_states.active
             end
 
@@ -2099,6 +2096,173 @@ ugui.registry = {
             ugui.standard_styler.draw_trackbar(control)
         end,
     },
+    listbox = {
+        logic = function(control, data)
+            ---@cast control ListBox
+
+            if data.selected_index == nil then
+                data.selected_index = control.selected_index
+            end
+            if data.scroll_x == nil then
+                data.scroll_x = 0
+            end
+            if data.scroll_y == nil then
+                data.scroll_y = 0
+            end
+
+            local prev_rect = ugui.internal.deep_clone(control.rectangle)
+            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+            local x_overflow = content_bounds.width > control.rectangle.width
+            local y_overflow = content_bounds.height > control.rectangle.height
+
+            if x_overflow then
+                control.rectangle.height = control.rectangle.height - ugui.standard_styler.params.scrollbar.thickness
+            end
+            if y_overflow then
+                control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
+            end
+
+            if ugui.internal.captured_control == control.uid then
+                -- Mouse-based selection
+                local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
+                local new_index = math.ceil((relative_y + (data.scroll_y *
+                        ((ugui.standard_styler.params.listbox_item.height * #control.items) - control.rectangle.height))) /
+                    ugui.standard_styler.params.listbox_item.height)
+                if new_index <= #control.items then
+                    data.selected_index = ugui.internal.clamp(new_index, 1, #control.items)
+                end
+            end
+
+            -- Keyboard-based selection. FIXME: Why is this based on the mouse being inside it???
+            -- FIXME: We want the separate concept of "keyboard focus" to be introduced
+            if ugui.internal.captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
+                for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
+                    if key == 'up' and data.selected_index ~= nil then
+                        data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
+                    end
+                    if key == 'down' and data.selected_index ~= nil then
+                        data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
+                    end
+                    if not y_overflow then
+                        if key == 'pageup' or key == 'home' then
+                            data.selected_index = 1
+                        end
+                        if key == 'pagedown' or key == 'end' then
+                            data.selected_index = #control.items
+                        end
+                    end
+                end
+            end
+
+            if y_overflow and (ugui.internal.captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)) then
+                local inc = 0
+                if ugui.internal.is_mouse_wheel_up() then
+                    inc = -1 / #control.items
+                end
+                if ugui.internal.is_mouse_wheel_down() then
+                    inc = 1 / #control.items
+                end
+
+                for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
+                    if key == 'pageup' then
+                        inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) / #control.items
+                    end
+                    if key == 'pagedown' then
+                        inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) / #control.items
+                    end
+                    if key == 'home' then
+                        inc = -1
+                    end
+                    if key == 'end' then
+                        inc = 1
+                    end
+                end
+
+                data.scroll_y = ugui.internal.clamp(data.scroll_y + inc, 0, 1)
+            end
+
+            control.rectangle = prev_rect
+        end,
+        draw = function(control)
+            ---@cast control ListBox
+            ugui.standard_styler.draw_listbox(control)
+        end,
+    },
+    scrollbar = {
+        get_thumb_rectangle = function(control, data)
+            ---@cast control ScrollBar
+
+            if data.value == nil then
+                data.value = control.value
+            end
+
+            local is_horizontal = control.rectangle.width > control.rectangle.height
+
+            local thumb_rectangle
+            -- we center the scrollbar around the translation value, and shrink it accordingly
+            if is_horizontal then
+                local scrollbar_width = control.rectangle.width * control.ratio
+                local scrollbar_x = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.width - scrollbar_width)
+                thumb_rectangle = {
+                    x = control.rectangle.x + scrollbar_x,
+                    y = control.rectangle.y,
+                    width = scrollbar_width,
+                    height = control.rectangle.height,
+                }
+            else
+                local scrollbar_height = control.rectangle.height * control.ratio
+                local scrollbar_y = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.height - scrollbar_height)
+                thumb_rectangle = {
+                    x = control.rectangle.x,
+                    y = control.rectangle.y + scrollbar_y,
+                    width = control.rectangle.width,
+                    height = scrollbar_height,
+                }
+            end
+
+            return thumb_rectangle
+        end,
+        logic = function(control, data)
+            ---@cast control ScrollBar
+
+            if data.value == nil then
+                data.value = control.value
+            end
+
+            local is_horizontal = control.rectangle.width > control.rectangle.height
+
+            if ugui.internal.captured_control == control.uid then
+                local relative_mouse = {
+                    x = ugui.internal.environment.mouse_position.x - control.rectangle.x,
+                    y = ugui.internal.environment.mouse_position.y - control.rectangle.y,
+                }
+                local relative_mouse_down = {
+                    x = ugui.internal.mouse_down_position.x - control.rectangle.x,
+                    y = ugui.internal.mouse_down_position.y - control.rectangle.y,
+                }
+                local current
+                local start
+                if is_horizontal then
+                    current = relative_mouse.x / control.rectangle.width
+                    start = relative_mouse_down.x / control.rectangle.width
+                else
+                    current = relative_mouse.y / control.rectangle.height
+                    start = relative_mouse_down.y / control.rectangle.height
+                end
+                data.value = ugui.internal.clamp(start + (current - start), 0, 1)
+            end
+
+            return data.value
+        end,
+        draw = function(control)
+            ---@cast control ScrollBar
+
+            ---@diagnostic disable-next-line: undefined-field
+            local thumb_rectangle = ugui.registry.scrollbar.get_thumb_rectangle(control, ugui.internal.control_data[control.uid])
+
+            ugui.standard_styler.draw_scrollbar(control.rectangle, thumb_rectangle, ugui.get_visual_state(control))
+        end,
+    },
 }
 
 --#endregion
@@ -2341,98 +2505,28 @@ end
 ---@param control ListBox The control table.
 ---@return integer # The new selected index.
 ugui.listbox = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_control(control)
-
-    ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
-    if ugui.internal.control_data[control.uid].scroll_x == nil then
-        ugui.internal.control_data[control.uid].scroll_x = 0
+    if not ugui.internal.control_data[control.uid] then
+        ugui.internal.control_data[control.uid] = {}
     end
-    if ugui.internal.control_data[control.uid].scroll_y == nil then
-        ugui.internal.control_data[control.uid].scroll_y = 0
+
+    local data = ugui.internal.control_data[control.uid]
+
+    if data.scroll_x == nil then
+        data.scroll_x = 0
+    end
+
+    if data.scroll_y == nil then
+        data.scroll_y = 0
     end
 
     local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
     local x_overflow = content_bounds.width > control.rectangle.width
     local y_overflow = content_bounds.height > control.rectangle.height
 
-    local new_rectangle = ugui.internal.deep_clone(control.rectangle)
-    if x_overflow then
-        new_rectangle.height = new_rectangle.height - ugui.standard_styler.params.scrollbar.thickness
-    end
-    if y_overflow then
-        new_rectangle.width = new_rectangle.width - ugui.standard_styler.params.scrollbar.thickness
-    end
-
-    control.rectangle = new_rectangle
-
-    local pushed = ugui.internal.process_push(control)
-
-    if ugui.internal.captured_control == control.uid then
-        local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
-        local new_index = math.ceil((relative_y + (ugui.internal.control_data[control.uid].scroll_y *
-                ((ugui.standard_styler.params.listbox_item.height * #control.items) - control.rectangle.height))) /
-            ugui.standard_styler.params.listbox_item.height)
-        -- we only assign the new index if it's within bounds, as
-        -- this emulates windows commctl behaviour
-        if new_index <= #control.items then
-            control.selected_index = ugui.internal.clamp(new_index, 1, #control.items)
-        end
-    end
-
-    if (BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)
-            or ugui.internal.captured_control == control.uid) then
-        for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-            if key == 'up' and control.selected_index ~= nil then
-                control.selected_index = ugui.internal.clamp(control.selected_index - 1, 1, #control.items)
-            end
-            if key == 'down' and control.selected_index ~= nil then
-                control.selected_index = ugui.internal.clamp(control.selected_index + 1, 1, #control.items)
-            end
-            if not y_overflow then
-                if key == 'pageup' or key == 'home' then
-                    control.selected_index = 1
-                end
-                if key == 'pagedown' or key == 'end' then
-                    control.selected_index = #control.items
-                end
-            end
-        end
-    end
-
-    if y_overflow
-        and (BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)
-            or ugui.internal.captured_control == control.uid) then
-        local inc = 0
-        if ugui.internal.is_mouse_wheel_up() then
-            inc = -1 / #control.items
-        end
-        if ugui.internal.is_mouse_wheel_down() then
-            inc = 1 / #control.items
-        end
-
-        for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-            if key == 'pageup' then
-                inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) / #control.items
-            end
-            if key == 'pagedown' then
-                inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) / #control.items
-            end
-            if key == 'home' then
-                inc = -1
-            end
-            if key == 'end' then
-                inc = 1
-            end
-        end
-
-        ugui.internal.control_data[control.uid].scroll_y = ugui.internal.clamp(
-            ugui.internal.control_data[control.uid].scroll_y + inc, 0, 1)
-    end
-
+    local result = ugui.internal.add_to_scene_and_return_stored_value(control, 'listbox')
 
     if x_overflow then
-        ugui.internal.control_data[control.uid].scroll_x = ugui.scrollbar({
+        data.scroll_x = ugui.scrollbar({
             uid = control.uid + 1,
             is_enabled = control.is_enabled,
             rectangle = {
@@ -2441,14 +2535,14 @@ ugui.listbox = function(control)
                 width = control.rectangle.width,
                 height = ugui.standard_styler.params.scrollbar.thickness,
             },
-            value = ugui.internal.control_data[control.uid].scroll_x,
+            value = data.scroll_x,
             ratio = 1 / (content_bounds.width / control.rectangle.width),
             topmost = control.topmost,
         })
     end
 
     if y_overflow then
-        ugui.internal.control_data[control.uid].scroll_y = ugui.scrollbar({
+        data.scroll_y = ugui.scrollbar({
             uid = control.uid + 2,
             is_enabled = control.is_enabled,
             rectangle = {
@@ -2457,103 +2551,20 @@ ugui.listbox = function(control)
                 width = ugui.standard_styler.params.scrollbar.thickness,
                 height = control.rectangle.height,
             },
-            value = ugui.internal.control_data[control.uid].scroll_y,
+            value = data.scroll_y,
             ratio = 1 / (content_bounds.height / control.rectangle.height),
             topmost = control.topmost,
         })
     end
 
-    if control.topmost then
-        ugui.internal.late_callbacks[#ugui.internal.late_callbacks + 1] = function()
-            ugui.standard_styler.draw_listbox(control)
-        end
-    else
-        ugui.standard_styler.draw_listbox(control)
-    end
-
-    ugui.internal.handle_tooltip(control)
-    return control.selected_index
+    return result
 end
 
 ---Places a ScrollBar.
 ---@param control ScrollBar The control table.
 ---@return number # The new value.
 ugui.scrollbar = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_control(control)
-
-    local pushed = ugui.internal.process_push(control)
-    local is_horizontal = control.rectangle.width > control.rectangle.height
-
-    -- if active and user clicks elsewhere, deactivate
-    if ugui.internal.captured_control == control.uid then
-        if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
-            if ugui.internal.is_mouse_just_down() then
-                -- deactivate, then clear selection
-                ugui.internal.captured_control = nil
-            end
-        end
-    end
-
-    if ugui.internal.captured_control == control.uid and control.is_enabled ~= false and ugui.internal.environment.is_primary_down then
-        local relative_mouse = {
-            x = ugui.internal.environment.mouse_position.x - control.rectangle.x,
-            y = ugui.internal.environment.mouse_position.y - control.rectangle.y,
-        }
-        local relative_mouse_down = {
-            x = ugui.internal.mouse_down_position.x - control.rectangle.x,
-            y = ugui.internal.mouse_down_position.y - control.rectangle.y,
-        }
-        local current
-        local start
-        if is_horizontal then
-            current = relative_mouse.x / control.rectangle.width
-            start = relative_mouse_down.x / control.rectangle.width
-        else
-            current = relative_mouse.y / control.rectangle.height
-            start = relative_mouse_down.y / control.rectangle.height
-        end
-        control.value = ugui.internal.clamp(start + (current - start), 0, 1)
-    end
-
-    local thumb_rectangle
-    -- we center the scrollbar around the translation value, and shrink it accordingly
-    if is_horizontal then
-        local scrollbar_width = control.rectangle.width * control.ratio
-        local scrollbar_x = ugui.internal.remap(control.value, 0, 1, 0, control.rectangle.width - scrollbar_width)
-        thumb_rectangle = {
-            x = control.rectangle.x + scrollbar_x,
-            y = control.rectangle.y,
-            width = scrollbar_width,
-            height = control.rectangle.height,
-        }
-    else
-        local scrollbar_height = control.rectangle.height * control.ratio
-        local scrollbar_y = ugui.internal.remap(control.value, 0, 1, 0, control.rectangle.height - scrollbar_height)
-        thumb_rectangle = {
-            x = control.rectangle.x,
-            y = control.rectangle.y + scrollbar_y,
-            width = control.rectangle.width,
-            height = scrollbar_height,
-        }
-    end
-
-    local visual_state = ugui.get_visual_state(control)
-    if ugui.internal.captured_control == control.uid and control.is_enabled ~= false and ugui.internal.environment.is_primary_down then
-        visual_state = ugui.visual_states.active
-    end
-
-    if control.topmost then
-        ugui.internal.late_callbacks[#ugui.internal.late_callbacks + 1] = function()
-            ugui.standard_styler.draw_scrollbar(control.rectangle, thumb_rectangle, visual_state)
-        end
-    else
-        ugui.standard_styler.draw_scrollbar(control.rectangle, thumb_rectangle, visual_state)
-    end
-
-
-    ugui.internal.handle_tooltip(control)
-    return control.value
+    return ugui.internal.add_to_scene_and_return_stored_value(control, 'scrollbar')
 end
 
 ---Places a Menu.
