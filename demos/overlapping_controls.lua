@@ -73,7 +73,7 @@ emu.atdrawd2d(function()
     })
     position = ugui.joystick({
         uid = 30,
-        rectangle = {x = 20, y = 200, width = 50, height = 50},
+        rectangle = {x = 20, y = 200, width = 150, height = 150},
         position = position,
     })
     -- value = ugui.trackbar({
