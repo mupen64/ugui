@@ -172,8 +172,12 @@ ugui.internal = {
     hovered_control = nil,
 
     ---@type UID?
-    ---The control that is currently capturing mouse and keyboard inputs.
-    captured_control = nil,
+    ---The control that is currently capturing mouse inputs.
+    mouse_captured_control = nil,
+
+    ---@type UID?
+    ---The control that is currently capturing keyboard inputs. Synonymous to a "focused" control.
+    keyboard_captured_control = nil,
 
     ---@type number
     ---The most recent time at which `hovered_control` changed, as returned by `os.clock`.
@@ -525,11 +529,11 @@ ugui.internal = {
         local clicked_control = nil
 
         ---@type SceneEntry?
-        local captured_control = nil
+        local mouse_captured_control = nil
         for i = 1, #ugui.internal.scene, 1 do
             local entry = ugui.internal.scene[i]
-            if entry.control.uid == ugui.internal.captured_control then
-                captured_control = entry
+            if entry.control.uid == ugui.internal.mouse_captured_control then
+                mouse_captured_control = entry
             end
         end
 
@@ -545,7 +549,8 @@ ugui.internal = {
                 if ugui.internal.is_mouse_just_down() then
                     if BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
-                        captured_control = entry
+                        ugui.internal.keyboard_captured_control = control.uid
+                        mouse_captured_control = entry
                     end
                 end
             end
@@ -562,21 +567,14 @@ ugui.internal = {
             end
         end
 
-        -- Clear the captured control if we released the mouse
+        -- Clear the mouse captured control if we released the mouse
         if not ugui.internal.environment.is_primary_down then
-            -- We only want to do this for controls that actually demand this behaviourz
-            if captured_control then
-                local registry_entry = ugui.registry[captured_control.type]
-
-                if not registry_entry.keep_capture_after_release then
-                    captured_control = nil
-                end
-            end
+            mouse_captured_control = nil
         end
 
         -- If we have a captured control, the hovered control must be locked to that as well.
-        if captured_control ~= nil then
-            ugui.internal.hovered_control = captured_control.control.uid
+        if mouse_captured_control ~= nil then
+            ugui.internal.hovered_control = mouse_captured_control.control.uid
         end
 
         -- If the clicked control is disabled, we clear it now at the end of input processing, effectively "swallowing" the click.
@@ -593,7 +591,7 @@ ugui.internal = {
             end
         end
 
-        ugui.internal.captured_control = captured_control and captured_control.control.uid or nil
+        ugui.internal.mouse_captured_control = mouse_captured_control and mouse_captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 }
@@ -627,7 +625,7 @@ ugui.get_visual_state = function(control)
         return ugui.visual_states.active
     end
 
-    if ugui.internal.captured_control == control.uid then
+    if ugui.internal.mouse_captured_control == control.uid then
         return ugui.visual_states.active
     end
 
@@ -1501,7 +1499,7 @@ ugui.standard_styler = {
         local visual_state = ugui.get_visual_state(control)
         local text = control.text or ''
 
-        if ugui.internal.captured_control == control.uid and control.is_enabled ~= false then
+        if ugui.internal.mouse_captured_control == control.uid and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
         end
 
@@ -1511,7 +1509,7 @@ ugui.standard_styler = {
             not (data.selection_end == nil) and
             control.is_enabled ~= false and
             not (data.selection_start == data.selection_end)
-            and ugui.internal.captured_control == control.uid
+            and ugui.internal.mouse_captured_control == control.uid
 
         if should_visualize_selection then
             local string_to_selection_start = text:sub(1,
@@ -1726,7 +1724,7 @@ ugui.standard_styler = {
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
 
-        if ugui.internal.captured_control == control.uid and control.is_enabled ~= false then
+        if ugui.internal.mouse_captured_control == control.uid and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
         end
 
@@ -1800,7 +1798,6 @@ ugui.standard_styler = {
 }
 
 ---@class ControlRegistryEntry
----@field public keep_capture_after_release boolean? Whether to keep input capture after releasing LMB on the control. Defaults to `false`.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public logic fun(control: Control, data: any): any Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
@@ -1859,7 +1856,6 @@ ugui.registry = {
         end,
     },
     textbox = {
-        keep_capture_after_release = true,
         setup = function(control, data)
             ---@cast control TextBox
             if data.caret_index == nil then
@@ -1881,7 +1877,7 @@ ugui.registry = {
                 return math.min(data.selection_start, data.selection_end)
             end
 
-            if ugui.internal.captured_control == control.uid then
+            if ugui.internal.mouse_captured_control == control.uid then
                 local theoretical_caret_index = ugui.internal.get_caret_index(data.text,
                     ugui.internal.environment.mouse_position.x - control.rectangle.x)
 
@@ -1959,7 +1955,7 @@ ugui.registry = {
             ---@cast control Joystick
             data.position = control.position
 
-            if ugui.internal.captured_control == control.uid then
+            if ugui.internal.mouse_captured_control == control.uid then
                 data.position.x = ugui.internal.clamp(
                     ugui.internal.remap(ugui.internal.environment.mouse_position.x - control.rectangle.x, 0,
                         control.rectangle.width, -128, 128), -128, 128)
@@ -1986,7 +1982,7 @@ ugui.registry = {
             ---@cast control Trackbar
             data.value = control.value
 
-            if ugui.internal.captured_control == control.uid then
+            if ugui.internal.mouse_captured_control == control.uid then
                 if control.rectangle.width > control.rectangle.height then
                     data.value = (ugui.internal.environment.mouse_position.x - control.rectangle.x) / control.rectangle.width
                 else
@@ -2029,7 +2025,7 @@ ugui.registry = {
                 control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
             end
 
-            if ugui.internal.captured_control == control.uid then
+            if ugui.internal.mouse_captured_control == control.uid then
                 -- Mouse-based selection
                 local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
                 local new_index = math.ceil((relative_y + (data.scroll_y *
@@ -2042,7 +2038,7 @@ ugui.registry = {
 
             -- Keyboard-based selection. FIXME: Why is this based on the mouse being inside it???
             -- FIXME: We want the separate concept of "keyboard focus" to be introduced
-            if ugui.internal.captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
+            if ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
                 for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
                     if key == 'up' and data.selected_index ~= nil then
                         data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
@@ -2061,7 +2057,7 @@ ugui.registry = {
                 end
             end
 
-            if y_overflow and (ugui.internal.captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)) then
+            if y_overflow and (ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)) then
                 local inc = 0
                 if ugui.internal.is_mouse_wheel_up() then
                     inc = -1 / #control.items
@@ -2104,7 +2100,7 @@ ugui.registry = {
 
             local is_horizontal = control.rectangle.width > control.rectangle.height
 
-            if ugui.internal.captured_control == control.uid then
+            if ugui.internal.mouse_captured_control == control.uid then
                 local relative_mouse = {
                     x = ugui.internal.environment.mouse_position.x - control.rectangle.x,
                     y = ugui.internal.environment.mouse_position.y - control.rectangle.y,
@@ -2252,6 +2248,14 @@ ugui.end_frame = function()
         local type = ugui.internal.scene[i].type
 
         ugui.registry[type].draw(control)
+
+        -- Draw debug focus rectangles
+        if ugui.internal.keyboard_captured_control == control.uid then
+            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
+        end
+         if ugui.internal.mouse_captured_control == control.uid then
+            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
+        end
     end
 
     ugui.internal.tooltip()
@@ -2609,7 +2613,7 @@ ugui.spinner = function(control)
     end
 
     if control.is_enabled ~= false
-        and (BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, textbox_rect) or ugui.internal.captured_control == control.uid)
+        and (BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, textbox_rect) or ugui.internal.mouse_captured_control == control.uid)
     then
         if ugui.internal.is_mouse_wheel_up() then
             value = clamp_value(value + increment)
@@ -2806,11 +2810,11 @@ ugui.numberbox = function(control)
     end
 
     -- if active and user clicks elsewhere, deactivate
-    if ugui.internal.captured_control == control.uid then
+    if ugui.internal.mouse_captured_control == control.uid then
         if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
             if ugui.internal.is_mouse_just_down() then
                 -- deactivate, then clear selection
-                ugui.internal.captured_control = nil
+                ugui.internal.mouse_captured_control = nil
                 ugui.internal.control_data[control.uid].selection_start = nil
                 ugui.internal.control_data[control.uid].selection_end = nil
             end
@@ -2852,7 +2856,7 @@ ugui.numberbox = function(control)
     end
 
     local visual_state = ugui.get_visual_state(control)
-    if ugui.internal.captured_control == control.uid and control.is_enabled then
+    if ugui.internal.mouse_captured_control == control.uid and control.is_enabled then
         visual_state = ugui.visual_states.active
     end
     ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
@@ -2886,7 +2890,7 @@ ugui.numberbox = function(control)
         height = control.rectangle.height,
     }
 
-    if ugui.internal.captured_control == control.uid then
+    if ugui.internal.mouse_captured_control == control.uid then
         -- find the clicked number, change caret index
         if ugui.internal.is_mouse_just_down() and BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
             ugui.internal.control_data[control.uid].caret_index = get_caret_index_at_relative_x(text,
