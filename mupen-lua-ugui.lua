@@ -178,6 +178,10 @@ ugui.internal = {
     ---The control that is currently capturing mouse and keyboard inputs.
     captured_control = nil,
 
+    ---@type number
+    ---The most recent time at which `hovered_control` changed, as returned by `os.clock`.
+    hover_start_time = 0,
+
     ---Whether a frame is currently in progress.
     frame_in_progress = false,
 
@@ -458,32 +462,24 @@ ugui.internal = {
         }
     end,
 
-    ---Does tooltip processing for the specified control.
-    ---@param control Control The control table.
-    handle_tooltip = function(control)
-        ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
-
-        local prev_tooltip_visible = ugui.internal.control_data[control.uid].tooltip_visible
-
-        ugui.internal.control_data[control.uid].tooltip_visible = false
-
-        if not control.tooltip then
+    ---Shows the tooltip for the currently hovered control.
+    tooltip = function()
+        if ugui.internal.hovered_control == nil then
             return
         end
-        if not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
+        if (os.clock() - ugui.internal.hover_start_time) < ugui.standard_styler.params.tooltip.delay then
             return
         end
 
-        ugui.internal.control_data[control.uid].tooltip_visible = true
-
-        if ugui.internal.control_data[control.uid].tooltip_visible and not prev_tooltip_visible then
-            ugui.internal.control_data[control.uid].tooltip_hover_start = os.clock()
+        -- Find hovered control
+        for _, entry in pairs(ugui.internal.scene) do
+            if entry.control.uid == ugui.internal.hovered_control then
+                ugui.standard_styler.draw_tooltip(entry.control, {
+                    x = ugui.internal.environment.mouse_position.x,
+                    y = ugui.internal.environment.mouse_position.y,
+                })
+            end
         end
-
-        ugui.standard_styler.draw_tooltip(control, {
-            x = ugui.internal.environment.mouse_position.x,
-            y = ugui.internal.environment.mouse_position.y,
-        }, ugui.internal.control_data[control.uid].tooltip_hover_start)
     end,
 
     ---Parses rich text into content segments.
@@ -540,6 +536,7 @@ ugui.internal = {
             end
         end
 
+        local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
 
         for i = #ugui.internal.scene, 1, -1 do
@@ -560,6 +557,10 @@ ugui.internal = {
             if ugui.internal.hovered_control == nil then
                 if BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
                     ugui.internal.hovered_control = control.uid
+
+                    if ugui.internal.hovered_control ~= prev_hovered_control then
+                        ugui.internal.hover_start_time = os.clock()
+                    end
                 end
             end
         end
@@ -584,6 +585,15 @@ ugui.internal = {
         -- If the clicked control is disabled, we clear it now at the end of input processing, effectively "swallowing" the click.
         if clicked_control and clicked_control.is_enabled == false then
             clicked_control = nil
+        end
+
+        -- Clear hovered control if it's disabled
+        for i = 1, #ugui.internal.scene, 1 do
+            local control = ugui.internal.scene[i].control
+            if control.uid == ugui.internal.hovered_control
+                and control.is_enabled == false then
+                ugui.internal.hovered_control = nil
+            end
         end
 
         ugui.internal.captured_control = captured_control and captured_control.control.uid or nil
@@ -1389,16 +1399,9 @@ ugui.standard_styler = {
     ---Draws a tooltip with the specified parameters.
     ---@param control Control The tooltip's parent control.
     ---@param position Vector2 The tooltip's position.
-    ---@param time number The time the user began hovering over the control associated with the tooltip, as returned by os.clock().
-    draw_tooltip = function(control, position, time)
+    draw_tooltip = function(control, position)
         local text = control.tooltip
         if not text then
-            return
-        end
-        if not time then
-            return
-        end
-        if os.clock() - time < ugui.standard_styler.params.tooltip.delay then
             return
         end
         local rectangle = {x = position.x, y = position.y, width = 0, height = 0}
@@ -2291,6 +2294,8 @@ ugui.end_frame = function()
 
         ugui.registry[type].draw(control)
     end
+
+    ugui.internal.tooltip()
 
     ugui.internal.scene = {}
     ugui.internal.last_control_rectangle = nil
