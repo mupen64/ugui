@@ -42,7 +42,7 @@ end
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field package plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
----@field package topmost boolean? Whether the control is drawn at the end of the frame, after all other controls.
+---@field package z_index integer? The control's Z-index. If nil, `0` is assumed.
 ---The base class for all controls.
 
 ---@class Button : Control
@@ -202,6 +202,13 @@ ugui.internal = {
             end
             known_uids[control.uid] = true
         end
+    end,
+
+    ---Sorts controls in the scene by their Z-index.
+    sort_scene = function()
+        table.sort(ugui.internal.scene, function(a, b)
+            return (a.control.z_index or 0) < (b.control.z_index or 0)
+        end)
     end,
 
     ---Deeply clones a table.
@@ -2256,10 +2263,13 @@ ugui.end_frame = function()
     -- 1. Scene validation pass
     ugui.internal.validate_scene()
 
-    -- 2. Input processing pass
+    -- 2. Z-Sorting pass
+    ugui.internal.sort_scene()
+
+    -- 3. Input processing pass
     ugui.internal.do_input_processing()
 
-    -- 3. Control logic pass
+    -- 4. Control logic pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
         local type = ugui.internal.scene[i].type
@@ -2274,7 +2284,7 @@ ugui.end_frame = function()
         ugui.internal.return_values[control.uid] = return_value
     end
 
-    -- 4. Rendering pass
+    -- 5. Rendering pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
         local type = ugui.internal.scene[i].type
@@ -2387,11 +2397,11 @@ ugui.combobox = function(control)
 
         data.selected_index = ugui.listbox({
             uid = control.uid + 1,
-            topmost = true,
             rectangle = list_rect,
             items = control.items,
             selected_index = data.selected_index,
             plaintext = control.plaintext,
+            z_index = math.maxinteger,
         })
     end
 
@@ -2429,7 +2439,7 @@ ugui.listbox = function(control)
             },
             value = data.scroll_x,
             ratio = 1 / (content_bounds.width / control.rectangle.width),
-            topmost = control.topmost,
+            z_index = control.z_index,
         })
     end
 
@@ -2445,7 +2455,7 @@ ugui.listbox = function(control)
             },
             value = data.scroll_y,
             ratio = 1 / (content_bounds.height / control.rectangle.height),
-            topmost = control.topmost,
+            z_index = control.z_index,
         })
     end
 
