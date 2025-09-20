@@ -1818,12 +1818,6 @@ ugui.registry = {
         end,
     },
     toggle_button = {
-        setup = function(control, data)
-            ---@cast control ToggleButton
-            if data.is_checked == nil then
-                data.is_checked = control.is_checked
-            end
-        end,
         logic = function(control, data)
             ---@cast control ToggleButton
             data.is_checked = control.is_checked
@@ -1838,12 +1832,6 @@ ugui.registry = {
         end,
     },
     carrousel_button = {
-        setup = function(control, data)
-            ---@cast control CarrouselButton
-            if data.selected_index == nil then
-                data.selected_index = control.selected_index
-            end
-        end,
         logic = function(control, data)
             ---@cast control CarrouselButton
             data.selected_index = control.selected_index
@@ -1874,9 +1862,6 @@ ugui.registry = {
         keep_capture_after_release = true,
         setup = function(control, data)
             ---@cast control TextBox
-            if data.text == nil then
-                data.text = control.text
-            end
             if data.caret_index == nil then
                 data.caret_index = 1
             end
@@ -1970,12 +1955,6 @@ ugui.registry = {
         end,
     },
     joystick = {
-        setup = function(control, data)
-            ---@cast control Joystick
-            if not data.position then
-                data.position = control.position or {x = 0, y = 0}
-            end
-        end,
         logic = function(control, data)
             ---@cast control Joystick
             data.position = control.position
@@ -2003,12 +1982,6 @@ ugui.registry = {
         end,
     },
     trackbar = {
-        setup = function(control, data)
-            ---@cast control Trackbar
-            if data.value == nil then
-                data.value = control.value
-            end
-        end,
         logic = function(control, data)
             ---@cast control Trackbar
             data.value = control.value
@@ -2033,9 +2006,6 @@ ugui.registry = {
     listbox = {
         setup = function(control, data)
             ---@cast control ListBox
-            if data.selected_index == nil then
-                data.selected_index = control.selected_index
-            end
             if data.scroll_x == nil then
                 data.scroll_x = 0
             end
@@ -2128,12 +2098,6 @@ ugui.registry = {
         end,
     },
     scrollbar = {
-        setup = function(control, data)
-            ---@cast control ScrollBar
-            if data.value == nil then
-                data.value = control.value
-            end
-        end,
         logic = function(control, data)
             ---@cast control ScrollBar
             data.value = control.value
@@ -2197,10 +2161,6 @@ ugui.registry = {
     combobox = {
         setup = function(control, data)
             ---@cast control ComboBox
-
-            if data.selected_index == nil then
-                data.selected_index = control.selected_index
-            end
             if data.open == nil then
                 data.open = false
             end
