@@ -1823,13 +1823,13 @@ ugui.registry = {
             if data.is_checked == nil then
                 data.is_checked = control.is_checked
             end
-
-            if ugui.internal.clicked_control == control.uid then
-                data.is_checked = not data.is_checked
-            end
         end,
         logic = function(control, data)
             ---@cast control ToggleButton
+            data.is_checked = control.is_checked
+            if ugui.internal.clicked_control == control.uid then
+                data.is_checked = not data.is_checked
+            end
             return data.is_checked
         end,
         draw = function(control)
