@@ -1274,11 +1274,11 @@ ugui.standard_styler = {
     end,
 
     ---Draws a scrollbar with the specified parameters.
-    ---@param container_rectangle Rectangle The scrollbar container's bounds.
+    ---@param control ScrollBar
     ---@param thumb_rectangle Rectangle The scrollbar thumb's bounds.
-    ---@param visual_state VisualState The control's visual state.
-    draw_scrollbar = function(container_rectangle, thumb_rectangle, visual_state)
-        BreitbandGraphics.fill_rectangle(container_rectangle,
+    draw_scrollbar = function(control, thumb_rectangle)
+        local visual_state = ugui.get_visual_state(control)
+        BreitbandGraphics.fill_rectangle(control.rectangle,
             ugui.standard_styler.params.scrollbar.back[visual_state])
         BreitbandGraphics.fill_rectangle(thumb_rectangle,
             ugui.standard_styler.params.scrollbar.thumb[visual_state])
@@ -1871,8 +1871,9 @@ ugui.standard_styler = {
 
 ---@class ControlRegistryEntry
 ---@field public keep_capture_after_release boolean? Whether to keep input capture after releasing LMB on the control. Defaults to `false`.
----@field public logic fun(control: Control, data: any): any
----@field public draw fun(control: Control)
+---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
+---@field public logic fun(control: Control, data: any): any Executes control logic.
+---@field public draw fun(control: Control) Draws the control.
 
 ---@type { [ControlType]: ControlRegistryEntry }
 ugui.registry = {
@@ -1887,7 +1888,7 @@ ugui.registry = {
         end,
     },
     toggle_button = {
-        logic = function(control, data)
+        setup = function(control, data)
             ---@cast control ToggleButton
             if data.is_checked == nil then
                 data.is_checked = control.is_checked
@@ -1896,7 +1897,9 @@ ugui.registry = {
             if ugui.internal.clicked_control == control.uid then
                 data.is_checked = not data.is_checked
             end
-
+        end,
+        logic = function(control, data)
+            ---@cast control ToggleButton
             return data.is_checked
         end,
         draw = function(control)
@@ -1905,12 +1908,14 @@ ugui.registry = {
         end,
     },
     carrousel_button = {
-        logic = function(control, data)
+        setup = function(control, data)
             ---@cast control CarrouselButton
             if data.selected_index == nil then
                 data.selected_index = control.selected_index
             end
-
+        end,
+        logic = function(control, data)
+            ---@cast control CarrouselButton
             if ugui.internal.clicked_control == control.uid then
                 local relative_x = ugui.internal.environment.mouse_position.x - control.rectangle.x
                 if relative_x > control.rectangle.width / 2 then
@@ -1935,9 +1940,8 @@ ugui.registry = {
     },
     textbox = {
         keep_capture_after_release = true,
-        logic = function(control, data)
+        setup = function(control, data)
             ---@cast control TextBox
-
             if data.text == nil then
                 data.text = control.text
             end
@@ -1947,7 +1951,9 @@ ugui.registry = {
             if data.caret_index == nil then
                 data.caret_index = 1
             end
-
+        end,
+        logic = function(control, data)
+            ---@cast control TextBox
             local function sel_hi()
                 return math.max(data.selection_start, data.selection_end)
             end
@@ -2030,13 +2036,14 @@ ugui.registry = {
         end,
     },
     joystick = {
-        logic = function(control, data)
+        setup = function(control, data)
             ---@cast control Joystick
-
             if not data.position then
                 data.position = control.position or {x = 0, y = 0}
             end
-
+        end,
+        logic = function(control, data)
+            ---@cast control Joystick
             if ugui.internal.captured_control == control.uid then
                 data.position.x = ugui.internal.clamp(
                     ugui.internal.remap(ugui.internal.environment.mouse_position.x - control.rectangle.x, 0,
@@ -2060,13 +2067,14 @@ ugui.registry = {
         end,
     },
     trackbar = {
-        logic = function(control, data)
+        setup = function(control, data)
             ---@cast control Trackbar
-
             if data.value == nil then
                 data.value = control.value
             end
-
+        end,
+        logic = function(control, data)
+            ---@cast control Trackbar
             if ugui.internal.captured_control == control.uid then
                 if control.rectangle.width > control.rectangle.height then
                     data.value = (ugui.internal.environment.mouse_position.x - control.rectangle.x) / control.rectangle.width
@@ -2085,9 +2093,8 @@ ugui.registry = {
         end,
     },
     listbox = {
-        logic = function(control, data)
+        setup = function(control, data)
             ---@cast control ListBox
-
             if data.selected_index == nil then
                 data.selected_index = control.selected_index
             end
@@ -2097,7 +2104,9 @@ ugui.registry = {
             if data.scroll_y == nil then
                 data.scroll_y = 0
             end
-
+        end,
+        logic = function(control, data)
+            ---@cast control ListBox
             local prev_rect = ugui.internal.deep_clone(control.rectangle)
             local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
             local x_overflow = content_bounds.width > control.rectangle.width
@@ -2177,46 +2186,14 @@ ugui.registry = {
         end,
     },
     scrollbar = {
-        get_thumb_rectangle = function(control, data)
+        setup = function(control, data)
             ---@cast control ScrollBar
-
             if data.value == nil then
                 data.value = control.value
             end
-
-            local is_horizontal = control.rectangle.width > control.rectangle.height
-
-            local thumb_rectangle
-            -- we center the scrollbar around the translation value, and shrink it accordingly
-            if is_horizontal then
-                local scrollbar_width = control.rectangle.width * control.ratio
-                local scrollbar_x = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.width - scrollbar_width)
-                thumb_rectangle = {
-                    x = control.rectangle.x + scrollbar_x,
-                    y = control.rectangle.y,
-                    width = scrollbar_width,
-                    height = control.rectangle.height,
-                }
-            else
-                local scrollbar_height = control.rectangle.height * control.ratio
-                local scrollbar_y = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.height - scrollbar_height)
-                thumb_rectangle = {
-                    x = control.rectangle.x,
-                    y = control.rectangle.y + scrollbar_y,
-                    width = control.rectangle.width,
-                    height = scrollbar_height,
-                }
-            end
-
-            return thumb_rectangle
         end,
         logic = function(control, data)
             ---@cast control ScrollBar
-
-            if data.value == nil then
-                data.value = control.value
-            end
-
             local is_horizontal = control.rectangle.width > control.rectangle.height
 
             if ugui.internal.captured_control == control.uid then
@@ -2244,15 +2221,37 @@ ugui.registry = {
         end,
         draw = function(control)
             ---@cast control ScrollBar
+            local data = ugui.internal.control_data[control.uid]
+            local is_horizontal = control.rectangle.width > control.rectangle.height
 
-            ---@diagnostic disable-next-line: undefined-field
-            local thumb_rectangle = ugui.registry.scrollbar.get_thumb_rectangle(control, ugui.internal.control_data[control.uid])
+            ---@type Rectangle
+            local thumb_rectangle
 
-            ugui.standard_styler.draw_scrollbar(control.rectangle, thumb_rectangle, ugui.get_visual_state(control))
+            if is_horizontal then
+                local scrollbar_width = control.rectangle.width * control.ratio
+                local scrollbar_x = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.width - scrollbar_width)
+                thumb_rectangle = {
+                    x = control.rectangle.x + scrollbar_x,
+                    y = control.rectangle.y,
+                    width = scrollbar_width,
+                    height = control.rectangle.height,
+                }
+            else
+                local scrollbar_height = control.rectangle.height * control.ratio
+                local scrollbar_y = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.height - scrollbar_height)
+                thumb_rectangle = {
+                    x = control.rectangle.x,
+                    y = control.rectangle.y + scrollbar_y,
+                    width = control.rectangle.width,
+                    height = scrollbar_height,
+                }
+            end
+
+            ugui.standard_styler.draw_scrollbar(control, thumb_rectangle)
         end,
     },
     combobox = {
-        logic = function(control, data)
+        setup = function(control, data)
             ---@cast control ComboBox
 
             if data.open == nil then
@@ -2264,6 +2263,9 @@ ugui.registry = {
             if data.hovered_index == nil then
                 data.hovered_index = control.selected_index
             end
+        end,
+        logic = function(control, data)
+            ---@cast control ComboBox
 
             if control.is_enabled == false then
                 data.is_open = false
@@ -2411,76 +2413,80 @@ end
 ---Places a Control of the specified type.
 ---@param control Control The control.
 ---@param type ControlType The control's type.
----@param default_return_value any? The default return value. Returned on the first frame of the control existing.
 ---@return any # The control's return value.
-ugui.control = function(control, type, default_return_value)
-    if ugui.registry[type] == nil then
+ugui.control = function(control, type)
+    local registry_entry = ugui.registry[type]
+    if registry_entry == nil then
         error(string.format("Unknown control type '%s'", type))
     end
+
+    -- If the control has only just been added, we run its setup.
+    if ugui.internal.control_data[control.uid] == nil then
+        ugui.internal.control_data[control.uid] = {}
+        if registry_entry.setup then
+            print(string.format("Running setup for '%s' (%d)", type, control.uid))
+            registry_entry.setup(control, ugui.internal.control_data[control.uid])
+        end
+
+        -- Run logic once to stabilize the return value for the first state
+        ugui.internal.return_values[control.uid] = registry_entry.logic(control, ugui.internal.control_data[control.uid])
+    end
+
     ugui.internal.scene[#ugui.internal.scene + 1] = {
         control = control,
         type = type,
     }
-    return ugui.internal.return_values[control.uid] or default_return_value
+    return ugui.internal.return_values[control.uid]
 end
 
 ---Places a Button.
 ---@param control Button The control table.
 ---@return boolean # Whether the button has been pressed.
 ugui.button = function(control)
-    return ugui.control(control, 'button', false)
+    return ugui.control(control, 'button')
 end
 
 ---Places a ToggleButton.
 ---@param control ToggleButton The control table.
 ---@return boolean # The new check state.
 ugui.toggle_button = function(control)
-    return ugui.control(control, 'toggle_button', control.is_checked)
+    return ugui.control(control, 'toggle_button')
 end
 
 ---Places a CarrouselButton.
 ---@param control CarrouselButton The control table.
 ---@return integer # The new selected index.
 ugui.carrousel_button = function(control)
-    return ugui.control(control, 'carrousel_button', control.selected_index)
+    return ugui.control(control, 'carrousel_button')
 end
 
 ---Places a TextBox.
 ---@param control TextBox The control table.
 ---@return string # The new text.
 ugui.textbox = function(control)
-    return ugui.control(control, 'textbox', control.text)
+    return ugui.control(control, 'textbox')
 end
 
 ---Places a Joystick.
 ---@param control Joystick The control table.
 ---@return Vector2 # The joystick's new position.
 ugui.joystick = function(control)
-    return ugui.control(control, 'joystick', control.position)
+    return ugui.control(control, 'joystick')
 end
 
 ---Places a Trackbar.
 ---@param control Trackbar The control table.
 ---@return number # The trackbar's new value.
 ugui.trackbar = function(control)
-    return ugui.control(control, 'trackbar', control.value)
+    return ugui.control(control, 'trackbar')
 end
 
 ---Places a ComboBox.
 ---@param control ComboBox The control table.
 ---@return integer # The new selected index.
 ugui.combobox = function(control)
-    if not ugui.internal.control_data[control.uid] then
-        ugui.internal.control_data[control.uid] = {}
-    end
-
+    local result = ugui.control(control, 'combobox')
     local data = ugui.internal.control_data[control.uid]
-
-    if data.selected_index == nil then
-        data.selected_index = control.selected_index
-    end
-
-    local result = ugui.control(control, 'combobox', control.selected_index)
 
     if data.is_open then
         local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
@@ -2519,25 +2525,12 @@ end
 ---@param control ListBox The control table.
 ---@return integer # The new selected index.
 ugui.listbox = function(control)
-    if not ugui.internal.control_data[control.uid] then
-        ugui.internal.control_data[control.uid] = {}
-    end
-
+    local result = ugui.control(control, 'listbox')
     local data = ugui.internal.control_data[control.uid]
-
-    if data.scroll_x == nil then
-        data.scroll_x = 0
-    end
-
-    if data.scroll_y == nil then
-        data.scroll_y = 0
-    end
 
     local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
     local x_overflow = content_bounds.width > control.rectangle.width
     local y_overflow = content_bounds.height > control.rectangle.height
-
-    local result = ugui.control(control, 'listbox')
 
     if x_overflow then
         data.scroll_x = ugui.scrollbar({
@@ -2578,7 +2571,7 @@ end
 ---@param control ScrollBar The control table.
 ---@return number # The new value.
 ugui.scrollbar = function(control)
-    return ugui.control(control, 'scrollbar', control.value)
+    return ugui.control(control, 'scrollbar')
 end
 
 ---Places a Menu.

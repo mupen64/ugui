@@ -80,11 +80,7 @@ emu.atdrawd2d(function()
         rectangle = {x = 20, y = 200, width = 150, height = 150},
         position = position,
     })
-    value = ugui.trackbar({
-        uid = 35,
-        rectangle = {x = 20, y = 260, width = 120, height = 20},
-        value = value,
-    })
+   
     index = ugui.listbox({
         uid = 40,
         rectangle = {x = 20, y = 300, width = 120, height = 200},
@@ -103,10 +99,13 @@ emu.atdrawd2d(function()
         items = items,
         selected_index = index,
     })
-    position = ugui.joystick({
+    ugui.joystick({
         uid = 55,
         rectangle = {x = 200, y = 350, width = 150, height = 150},
-        position = position,
+        position = {
+            x = math.sin(os.clock() / 2) * 50,
+            y = math.cos(os.clock() / 2) * 50,
+        },
     })
     ugui.end_frame()
 end)
