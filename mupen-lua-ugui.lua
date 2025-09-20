@@ -15,9 +15,6 @@ end
 ---@alias UID number
 ---Unique identifier for a control. Must be unique within a frame.
 
----@alias ControlRectangleComputationDelegate fun(layout: LayoutSection, index: integer, control: Control): Rectangle
----A function which computes the rectangle for a control using the specified layout section.
-
 ---@alias RichText string
 ---Text which can contain other inline elements, such as icons.
 ---
@@ -38,17 +35,6 @@ end
 ---@field public is_primary_down boolean? Whether the primary mouse button is being pressed.
 ---@field public held_keys table<string, boolean> A map of held key identifiers to booleans. A key not being present or its value being 'false' means it is not held.
 ---@field public window_size { x: number, y: number }? The rendering bounds. If nil, no rendering bounds are considered and certain controls, such as menus, might overflow off-screen.
-
----@class LayoutSection
----@field public rectangle { x: number?, y: number?, width: number?, height: number? }? The rectangle region of the layout section. Depending on the section type, some components might be ignored. If nil or any contained field is nil, the field or the entire rectangle will be replaced with the corresponding value from the current state of the layout operation.
----@field package compute_control_rectangle ControlRectangleComputationDelegate? The layout section's bounds internal computation function. Doesn't need to be provided by external callers utilizing the layout section API via push_xyz().
----@field package data any? The layout section's internal data. Doesn't need to be provided by external callers utilizing the layout section API via push_xyz().
----The base class for all layout sections.
-
----@class StackPanel : LayoutSection
----@field public horizontal boolean? Whether the layout flow is horizontal. If nil, false is assumed.
----@field public gap number? The gap between elements. If nil, 0 is assumed.
----A StackPanel layout section, which orders its elements sequentially on the specified axis, adding gaps inbetween if specified.
 
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
@@ -191,10 +177,6 @@ ugui.internal = {
     ---@type UID?
     ---The control that is currently capturing mouse and keyboard inputs.
     captured_control = nil,
-
-    ---@type LayoutSection[]
-    ---The current layout stack.
-    layout_stack = {},
 
     ---Whether a frame is currently in progress.
     frame_in_progress = false,
@@ -469,15 +451,6 @@ ugui.internal = {
         }
     end,
 
-    ---Performs the required layout operations on the specified control.
-    ---@param control Control The control table. Its contents may be mutated.
-    do_layout = function(control)
-        for i = 1, #ugui.internal.layout_stack, 1 do
-            local section = ugui.internal.layout_stack[i]
-            control.rectangle = section:compute_control_rectangle(i, control)
-        end
-    end,
-
     ---Does tooltip processing for the specified control.
     ---@param control Control The control table.
     handle_tooltip = function(control)
@@ -614,50 +587,6 @@ ugui.internal = {
 --#endregion
 
 --#region Visualisation and Styles
-
----@type table<string, ControlRectangleComputationDelegate>
----Map of layout section names to their control rectangle computation delegates.
-ugui.layout_computation_functions = {
-    ['StackPanel'] = function(layout, index, control)
-        ---@cast layout StackPanel
-
-        if index ~= #ugui.internal.layout_stack then
-            return control.rectangle
-        end
-
-        if not layout.data then
-            layout.data = {x = layout.rectangle.x, y = layout.rectangle.y, i = 1}
-        end
-
-        local rectangle = ugui.internal.deep_clone(control.rectangle)
-        local gap = layout.gap or 0
-
-        local function add_accumulators()
-            if layout.horizontal then
-                layout.data.x = layout.data.x + rectangle.width + gap
-            else
-                layout.data.y = layout.data.y + rectangle.height + gap
-            end
-        end
-
-        if (layout.horizontal and layout.rectangle.width ~= 0)
-            or (not layout.horizontal and layout.rectangle.height ~= 0) then
-            add_accumulators()
-        end
-
-        rectangle.x = layout.data.x
-        rectangle.y = layout.data.y
-        layout.data.i = layout.data.i + 1
-
-        if (layout.horizontal and layout.rectangle.width == 0)
-            or (not layout.horizontal and layout.rectangle.height == 0) then
-            add_accumulators()
-        end
-
-
-        return rectangle
-    end,
-}
 
 ---@enum VisualState
 -- The possible states of a control, which are used by the styler for drawing.
@@ -2358,43 +2287,6 @@ ugui.end_frame = function()
     ugui.internal.frame_in_progress = false
 end
 
----Pushes a layout section to the layout stack.
----@param layout LayoutSection The layout section.
-ugui.push = function(layout)
-    if #ugui.internal.layout_stack > 0 then
-        error('Tried to push more than 1 layout section to the layout stack. This operation is not currently supported.')
-        return
-    end
-
-    if not layout.rectangle then
-        layout.rectangle = ugui.internal.last_control_rectangle
-    else
-        local rect = ugui.internal.last_control_rectangle or {x = 0, y = 0, width = 0, height = 0}
-        layout.rectangle.x = layout.rectangle.x ~= nil and layout.rectangle.x or rect.x
-        layout.rectangle.y = layout.rectangle.y ~= nil and layout.rectangle.y or rect.y
-        layout.rectangle.width = layout.rectangle.width ~= nil and layout.rectangle.width or rect.width
-        layout.rectangle.height = layout.rectangle.height ~= nil and layout.rectangle.height or rect.height
-    end
-
-    ugui.internal.layout_stack[#ugui.internal.layout_stack + 1] = layout
-end
-
----Pushes a StackPanel layout section to the layout stack.
----@param layout StackPanel The layout section.
-push_stackpanel = function(layout)
-    layout.compute_control_rectangle = ugui.layout_computation_functions['StackPanel']
-
-    ugui.push(layout)
-end
-
----Pops the most recent layout section off the layout stack.
-ugui.pop = function()
-    if #ugui.internal.layout_stack == 0 then
-        error('Tried to pop() from an empty layout stack. Note that every layout section pushed to the layout stack needs to be popped off the stack before the end of the frame.')
-    end
-    table.remove(ugui.internal.layout_stack, #ugui.internal.layout_stack)
-end
-
 ---Places a Control of the specified type.
 ---@param control Control The control.
 ---@param type ControlType The control's type.
@@ -2822,7 +2714,6 @@ end
 ---@param control TabControl The control table.
 ---@return TabControlResult # The result.
 ugui.tabcontrol = function(control)
-    ugui.internal.do_layout(control)
     ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
@@ -2890,7 +2781,6 @@ end
 ---@param control NumberBox The control table.
 ---@return integer # The new value.
 ugui.numberbox = function(control)
-    ugui.internal.do_layout(control)
     ugui.internal.validate_control(control)
 
     ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
