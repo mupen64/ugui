@@ -147,9 +147,6 @@ ugui.internal = {
     ---@type SceneEntry[]
     scene = {},
 
-    ---@type { [UID]: any }
-    return_values = {},
-
     ---@type table<UID, any>
     ---Map of control UIDs to their data.
     control_data = {},
@@ -2040,6 +2037,8 @@ ugui.registry = {
         end,
         logic = function(control, data)
             ---@cast control ListBox
+            data.selected_index = control.selected_index
+
             local prev_rect = ugui.internal.deep_clone(control.rectangle)
             local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
             local x_overflow = content_bounds.width > control.rectangle.width
@@ -2201,6 +2200,7 @@ ugui.registry = {
         end,
         logic = function(control, data)
             ---@cast control ComboBox
+            data.selected_index = control.selected_index
 
             if control.is_enabled == false then
                 data.open = false
@@ -2221,6 +2221,8 @@ ugui.registry = {
                     data.open = false
                 end
             end
+
+            return data.selected_index
         end,
         draw = function(control)
             ---@cast control ComboBox
@@ -2274,21 +2276,6 @@ ugui.end_frame = function()
     -- 3. Input processing pass
     ugui.internal.do_input_processing()
 
-    -- 4. Control logic pass
-    for i = 1, #ugui.internal.scene, 1 do
-        local control = ugui.internal.scene[i].control
-        local type = ugui.internal.scene[i].type
-
-        -- Ensure control data exists
-        if not ugui.internal.control_data[control.uid] then
-            ugui.internal.control_data[control.uid] = {}
-        end
-
-        local return_value = ugui.registry[type].logic(control, ugui.internal.control_data[control.uid])
-
-        ugui.internal.return_values[control.uid] = return_value
-    end
-
     -- 5. Rendering pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
@@ -2314,6 +2301,8 @@ ugui.control = function(control, type)
         error(string.format("Unknown control type '%s'", type))
     end
 
+    local return_value
+
     -- If the control has only just been added, we run its setup.
     if ugui.internal.control_data[control.uid] == nil then
         ugui.internal.control_data[control.uid] = {}
@@ -2323,14 +2312,17 @@ ugui.control = function(control, type)
         end
 
         -- Run logic once to stabilize the return value for the first state
-        ugui.internal.return_values[control.uid] = registry_entry.logic(control, ugui.internal.control_data[control.uid])
+        return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
     end
+
+    -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result. 
+    return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
 
     ugui.internal.scene[#ugui.internal.scene + 1] = {
         control = control,
         type = type,
     }
-    return ugui.internal.return_values[control.uid]
+    return return_value
 end
 
 ---Places a Button.
@@ -2379,7 +2371,7 @@ end
 ---@param control ComboBox The control table.
 ---@return integer # The new selected index.
 ugui.combobox = function(control)
-    local result = ugui.control(control, 'combobox')
+    local _ = ugui.control(control, 'combobox')
     local data = ugui.internal.control_data[control.uid]
 
     if data.open then

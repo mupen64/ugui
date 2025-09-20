@@ -56,9 +56,9 @@ emu.atdrawd2d(function()
     if ugui.button({
             uid = 10,
             rectangle = {x = 80, y = 80, width = 100, height = 50},
-            text = 'Hello, world!',
+            text = tostring(index),
         }) then
-        print('2')
+        index = index + 1
     end
     if ugui.button({
             uid = 15,
