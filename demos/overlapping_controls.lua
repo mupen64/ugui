@@ -13,8 +13,12 @@ local checked = true
 local text = 'Hello World!'
 local position = {x = 0, y = 0}
 local value = 0.5
-local items = {'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item', 'Item'}
+local items = {}
 local index = 1
+
+for i = 1, 100, 1 do
+    items[#items+1] = "Item " .. i
+end
 
 emu.atdrawd2d(function()
     local window_size = wgui.info()
