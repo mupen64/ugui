@@ -1746,7 +1746,7 @@ ugui.standard_styler = {
         local data = ugui.internal.control_data[control.uid]
         local selected_item = data.selected_index == nil and '' or control.items[data.selected_index]
 
-        if ugui.internal.control_data[control.uid].is_open and control.is_enabled ~= false then
+        if data.open and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
         end
 
@@ -2201,14 +2201,14 @@ ugui.registry = {
             ---@cast control ComboBox
 
             if control.is_enabled == false then
-                data.is_open = false
+                data.open = false
             end
 
             if ugui.internal.clicked_control == control.uid then
-                data.is_open = not data.is_open
+                data.open = not data.open
             end
 
-            if data.is_open and ugui.internal.is_mouse_just_down() and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
+            if data.open and ugui.internal.is_mouse_just_down() and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
                 local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
                 if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, {
                         x = control.rectangle.x,
@@ -2216,7 +2216,7 @@ ugui.registry = {
                         width = control.rectangle.width,
                         height = content_bounds.height,
                     }) then
-                    data.is_open = false
+                    data.open = false
                 end
             end
         end,
@@ -2380,7 +2380,7 @@ ugui.combobox = function(control)
     local result = ugui.control(control, 'combobox')
     local data = ugui.internal.control_data[control.uid]
 
-    if data.is_open then
+    if data.open then
         local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
 
         local width = control.rectangle.width
@@ -2410,7 +2410,7 @@ ugui.combobox = function(control)
         })
     end
 
-    return result
+    return data.selected_index
 end
 
 ---Places a ListBox.
