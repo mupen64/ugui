@@ -2525,12 +2525,20 @@ end
 ---@param control ListBox The control table.
 ---@return integer # The new selected index.
 ugui.listbox = function(control)
-    local result = ugui.control(control, 'listbox')
-    local data = ugui.internal.control_data[control.uid]
-
     local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
     local x_overflow = content_bounds.width > control.rectangle.width
     local y_overflow = content_bounds.height > control.rectangle.height
+
+    -- If we need scrollbars, we shrink the control rectangle to accomodate them.
+    if x_overflow then
+        control.rectangle.height = control.rectangle.height - ugui.standard_styler.params.scrollbar.thickness
+    end
+    if y_overflow then
+        control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
+    end
+
+    local result = ugui.control(control, 'listbox')
+    local data = ugui.internal.control_data[control.uid]
 
     if x_overflow then
         data.scroll_x = ugui.scrollbar({

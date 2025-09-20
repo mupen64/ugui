@@ -80,7 +80,7 @@ emu.atdrawd2d(function()
         rectangle = {x = 20, y = 200, width = 150, height = 150},
         position = position,
     })
-   
+
     index = ugui.listbox({
         uid = 40,
         rectangle = {x = 20, y = 300, width = 120, height = 200},
