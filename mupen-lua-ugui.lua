@@ -2112,6 +2112,8 @@ ugui.registry = {
             end
 
             control.rectangle = prev_rect
+
+            return data.selected_index
         end,
         draw = function(control)
             ---@cast control ListBox
