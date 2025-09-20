@@ -39,7 +39,7 @@ emu.atdrawd2d(function()
         held_keys = keys,
         window_size = {
             x = window_size.width,
-            y = window_size.height,
+            y = window_size.height - 26,
         },
     })
     if ugui.button({
