@@ -1499,17 +1499,17 @@ ugui.standard_styler = {
         local visual_state = ugui.get_visual_state(control)
         local text = control.text or ''
 
-        if ugui.internal.mouse_captured_control == control.uid and control.is_enabled ~= false then
+        -- Special case: if we're capturing the keyboard, we consider ourselves "active"
+        if ugui.internal.keyboard_captured_control == control.uid then
             visual_state = ugui.visual_states.active
         end
 
         ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
 
-        local should_visualize_selection = not (ugui.internal.control_data[control.uid].selection_start == nil) and
-            not (data.selection_end == nil) and
-            control.is_enabled ~= false and
-            not (data.selection_start == data.selection_end)
-            and ugui.internal.mouse_captured_control == control.uid
+        local should_visualize_selection =
+            control.is_enabled ~= false
+            and data.selection_start ~= data.selection_end
+            and ugui.internal.keyboard_captured_control == control.uid
 
         if should_visualize_selection then
             local string_to_selection_start = text:sub(1,
@@ -1861,37 +1861,33 @@ ugui.registry = {
             if data.caret_index == nil then
                 data.caret_index = 1
             end
-            if data.caret_index == nil then
-                data.caret_index = 1
+            if data.selection_start == nil then
+                data.selection_start = 1
+            end
+            if data.selection_end == nil then
+                data.selection_end = 1
             end
         end,
         logic = function(control, data)
             ---@cast control TextBox
             data.text = control.text
 
-            local function sel_hi()
-                return math.max(data.selection_start, data.selection_end)
+            local index_at_mouse = ugui.internal.get_caret_index(data.text, ugui.internal.environment.mouse_position.x - control.rectangle.x)
+
+            -- If the control was just clicked, start a new selection.
+            if ugui.internal.clicked_control == control.uid then
+                data.caret_index = index_at_mouse
+                data.selection_start = index_at_mouse
+                data.selection_end = index_at_mouse
             end
 
-            local function sel_lo()
-                return math.min(data.selection_start, data.selection_end)
-            end
-
+            -- If we're dragging the control, extend the existing selection.
             if ugui.internal.mouse_captured_control == control.uid then
-                local theoretical_caret_index = ugui.internal.get_caret_index(data.text,
-                    ugui.internal.environment.mouse_position.x - control.rectangle.x)
+                data.selection_end = index_at_mouse
+            end
 
-                -- start a new selection
-                if ugui.internal.is_mouse_just_down() and ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
-                    data.caret_index = theoretical_caret_index
-                    data.selection_start = theoretical_caret_index
-                end
-
-                -- already has selection, move end to appropriate index
-                if ugui.internal.environment.is_primary_down and ugui.internal.is_point_inside_control(ugui.internal.mouse_down_position, control) then
-                    data.selection_end = theoretical_caret_index
-                end
-
+            -- If we're capturing the keyboard, we process all the key presses.
+            if ugui.internal.keyboard_captured_control == control.uid then
                 local just_pressed_keys = ugui.internal.get_just_pressed_keys()
                 local has_selection = data.selection_start ~=
                     data.selection_end
@@ -1910,8 +1906,9 @@ ugui.registry = {
                         end
 
                         if has_selection then
-                            local lower_selection = sel_lo()
-                            data.text = ugui.internal.remove_range(data.text, sel_lo(), sel_hi())
+                            local lower_selection = math.min(data.selection_start, data.selection_end)
+                            local higher_selection = math.max(data.selection_start, data.selection_end)
+                            data.text = ugui.internal.remove_range(data.text, lower_selection, higher_selection)
                             data.caret_index = lower_selection
                             data.selection_start = lower_selection
                             data.selection_end = lower_selection
@@ -1940,8 +1937,7 @@ ugui.registry = {
                 end
             end
 
-            data.caret_index = ugui.internal.clamp(
-                data.caret_index, 1, #data.text + 1)
+            data.caret_index = ugui.internal.clamp(data.caret_index, 1, #data.text + 1)
 
             return data.text
         end,
@@ -2250,12 +2246,12 @@ ugui.end_frame = function()
         ugui.registry[type].draw(control)
 
         -- Draw debug focus rectangles
-        if ugui.internal.keyboard_captured_control == control.uid then
-            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
-        end
-         if ugui.internal.mouse_captured_control == control.uid then
-            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
-        end
+        -- if ugui.internal.keyboard_captured_control == control.uid then
+        --     BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
+        -- end
+        -- if ugui.internal.mouse_captured_control == control.uid then
+        --     BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
+        -- end
     end
 
     ugui.internal.tooltip()
