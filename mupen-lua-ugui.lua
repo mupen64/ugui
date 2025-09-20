@@ -1846,6 +1846,8 @@ ugui.registry = {
         end,
         logic = function(control, data)
             ---@cast control CarrouselButton
+            data.selected_index = control.selected_index
+
             if ugui.internal.clicked_control == control.uid then
                 local relative_x = ugui.internal.environment.mouse_position.x - control.rectangle.x
                 if relative_x > control.rectangle.width / 2 then
@@ -1861,7 +1863,7 @@ ugui.registry = {
                 end
             end
 
-            return control.items and ugui.internal.clamp(data.selected_index, 1, #control.items) or nil
+            return (control.items and ugui.internal.clamp(data.selected_index, 1, #control.items) or nil)
         end,
         draw = function(control)
             ---@cast control CarrouselButton
@@ -1884,6 +1886,8 @@ ugui.registry = {
         end,
         logic = function(control, data)
             ---@cast control TextBox
+            data.text = control.text
+
             local function sel_hi()
                 return math.max(data.selection_start, data.selection_end)
             end
@@ -1974,6 +1978,8 @@ ugui.registry = {
         end,
         logic = function(control, data)
             ---@cast control Joystick
+            data.position = control.position
+
             if ugui.internal.captured_control == control.uid then
                 data.position.x = ugui.internal.clamp(
                     ugui.internal.remap(ugui.internal.environment.mouse_position.x - control.rectangle.x, 0,
@@ -2005,6 +2011,8 @@ ugui.registry = {
         end,
         logic = function(control, data)
             ---@cast control Trackbar
+            data.value = control.value
+
             if ugui.internal.captured_control == control.uid then
                 if control.rectangle.width > control.rectangle.height then
                     data.value = (ugui.internal.environment.mouse_position.x - control.rectangle.x) / control.rectangle.width
@@ -2128,6 +2136,8 @@ ugui.registry = {
         end,
         logic = function(control, data)
             ---@cast control ScrollBar
+            data.value = control.value
+
             local is_horizontal = control.rectangle.width > control.rectangle.height
 
             if ugui.internal.captured_control == control.uid then
@@ -2188,11 +2198,11 @@ ugui.registry = {
         setup = function(control, data)
             ---@cast control ComboBox
 
-            if data.open == nil then
-                data.open = false
-            end
             if data.selected_index == nil then
                 data.selected_index = control.selected_index
+            end
+            if data.open == nil then
+                data.open = false
             end
             if data.hovered_index == nil then
                 data.hovered_index = control.selected_index
@@ -2315,7 +2325,7 @@ ugui.control = function(control, type)
         return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
     end
 
-    -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result. 
+    -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
     return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
 
     ugui.internal.scene[#ugui.internal.scene + 1] = {
