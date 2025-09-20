@@ -161,12 +161,6 @@ ugui.internal = {
     ---@type SceneEntry[]
     scene = {},
 
-    ---@type SceneEntry[]
-    scene_1 = {},
-
-    ---@type SceneEntry[]
-    scene_2 = {},
-
     ---@type { [UID]: any }
     return_values = {},
 
@@ -2359,17 +2353,8 @@ ugui.end_frame = function()
         ugui.registry[type].draw(control)
     end
 
-    -- Swap scene buffers
-    if ugui.internal.scene == ugui.internal.scene_1 then
-        ugui.internal.scene = ugui.internal.scene_2
-        ugui.internal.scene_1 = {}
-    else
-        ugui.internal.scene = ugui.internal.scene_1
-        ugui.internal.scene_2 = {}
-    end
-
+    ugui.internal.scene = {}
     ugui.internal.last_control_rectangle = nil
-
     ugui.internal.frame_in_progress = false
 end
 
