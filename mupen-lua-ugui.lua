@@ -149,11 +149,11 @@ end
 ---@field public show_negative boolean? Whether a button for viewing and toggling the value's sign is shown. If nil, false is assumed.
 ---A numberbox, which allows modifying a number by typing or by adjusting its individual digits.
 
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox"
+
 --#endregion
 
 --#region ugui.internal
-
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar"
 
 ugui.internal = {
     ---@alias SceneEntry { control: Control, type: ControlType }
@@ -1810,7 +1810,8 @@ ugui.standard_styler = {
     ---@param control ComboBox The control table.
     draw_combobox = function(control)
         local visual_state = ugui.get_visual_state(control)
-        local selected_item = control.items and (control.selected_index and control.items[control.selected_index] or '') or ''
+        local data = ugui.internal.control_data[control.uid]
+        local selected_item = data.selected_index == nil and '' or control.items[data.selected_index]
 
         if ugui.internal.control_data[control.uid].is_open and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
@@ -2250,6 +2251,46 @@ ugui.registry = {
             ugui.standard_styler.draw_scrollbar(control.rectangle, thumb_rectangle, ugui.get_visual_state(control))
         end,
     },
+    combobox = {
+        logic = function(control, data)
+            ---@cast control ComboBox
+
+            if data.open == nil then
+                data.open = false
+            end
+            if data.selected_index == nil then
+                data.selected_index = control.selected_index
+            end
+            if data.hovered_index == nil then
+                data.hovered_index = control.selected_index
+            end
+
+            if control.is_enabled == false then
+                data.is_open = false
+            end
+
+            if ugui.internal.clicked_control == control.uid then
+                data.is_open = not data.is_open
+            end
+
+            if data.is_open and ugui.internal.is_mouse_just_down() and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
+                local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+                if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, {
+                        x = control.rectangle.x,
+                        y = control.rectangle.y + control.rectangle.height,
+                        width = control.rectangle.width,
+                        height = content_bounds.height,
+                    }) then
+                    data.is_open = false
+                end
+            end
+        end,
+        draw = function(control)
+            ---@cast control ComboBox
+            ugui.standard_styler.draw_combobox(control)
+        end,
+    },
+
 }
 
 --#endregion
@@ -2373,6 +2414,9 @@ end
 ---@param default_return_value any? The default return value. Returned on the first frame of the control existing.
 ---@return any # The control's return value.
 ugui.control = function(control, type, default_return_value)
+    if ugui.registry[type] == nil then
+        error(string.format("Unknown control type '%s'", type))
+    end
     ugui.internal.scene[#ugui.internal.scene + 1] = {
         control = control,
         type = type,
@@ -2426,45 +2470,19 @@ end
 ---@param control ComboBox The control table.
 ---@return integer # The new selected index.
 ugui.combobox = function(control)
-    ugui.internal.do_layout(control)
-    ugui.internal.validate_control(control)
-
-    ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
-    if ugui.internal.control_data[control.uid].is_open == nil then
-        ugui.internal.control_data[control.uid].is_open = false
-    end
-    if ugui.internal.control_data[control.uid].hovered_index == nil then
-        ugui.internal.control_data[control.uid].hovered_index = control.selected_index
+    if not ugui.internal.control_data[control.uid] then
+        ugui.internal.control_data[control.uid] = {}
     end
 
-    if control.is_enabled == false then
-        ugui.internal.control_data[control.uid].is_open = false
+    local data = ugui.internal.control_data[control.uid]
+
+    if data.selected_index == nil then
+        data.selected_index = control.selected_index
     end
 
-    local pushed = ugui.internal.process_push(control)
+    local result = ugui.control(control, 'combobox', control.selected_index)
 
-    if control.is_enabled ~= false
-        and ugui.internal.control_data[control.uid].is_open
-        and ugui.internal.is_mouse_just_down()
-        and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-        if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, {
-                x = control.rectangle.x,
-                y = control.rectangle.y + control.rectangle.height,
-                width = control.rectangle.width,
-                height = content_bounds.height,
-            }) then
-            ugui.internal.control_data[control.uid].is_open = false
-        end
-    end
-
-    if pushed then
-        ugui.internal.control_data[control.uid].is_open = not ugui.internal.control_data[control.uid].is_open
-    end
-
-    local selected_index = control.selected_index
-
-    if ugui.internal.control_data[control.uid].is_open and control.is_enabled ~= false then
+    if data.is_open then
         local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
 
         local width = control.rectangle.width
@@ -2483,22 +2501,18 @@ ugui.combobox = function(control)
             width = width,
             height = height,
         }
-        ugui.internal.hittest_free_rects[#ugui.internal.hittest_free_rects + 1] = list_rect
 
-        selected_index = ugui.listbox({
+        data.selected_index = ugui.listbox({
             uid = control.uid + 1,
             topmost = true,
             rectangle = list_rect,
             items = control.items,
-            selected_index = selected_index,
+            selected_index = data.selected_index,
             plaintext = control.plaintext,
         })
     end
 
-    ugui.standard_styler.draw_combobox(control)
-
-    ugui.internal.handle_tooltip(control)
-    return selected_index
+    return result
 end
 
 ---Places a ListBox.

@@ -37,6 +37,10 @@ emu.atdrawd2d(function()
         wheel = 0,
         is_primary_down = keys.leftclick,
         held_keys = keys,
+        window_size = {
+            x = window_size.width,
+            y = window_size.height,
+        },
     })
     if ugui.button({
             uid = 5,
@@ -93,6 +97,16 @@ emu.atdrawd2d(function()
         value = value,
         ratio = 0.2,
     })
-
+    index = ugui.combobox({
+        uid = 50,
+        rectangle = {x = 200, y = 300, width = 160, height = 23},
+        items = items,
+        selected_index = index,
+    })
+    position = ugui.joystick({
+        uid = 55,
+        rectangle = {x = 200, y = 350, width = 150, height = 150},
+        position = position,
+    })
     ugui.end_frame()
 end)
