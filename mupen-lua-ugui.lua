@@ -2303,7 +2303,7 @@ ugui.registry = {
                 local item = control.items[data.hovered_index]
 
                 -- Only child-less items can be clicked
-                if item.enabled ~= false and item.items ~= nil and #item.items > 0 then
+                if item.enabled ~= false and (item.items == nil or #item.items == 0) then
                     result.item = item
                 end
             end
