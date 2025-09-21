@@ -111,5 +111,11 @@ emu.atdrawd2d(function()
             y = math.cos(os.clock() / 2) * 50,
         },
     })
+    index = ugui.carrousel_button({
+        uid = 60,
+        rectangle = {x = 380, y = 300, width = 160, height = 23},
+        items = items,
+        selected_index = index,
+    })
     ugui.end_frame()
 end)
