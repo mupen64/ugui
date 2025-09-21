@@ -97,6 +97,12 @@ emu.atdrawd2d(function()
         value = value,
         ratio = 0.2,
     })
+    value = ugui.scrollbar({
+        uid = 46,
+        rectangle = {x = 280, y = 10, width = 300, height = 20},
+        value = value,
+        ratio = 0.2,
+    })
     index = ugui.combobox({
         uid = 50,
         rectangle = {x = 200, y = 300, width = 160, height = 23},
