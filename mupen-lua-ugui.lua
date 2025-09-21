@@ -2585,6 +2585,7 @@ ugui.menu = function(control)
                     height = 0,
                 },
                 items = item.items,
+                z_index = (control.z_index or 0) + 1,
                 parent_rectangle = ugui.internal.deep_clone(control.rectangle),
             })
 
