@@ -161,10 +161,11 @@ emu.atdrawd2d(function()
         local result = ugui.menu({
             uid = 5,
             rectangle = {
-                x = 500,
+                x = 50,
                 y = 76,
             },
             items = menu_items,
+            z_index = 1,
         })
 
         if result.dismissed then
@@ -182,7 +183,7 @@ emu.atdrawd2d(function()
     end
 
     if ugui.button({
-            uid = 123,
+            uid = 500,
             rectangle = {
                 x = 5,
                 y = 55,
@@ -195,7 +196,7 @@ emu.atdrawd2d(function()
     end
 
     selected_index_2 = ugui.listbox({
-        uid = 555,
+        uid = 1000,
         is_enabled = true,
         rectangle = {
             x = 5,
@@ -209,7 +210,7 @@ emu.atdrawd2d(function()
     })
 
     text = ugui.textbox({
-        uid = 5255,
+        uid = 1500,
         rectangle = {
             x = 5,
             y = 30,
@@ -220,7 +221,7 @@ emu.atdrawd2d(function()
     })
 
     if ugui.button({
-            uid = 5010,
+            uid = 2000,
             rectangle = {
                 x = initial_size.width - 90,
                 y = initial_size.height - 90,
@@ -233,7 +234,7 @@ emu.atdrawd2d(function()
     end
 
     selected_index = ugui.combobox({
-        uid = 110123,
+        uid = 2500,
         rectangle = {
             x = 720,
             y = 10,
@@ -245,7 +246,7 @@ emu.atdrawd2d(function()
     })
     
     ugui.combobox({
-        uid = 5015,
+        uid = 3000,
         rectangle = {
             x = initial_size.width - 90,
             y = initial_size.height - 250,
@@ -257,7 +258,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.combobox({
-        uid = 10000,
+        uid = 3500,
         rectangle = {
             x = 300,
             y = 10,

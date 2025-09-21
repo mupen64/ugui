@@ -151,6 +151,10 @@ ugui.internal = {
     ---Map of control UIDs to their data.
     control_data = {},
 
+    ---@type { [UID]: boolean }
+    ---Dictionary of all UIDs that were present in the previous frame. Used for dispatching events related to control lifecycles via `dispatch_events`.
+    previous_uids = {},
+
     ---@type Environment
     ---The environment for the current frame.
     environment = nil,
@@ -214,6 +218,26 @@ ugui.internal = {
         ugui.internal.stable_sort(ugui.internal.scene, function(a, b)
             return (a.control.z_index or 0) < (b.control.z_index or 0)
         end)
+    end,
+
+    ---Dispatches events related to controls in the scene.
+    dispatch_events = function()
+        for _, value in pairs(ugui.internal.scene) do
+            local existed_in_previous_frame = false
+            for uid, _ in pairs(ugui.internal.previous_uids) do
+                if value.control.uid == uid then
+                    existed_in_previous_frame = true
+                    break
+                end
+            end
+
+            if not existed_in_previous_frame then
+                local registry_entry = ugui.registry[value.type]
+                if registry_entry.added then
+                    registry_entry.added(value.control, ugui.internal.control_data[value.control.uid])
+                end
+            end
+        end
     end,
 
     ---Deeply clones a table.
@@ -1847,6 +1871,7 @@ ugui.standard_styler = {
 
 ---@class ControlRegistryEntry
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
+---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
 ---@field public logic fun(control: Control, data: any): any Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
 
@@ -2240,6 +2265,10 @@ ugui.registry = {
         end,
     },
     menu = {
+        added = function(control, data)
+            ugui.internal.mouse_captured_control = control.uid
+            ugui.internal.keyboard_captured_control = control.uid
+        end,
         logic = function(control, data)
             ---@cast control Menu
 
@@ -2264,22 +2293,21 @@ ugui.registry = {
             end
 
             if ugui.internal.hovered_control == control.uid then
-                local i = math.floor((ugui.internal.environment.mouse_position.y - control.rectangle.y) / ugui.standard_styler.params.menu_item.height) + 1
-                i = ugui.internal.clamp(i, 1, #control.items)
-
-                local item = control.items[i]
-
                 reset_hovered_index_for_all_child_menus(control.uid, control.items)
 
-                data.hovered_index = i
+                local i = math.floor((ugui.internal.environment.mouse_position.y - control.rectangle.y) / ugui.standard_styler.params.menu_item.height) + 1
+                data.hovered_index = ugui.internal.clamp(i, 1, #control.items)
+            end
 
-                if ugui.internal.is_mouse_just_up() and item.enabled ~= false then
-                    -- Only child-less items can be clicked
-                    if item.items == nil or #item.items == 0 then
-                        result.item = item
-                    end
+            if ugui.internal.clicked_control == control.uid then
+                local item = control.items[data.hovered_index]
+
+                -- Only child-less items can be clicked
+                if item.enabled ~= false and item.items == nil or #item.items == 0 then
+                    result.item = item
                 end
             end
+
 
             if result.dismissed or result.item then
                 reset_hovered_index_for_all_child_menus(control.uid, control.items)
@@ -2338,6 +2366,9 @@ ugui.end_frame = function()
     -- 3. Input processing pass
     ugui.internal.do_input_processing()
 
+    -- 4. Event dispatching pass
+    ugui.internal.dispatch_events()
+
     -- 5. Rendering pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
@@ -2346,15 +2377,22 @@ ugui.end_frame = function()
         ugui.registry[type].draw(control)
 
         -- Draw debug focus rectangles
-        -- if ugui.internal.keyboard_captured_control == control.uid then
-        --     BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
-        -- end
-        -- if ugui.internal.mouse_captured_control == control.uid then
-        --     BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
-        -- end
+        if ugui.internal.keyboard_captured_control == control.uid then
+            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
+        end
+        if ugui.internal.mouse_captured_control == control.uid then
+            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
+        end
     end
 
     ugui.internal.tooltip()
+
+    -- Store UIDs that were present in this frame
+    ugui.internal.previous_uids = {}
+    for i = 1, #ugui.internal.scene, 1 do
+        local control = ugui.internal.scene[i].control
+        ugui.internal.previous_uids[control.uid] = true
+    end
 
     ugui.internal.scene = {}
     ugui.internal.last_control_rectangle = nil
