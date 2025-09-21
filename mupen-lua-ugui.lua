@@ -209,9 +209,9 @@ ugui.internal = {
         end
     end,
 
-    ---Sorts controls in the scene by their Z-index.
+    ---Sorts controls stably in the scene by their Z-index.
     sort_scene = function()
-        table.sort(ugui.internal.scene, function(a, b)
+        ugui.internal.stable_sort(ugui.internal.scene, function(a, b)
             return (a.control.z_index or 0) < (b.control.z_index or 0)
         end)
     end,
@@ -231,6 +231,54 @@ ugui.internal = {
                 v, s)
         end
         return res
+    end,
+
+    ---Performs an in-place stable sort on the specified table.
+    ---@generic T
+    ---@param t T[]
+    ---@param cmp? fun(a: T, b: T):boolean
+    stable_sort = function(t, cmp)
+        local function merge(left, right)
+            local result = {}
+            local i, j = 1, 1
+
+            while i <= #left and j <= #right do
+                -- If left < right, or they are "equal" (cmp false both ways),
+                -- take from the left to preserve stability
+                if cmp(left[i], right[j]) or (not cmp(right[j], left[i])) then
+                    table.insert(result, left[i])
+                    i = i + 1
+                else
+                    table.insert(result, right[j])
+                    j = j + 1
+                end
+            end
+
+            while i <= #left do
+                table.insert(result, left[i])
+                i = i + 1
+            end
+            while j <= #right do
+                table.insert(result, right[j])
+                j = j + 1
+            end
+
+            return result
+        end
+
+        local function mergesort(arr)
+            if #arr <= 1 then return arr end
+            local mid = math.floor(#arr / 2)
+            local left, right = {}, {}
+            for i = 1, mid do table.insert(left, arr[i]) end
+            for i = mid + 1, #arr do table.insert(right, arr[i]) end
+            return merge(mergesort(left), mergesort(right))
+        end
+
+        local sorted = mergesort(t)
+        for i = 1, #t do
+            t[i] = sorted[i]
+        end
     end,
 
     ---Removes a range of characters from a string.
