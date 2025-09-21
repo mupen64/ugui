@@ -135,7 +135,7 @@ end
 ---@field public show_negative boolean? Whether a button for viewing and toggling the value's sign is shown. If nil, false is assumed.
 ---A numberbox, which allows modifying a number by typing or by adjusting its individual digits.
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu"
 
 --#endregion
 
@@ -2239,7 +2239,59 @@ ugui.registry = {
             ugui.standard_styler.draw_combobox(control)
         end,
     },
+    menu = {
+        logic = function(control, data)
+            ---@cast control Menu
 
+            local function reset_hovered_index_for_all_child_menus(uid, items)
+                if ugui.internal.control_data[uid] then
+                    ugui.internal.control_data[uid].hovered_index = nil
+                end
+                for _, item in pairs(items) do
+                    if item.items then
+                        reset_hovered_index_for_all_child_menus(uid + 1, item.items)
+                    end
+                end
+            end
+
+            local result = {
+                item = nil,
+                dismissed = false,
+            }
+
+            if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+                result.dismissed = true
+            end
+
+            if ugui.internal.hovered_control == control.uid then
+                local i = math.floor((ugui.internal.environment.mouse_position.y - control.rectangle.y) / ugui.standard_styler.params.menu_item.height) + 1
+                i = ugui.internal.clamp(i, 1, #control.items)
+
+                local item = control.items[i]
+
+                reset_hovered_index_for_all_child_menus(control.uid, control.items)
+
+                data.hovered_index = i
+
+                if ugui.internal.is_mouse_just_up() and item.enabled ~= false then
+                    -- Only child-less items can be clicked
+                    if item.items == nil or #item.items == 0 then
+                        result.item = item
+                    end
+                end
+            end
+
+            if result.dismissed or result.item then
+                reset_hovered_index_for_all_child_menus(control.uid, control.items)
+            end
+
+            return result
+        end,
+        draw = function(control)
+            ---@cast control Menu
+            ugui.standard_styler.draw_menu(control, control.rectangle)
+        end,
+    },
 }
 
 --#endregion
@@ -2490,25 +2542,6 @@ end
 ---@param control Menu The control table.
 ---@return MenuResult # The menu result.
 ugui.menu = function(control)
-    -- Avoid tripping the control validation... it's going to be overwritten anyway
-    if control.rectangle and not control.rectangle.width then
-        control.rectangle.width = 0
-    end
-    if control.rectangle and not control.rectangle.height then
-        control.rectangle.height = 0
-    end
-
-    -- NOTE: Menus are exempt from the layout engine.
-    ugui.internal.validate_control(control)
-
-    if not ugui.internal.control_data[control.uid] then
-        print('Top-level menu')
-        ugui.internal.control_data[control.uid] = {
-            hovered_index = nil,
-            parent_rectangle = nil,
-        }
-    end
-
     -- We adjust the dimensions with what should fit the content
     local max_text_width = 0
     for _, item in pairs(control.items) do
@@ -2523,10 +2556,9 @@ ugui.menu = function(control)
 
     -- Overflow avoidance: shift the X/Y position to avoid going out of bounds
     if control.rectangle.x + control.rectangle.width > ugui.internal.environment.window_size.x then
-        local parent_rect = ugui.internal.control_data[control.uid].parent_rectangle
         -- If the menu has a parent and there's an overflow on the X axis, try snaking out of the situation by moving left of the menu
-        if parent_rect then
-            control.rectangle.x = parent_rect.x - control.rectangle.width + ugui.standard_styler.params.menu.overlap_size
+        if control.parent_rectangle then
+            control.rectangle.x = control.parent_rectangle.x - control.rectangle.width + ugui.standard_styler.params.menu.overlap_size
         else
             control.rectangle.x = control.rectangle.x - (control.rectangle.x + control.rectangle.width - ugui.internal.environment.window_size.x)
         end
@@ -2535,83 +2567,33 @@ ugui.menu = function(control)
         control.rectangle.y = control.rectangle.y - (control.rectangle.y + control.rectangle.height - ugui.internal.environment.window_size.y)
     end
 
-    local result = {
-        item = nil,
-        dismissed = false,
-    }
+    local result = ugui.control(control, 'menu')
+    local data = ugui.internal.control_data[control.uid]
 
-    local mouse_inside_control = BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)
+    -- Show child menu if there's any hovered one
+    if data.hovered_index ~= nil then
+        local i = data.hovered_index
+        local item = control.items[i]
 
-    if control.is_enabled ~= false then
-        if ugui.internal.is_mouse_just_down() and not mouse_inside_control then
-            -- This path is also reached when a subitem is clicked, so we'll delay clearing the hover indicies until the submenu has also given a result
-            result.dismissed = true
-        end
+        if item.items and item.enabled ~= false then
+            local submenu_result = ugui.menu({
+                uid = control.uid + 1,
+                rectangle = {
+                    x = control.rectangle.x + control.rectangle.width - ugui.standard_styler.params.menu.overlap_size,
+                    y = control.rectangle.y + ((i - 1) * ugui.standard_styler.params.menu_item.height),
+                    width = 0,
+                    height = 0,
+                },
+                items = item.items,
+                parent_rectangle = ugui.internal.deep_clone(control.rectangle),
+            })
 
-        if mouse_inside_control then
-            local i = math.floor((ugui.internal.environment.mouse_position.y - control.rectangle.y) / ugui.standard_styler.params.menu_item.height) + 1
-            local item = control.items[i]
-
-            ugui.internal.control_data[control.uid].hovered_index = i
-
-            if ugui.internal.is_mouse_just_up() then
-                if (item.enabled == nil or item.enabled == true) and (item.items == nil or #item.items == 0) then
-                    result.item = item
-                end
-            end
-        end
-
-        if ugui.internal.control_data[control.uid].hovered_index ~= nil then
-            local i = ugui.internal.control_data[control.uid].hovered_index
-            local item = control.items[i]
-            if item.items and (item.enabled == nil or item.enabled == true) then
-                local submenu_uid = control.uid + 1
-
-                if not ugui.internal.control_data[submenu_uid] then
-                    ugui.internal.control_data[submenu_uid] = {
-                        hovered_index = nil,
-                        parent_rectangle = ugui.internal.deep_clone(control.rectangle),
-                    }
-                end
-
-                local submenu_result = ugui.menu({
-                    uid = submenu_uid,
-                    rectangle = {
-                        x = control.rectangle.x + control.rectangle.width - ugui.standard_styler.params.menu.overlap_size,
-                        y = control.rectangle.y + ((i - 1) * ugui.standard_styler.params.menu_item.height),
-                        width = nil,
-                        height = nil,
-                    },
-                    items = item.items,
-                })
-
-                if submenu_result.item then
-                    result.dismissed = false
-                    result.item = submenu_result.item
-                end
+            if submenu_result.item then
+                result.dismissed = false
+                result.item = submenu_result.item
             end
         end
     end
-
-    if result.dismissed or result.item then
-        -- We need to clear the hover index or all menus in this tree, which means a massively annoying tree traversal
-        local function clear_hover_index_for_menu(uid, items)
-            if ugui.internal.control_data[uid] and ugui.internal.control_data[uid].hovered_index then
-                ugui.internal.control_data[uid].hovered_index = nil
-            end
-            for _, item in pairs(items) do
-                if item.items then
-                    clear_hover_index_for_menu(uid + 1, item.items)
-                end
-            end
-        end
-        clear_hover_index_for_menu(control.uid, control.items)
-    end
-
-    -- Menus are late-drawn, but in reverse order since submenus must overlap and draw over the parent
-    table.insert(ugui.internal.late_callbacks, 1, function()
-        ugui.standard_styler.draw_menu(control, control.rectangle)
-    end)
 
     return result
 end
