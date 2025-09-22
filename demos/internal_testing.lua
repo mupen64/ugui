@@ -1,10 +1,5 @@
-local path_root = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "\\")
-
----@module "breitbandgraphics"
-BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
-
----@module "mupen-lua-ugui"
-ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
+local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
+dofile(path_root .. 'base.lua')
 
 local items = {}
 for i = 1, 1000, 1 do
@@ -116,34 +111,8 @@ local menu_items = {
     },
 }
 
--- wgui.resize(initial_size.width + 300, initial_size.height)
 emu.atdrawd2d(function()
-    BreitbandGraphics.fill_rectangle({
-        x = 0,
-        y = 0,
-        width = wgui.info().width,
-        height = wgui.info().height,
-    }, {
-        r = 253,
-        g = 253,
-        b = 253,
-    })
-
-    local keys = input.get()
-    ugui.begin_frame({
-        mouse_position = {
-            x = keys.xmouse,
-            y = keys.ymouse,
-        },
-        wheel = mouse_wheel,
-        is_primary_down = keys.leftclick,
-        held_keys = keys,
-        window_size = {
-            x = wgui.info().width,
-            y = wgui.info().height,
-        },
-    })
-    mouse_wheel = 0
+    begin_frame()
 
     selected_index = ugui.combobox({
         uid = 0,
@@ -244,7 +213,7 @@ emu.atdrawd2d(function()
         items = items,
         selected_index = selected_index,
     })
-    
+
     ugui.combobox({
         uid = 3000,
         rectangle = {
@@ -253,7 +222,7 @@ emu.atdrawd2d(function()
             width = 200,
             height = 30,
         },
-        items = {"A", "B", "C"},
+        items = {'A', 'B', 'C'},
         selected_index = 1,
     })
 
@@ -265,26 +234,9 @@ emu.atdrawd2d(function()
             width = 200,
             height = 30,
         },
-        items = {"A", "B", "C"},
+        items = {'A', 'B', 'C'},
         selected_index = nil,
     })
 
-    
-
-    ugui.end_frame()
-end)
-
-emu.atstop(function()
-    -- wgui.resize(initial_size.width, initial_size.height)
-end)
-
-emu.atwindowmessage(function(_, msg_id, wparam, _)
-    if msg_id == 522 then
-        local scroll = math.floor(wparam / 65536)
-        if scroll == 120 then
-            mouse_wheel = 1
-        elseif scroll == 65416 then
-            mouse_wheel = -1
-        end
-    end
+    end_frame()
 end)

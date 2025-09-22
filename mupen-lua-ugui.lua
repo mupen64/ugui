@@ -2265,10 +2265,6 @@ ugui.registry = {
         end,
     },
     menu = {
-        added = function(control, data)
-            ugui.internal.mouse_captured_control = control.uid
-            ugui.internal.keyboard_captured_control = control.uid
-        end,
         logic = function(control, data)
             ---@cast control Menu
 
