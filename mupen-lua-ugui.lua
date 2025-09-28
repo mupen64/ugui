@@ -598,6 +598,12 @@ ugui.internal = {
 
     ---Does core input processing work, such as control capture/hover/click state management.
     do_input_processing = function()
+        local function is_point_inside_rectangle(point, rectangle)
+            return point.x >= rectangle.x and
+                point.y >= rectangle.y and
+                point.x <= rectangle.x + rectangle.width and
+                point.y <= rectangle.y + rectangle.height
+        end
         ---@type Control?
         local clicked_control = nil
 
@@ -620,7 +626,7 @@ ugui.internal = {
             -- Determine the clicked control if we haven't already
             if clicked_control == nil then
                 if ugui.internal.is_mouse_just_down() then
-                    if BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+                    if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
                         ugui.internal.keyboard_captured_control = control.uid
                         mouse_captured_control = entry
@@ -630,7 +636,7 @@ ugui.internal = {
 
             -- Determine the hovered control if we haven't already
             if ugui.internal.hovered_control == nil then
-                if BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
+                if is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
                     ugui.internal.hovered_control = control.uid
 
                     if ugui.internal.hovered_control ~= prev_hovered_control then
