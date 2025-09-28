@@ -3,6 +3,7 @@ local ugui = {
     _URL = 'https://github.com/Aurumaker72/mupen-lua-ugui',
     _DESCRIPTION = 'Flexible immediate-mode GUI library for Mupen Lua',
     _LICENSE = 'GPL-3',
+    DEBUG = false,
 }
 
 if not BreitbandGraphics then
@@ -2529,12 +2530,13 @@ ugui.end_frame = function()
 
         ugui.registry[type].draw(control)
 
-        -- Draw debug focus rectangles
-        if ugui.internal.keyboard_captured_control == control.uid then
-            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
-        end
-        if ugui.internal.mouse_captured_control == control.uid then
-            BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
+        if ugui.DEBUG then
+            if ugui.internal.keyboard_captured_control == control.uid then
+                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
+            end
+            if ugui.internal.mouse_captured_control == control.uid then
+                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
+            end
         end
     end
 
@@ -2573,7 +2575,6 @@ ugui.control = function(control, type)
     if ugui.internal.control_data[control.uid] == nil then
         ugui.internal.control_data[control.uid] = {}
         if registry_entry.setup then
-            print(string.format("Running setup for '%s' (%d)", type, control.uid))
             registry_entry.setup(control, ugui.internal.control_data[control.uid])
         end
 
