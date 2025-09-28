@@ -2265,6 +2265,9 @@ ugui.registry = {
         end,
     },
     menu = {
+        setup = function(control, data)
+            data.dismissed = 0
+        end,
         logic = function(control, data)
             ---@cast control Menu
 
@@ -2284,8 +2287,19 @@ ugui.registry = {
                 dismissed = false,
             }
 
-            if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+            -- We want to delay returning the dismissed state by a frame because we don't get to handle inputs otherwise,
+            -- so we turn the dismissed flag into a tristate.
+            if data.dismissed == 2 then
+                data.dismissed = 0
                 result.dismissed = true
+            end
+
+            if data.dismissed == 1 then
+                data.dismissed = 2
+            end
+
+            if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+                data.dismissed = 1
             end
 
             if ugui.internal.hovered_control == control.uid then
@@ -2304,10 +2318,10 @@ ugui.registry = {
                 end
             end
 
-
             if result.dismissed or result.item then
                 reset_hovered_index_for_all_child_menus(control.uid, control.items)
             end
+
 
             return result
         end,
