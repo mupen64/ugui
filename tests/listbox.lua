@@ -34,33 +34,21 @@ group.tests[#group.tests + 1] = {
     func = function(ctx)
         local selected_index = 999
 
-        ugui.begin_frame({
-            mouse_position = ctx.data.mouse_position,
-            wheel = 0,
-            is_primary_down = false,
-            held_keys = {},
-        })
-        selected_index = ugui.listbox({
-            uid = 5,
-            rectangle = ctx.data.rect,
-            items = ctx.data.items,
-            selected_index = selected_index,
-        })
-        ugui.end_frame()
-
-        ugui.begin_frame({
-            mouse_position = ctx.data.mouse_position,
-            wheel = 0,
-            is_primary_down = true,
-            held_keys = {},
-        })
-        selected_index = ugui.listbox({
-            uid = 5,
-            rectangle = ctx.data.rect,
-            items = ctx.data.items,
-            selected_index = selected_index,
-        })
-        ugui.end_frame()
+        for i = 1, 3, 1 do
+            ugui.begin_frame({
+                mouse_position = ctx.data.mouse_position,
+                wheel = 0,
+                is_primary_down = i > 1,
+                held_keys = {},
+            })
+            selected_index = ugui.listbox({
+                uid = 5,
+                rectangle = ctx.data.rect,
+                items = ctx.data.items,
+                selected_index = selected_index,
+            })
+            ugui.end_frame()
+        end
 
         ctx.log(selected_index)
         ctx.assert_eq(ctx.data.expected_index, selected_index)
