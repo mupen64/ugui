@@ -2428,7 +2428,7 @@ ugui.registry = {
             local text = string.format('%0' .. tostring(control.places) .. 'd', math.abs(control.value))
 
             local visual_state = ugui.get_visual_state(control)
-            if ugui.internal.mouse_captured_control == control.uid and control.is_enabled then
+            if ugui.internal.keyboard_captured_control == control.uid then
                 visual_state = ugui.visual_states.active
             end
             ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
@@ -2460,18 +2460,19 @@ ugui.registry = {
                 height = control.rectangle.height,
             }
 
-            -- draw the char at caret index in inverted color
-            BreitbandGraphics.fill_rectangle(selected_char_rect, ugui.standard_styler.params.numberbox.selection)
-            BreitbandGraphics.push_clip(selected_char_rect)
-            BreitbandGraphics.draw_text2({
-                text = text,
-                rectangle = control.rectangle,
-                color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
-                font_name = font_name,
-                font_size = font_size,
-                aliased = not ugui.standard_styler.params.cleartype,
-            })
-            BreitbandGraphics.pop_clip()
+            if ugui.internal.keyboard_captured_control == control.uid then
+                BreitbandGraphics.fill_rectangle(selected_char_rect, ugui.standard_styler.params.numberbox.selection)
+                BreitbandGraphics.push_clip(selected_char_rect)
+                BreitbandGraphics.draw_text2({
+                    text = text,
+                    rectangle = control.rectangle,
+                    color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
+                    font_name = font_name,
+                    font_size = font_size,
+                    aliased = not ugui.standard_styler.params.cleartype,
+                })
+                BreitbandGraphics.pop_clip()
+            end
         end,
     },
 }
