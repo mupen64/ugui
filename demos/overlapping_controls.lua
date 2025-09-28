@@ -7,6 +7,8 @@ local position = {x = 0, y = 0}
 local value = 0.5
 local items = {}
 local index = 1
+local num = 50
+local num2 = -50
 
 for i = 1, 100, 1 do
     items[#items + 1] = 'Item ' .. i
@@ -91,6 +93,36 @@ emu.atdrawd2d(function()
         rectangle = {x = 380, y = 300, width = 160, height = 23},
         items = items,
         selected_index = index,
+    })
+
+    num = ugui.numberbox({
+        uid = 65,
+        rectangle = {x = 350, y = 50, width = 160, height = 23},
+        value = num,
+        places = 4,
+    })
+    BreitbandGraphics.draw_text2({
+        rectangle = {x = 515, y = 50, width = 999, height = 23},
+        align_x = BreitbandGraphics.alignment.start,
+        text = tostring(num),
+        color = BreitbandGraphics.colors.black,
+        font_name = ugui.standard_styler.params.font_name,
+        font_size = ugui.standard_styler.params.font_size,
+    })
+    num2 = ugui.numberbox({
+        uid = 70,
+        rectangle = {x = 350, y = 75, width = 160, height = 23},
+        value = num2,
+        places = 4,
+        show_negative = true,
+    })
+    BreitbandGraphics.draw_text2({
+        rectangle = {x = 515, y = 75, width = 999, height = 23},
+        align_x = BreitbandGraphics.alignment.start,
+        text = tostring(num2),
+        color = BreitbandGraphics.colors.black,
+        font_name = ugui.standard_styler.params.font_name,
+        font_size = ugui.standard_styler.params.font_size,
     })
     
     end_frame()

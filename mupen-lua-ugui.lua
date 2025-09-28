@@ -135,7 +135,7 @@ end
 ---@field public show_negative boolean? Whether a button for viewing and toggling the value's sign is shown. If nil, false is assumed.
 ---A numberbox, which allows modifying a number by typing or by adjusting its individual digits.
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
 
 --#endregion
 
@@ -2330,6 +2330,149 @@ ugui.registry = {
             ugui.standard_styler.draw_menu(control, control.rectangle)
         end,
     },
+    numberbox = {
+        setup = function(control, data)
+            data.caret_index = 1
+        end,
+        logic = function(control, data)
+            ---@cast control NumberBox
+            local prev_value_negative = control.value < 0
+            data.value = math.abs(control.value)
+
+            local function get_caret_index_at_relative_x(x)
+                local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
+                local font_name = ugui.standard_styler.params.monospace_font_name
+                local text = string.format('%0' .. tostring(control.places) .. 'd', data.value)
+
+                -- award for most painful basic geometry
+                local full_width = BreitbandGraphics.get_text_size(text,
+                    font_size,
+                    font_name).width
+
+                local positions = {}
+                for i = 1, #text, 1 do
+                    local width = BreitbandGraphics.get_text_size(text:sub(1, i),
+                        font_size,
+                        font_name).width
+
+                    local left = control.rectangle.width / 2 - full_width / 2
+                    positions[#positions + 1] = width + left
+                end
+
+                for i = #positions, 1, -1 do
+                    if x > positions[i] then
+                        return ugui.internal.clamp(i + 1, 1, #positions)
+                    end
+                end
+                return 1
+            end
+
+            local function increment_digit(index, value)
+                data.value = ugui.internal.set_digit(data.value, control.places,
+                    ugui.internal.get_digit(data.value, control.places, index) + value, index)
+            end
+
+            if ugui.internal.clicked_control == control.uid then
+                data.caret_index = get_caret_index_at_relative_x(ugui.internal.environment.mouse_position.x - control.rectangle.x)
+            end
+
+            if ugui.internal.keyboard_captured_control == control.uid then
+                -- handle number key press
+                for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
+                    local num_1 = tonumber(key)
+                    local num_2 = tonumber(key:sub(7))
+                    local value = num_1 and num_1 or num_2
+
+                    if value then
+                        local oldkey = math.floor(value / math.pow(10, control.places - data.caret_index)) % 10
+                        value = value + (value - oldkey) * math.pow(10, control.places - data.caret_index)
+                        data.caret_index = data.caret_index + 1
+                    end
+
+                    if key == 'left' then
+                        data.caret_index = data.caret_index - 1
+                    end
+                    if key == 'right' then
+                        data.caret_index = data.caret_index + 1
+                    end
+                    if key == 'up' then
+                        increment_digit(data.caret_index, 1)
+                    end
+                    if key == 'down' then
+                        increment_digit(data.caret_index, -1)
+                    end
+                end
+
+                if ugui.internal.is_mouse_wheel_up() then
+                    increment_digit(data.caret_index, 1)
+                end
+                if ugui.internal.is_mouse_wheel_down() then
+                    increment_digit(data.caret_index, -1)
+                end
+            end
+
+            data.caret_index = ugui.internal.clamp(data.caret_index, 1, control.places)
+
+            if prev_value_negative then
+                data.value = -math.abs(data.value)
+            end
+
+            return data.value
+        end,
+        draw = function(control)
+            ---@cast control NumberBox
+            local data = ugui.internal.control_data[control.uid]
+            local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
+            local font_name = ugui.standard_styler.params.monospace_font_name
+            local text = string.format('%0' .. tostring(control.places) .. 'd', math.abs(control.value))
+
+            local visual_state = ugui.get_visual_state(control)
+            if ugui.internal.mouse_captured_control == control.uid and control.is_enabled then
+                visual_state = ugui.visual_states.active
+            end
+            ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
+
+            BreitbandGraphics.draw_text2({
+                text = text,
+                rectangle = control.rectangle,
+                color = ugui.standard_styler.params.textbox.text[visual_state],
+                font_name = font_name,
+                font_size = font_size,
+                aliased = not ugui.standard_styler.params.cleartype,
+            })
+
+            local text_width_up_to_caret = BreitbandGraphics.get_text_size(
+                text:sub(1, data.caret_index - 1),
+                font_size,
+                font_name).width
+
+            local full_width = BreitbandGraphics.get_text_size(text,
+                font_size,
+                font_name).width
+
+            local left = control.rectangle.width / 2 - full_width / 2
+
+            local selected_char_rect = {
+                x = control.rectangle.x + left + text_width_up_to_caret,
+                y = control.rectangle.y,
+                width = font_size / 2,
+                height = control.rectangle.height,
+            }
+
+            -- draw the char at caret index in inverted color
+            BreitbandGraphics.fill_rectangle(selected_char_rect, ugui.standard_styler.params.numberbox.selection)
+            BreitbandGraphics.push_clip(selected_char_rect)
+            BreitbandGraphics.draw_text2({
+                text = text,
+                rectangle = control.rectangle,
+                color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
+                font_name = font_name,
+                font_size = font_size,
+                aliased = not ugui.standard_styler.params.cleartype,
+            })
+            BreitbandGraphics.pop_clip()
+        end,
+    },
 }
 
 --#endregion
@@ -2411,9 +2554,14 @@ end
 
 ---Places a Control of the specified type.
 ---@param control Control The control.
----@param type ControlType The control's type.
+---@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
 ---@return any # The control's return value.
 ugui.control = function(control, type)
+    if type == '' then
+        ugui.internal.control_data[control.uid] = {}
+        return
+    end
+
     local registry_entry = ugui.registry[type]
     if registry_entry == nil then
         error(string.format("Unknown control type '%s'", type))
@@ -2764,7 +2912,6 @@ ugui.spinner = function(control)
         end
     end
 
-    ugui.internal.handle_tooltip(control)
     return clamp_value(value)
 end
 
@@ -2772,12 +2919,15 @@ end
 ---@param control TabControl The control table.
 ---@return TabControlResult # The result.
 ugui.tabcontrol = function(control)
-    ugui.internal.validate_control(control)
+    local _ = ugui.control(control, '')
+    local data = ugui.internal.control_data[control.uid]
 
-    ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
+    if data.scroll_x == nil then
+        data.scroll_x = 0
+    end
 
-    if ugui.internal.control_data[control.uid].y_translation == nil then
-        ugui.internal.control_data[control.uid].y_translation = 0
+    if data.scroll_y == nil then
+        data.scroll_y = 0
     end
 
     if ugui.standard_styler.params.tabcontrol.draw_frame then
@@ -2823,7 +2973,6 @@ ugui.tabcontrol = function(control)
         x = x + width + ugui.standard_styler.params.tabcontrol.gap_x
     end
 
-    ugui.internal.handle_tooltip(control)
     return {
         selected_index = selected_index,
         rectangle = {
@@ -2839,26 +2988,19 @@ end
 ---@param control NumberBox The control table.
 ---@return integer # The new value.
 ugui.numberbox = function(control)
-    ugui.internal.validate_control(control)
+    local _ = ugui.control(control, 'numberbox')
+    local data = ugui.internal.control_data[control.uid]
 
-    ugui.internal.control_data[control.uid] = ugui.internal.control_data[control.uid] or {}
-    if ugui.internal.control_data[control.uid].caret_index == nil then
-        ugui.internal.control_data[control.uid].caret_index = 1
-    end
-
-    local is_positive = control.value >= 0
-
-    -- conditionally visible negative sign button
     if control.show_negative then
         local negative_button_size = control.rectangle.width / 8
 
-        -- NOTE: we clobber the rect ref!!
         control.rectangle = {
             x = control.rectangle.x + negative_button_size,
             y = control.rectangle.y,
             width = control.rectangle.width - negative_button_size,
             height = control.rectangle.height,
         }
+
         if ugui.button({
                 uid = control.uid + 1,
                 is_enabled = true,
@@ -2868,171 +3010,13 @@ ugui.numberbox = function(control)
                     width = negative_button_size,
                     height = control.rectangle.height,
                 },
-                text = is_positive and '+' or '-',
+                text = data.value >= 0 and '+' or '-',
             }) then
-            control.value = -control.value
-            is_positive = not is_positive
+            data.value = -data.value
         end
     end
 
-    -- we dont want sign in display
-    control.value = math.abs(control.value)
-
-    local pushed = ugui.internal.process_push(control)
-
-    if pushed then
-        ugui.internal.clear_active_control_after_mouse_up = false
-    end
-
-    -- if active and user clicks elsewhere, deactivate
-    if ugui.internal.mouse_captured_control == control.uid then
-        if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
-            if ugui.internal.is_mouse_just_down() then
-                -- deactivate, then clear selection
-                ugui.internal.mouse_captured_control = nil
-                ugui.internal.control_data[control.uid].selection_start = nil
-                ugui.internal.control_data[control.uid].selection_end = nil
-            end
-        end
-    end
-
-    local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
-    local font_name = ugui.standard_styler.params.monospace_font_name
-
-    local function get_caret_index_at_relative_x(text, x)
-        -- award for most painful basic geometry
-        local full_width = BreitbandGraphics.get_text_size(text,
-            font_size,
-            font_name).width
-
-        local positions = {}
-        for i = 1, #text, 1 do
-            local width = BreitbandGraphics.get_text_size(text:sub(1, i),
-                font_size,
-                font_name).width
-
-            local left = control.rectangle.width / 2 - full_width / 2
-            positions[#positions + 1] = width + left
-        end
-
-        for i = #positions, 1, -1 do
-            if x > positions[i] then
-                return ugui.internal.clamp(i + 1, 1, #positions)
-            end
-        end
-        return 1
-    end
-
-    local function increment_digit(index, value)
-        control.value = ugui.internal.set_digit(control.value, control.places,
-            ugui.internal.get_digit(control.value, control.places,
-                index) + value,
-            index)
-    end
-
-    local visual_state = ugui.get_visual_state(control)
-    if ugui.internal.mouse_captured_control == control.uid and control.is_enabled then
-        visual_state = ugui.visual_states.active
-    end
-    ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
-
-    local text = string.format('%0' .. tostring(control.places) .. 'd', control.value)
-
-    BreitbandGraphics.draw_text2({
-        text = text,
-        rectangle = control.rectangle,
-        color = ugui.standard_styler.params.textbox.text[visual_state],
-        font_name = font_name,
-        font_size = font_size,
-        aliased = not ugui.standard_styler.params.cleartype,
-    })
-
-    local text_width_up_to_caret = BreitbandGraphics.get_text_size(
-        text:sub(1, ugui.internal.control_data[control.uid].caret_index - 1),
-        font_size,
-        font_name).width
-
-    local full_width = BreitbandGraphics.get_text_size(text,
-        font_size,
-        font_name).width
-
-    local left = control.rectangle.width / 2 - full_width / 2
-
-    local selected_char_rect = {
-        x = control.rectangle.x + left + text_width_up_to_caret,
-        y = control.rectangle.y,
-        width = font_size / 2,
-        height = control.rectangle.height,
-    }
-
-    if ugui.internal.mouse_captured_control == control.uid then
-        -- find the clicked number, change caret index
-        if ugui.internal.is_mouse_just_down() and BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
-            ugui.internal.control_data[control.uid].caret_index = get_caret_index_at_relative_x(text,
-                ugui.internal.environment.mouse_position.x - control.rectangle.x)
-        end
-
-        -- handle number key press
-        for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-            local num_1 = tonumber(key)
-            local num_2 = tonumber(key:sub(7))
-            local value = num_1 and num_1 or num_2
-
-            if value then
-                local oldkey = math.floor(control.value /
-                    math.pow(10, control.places - ugui.internal.control_data[control.uid].caret_index)) % 10
-                control.value = control.value +
-                    (value - oldkey) *
-                    math.pow(10, control.places - ugui.internal.control_data[control.uid].caret_index)
-                ugui.internal.control_data[control.uid].caret_index = ugui.internal.control_data
-                    [control.uid]
-                    .caret_index + 1
-            end
-
-            if key == 'left' then
-                ugui.internal.control_data[control.uid].caret_index = ugui.internal.control_data
-                    [control.uid]
-                    .caret_index - 1
-            end
-            if key == 'right' then
-                ugui.internal.control_data[control.uid].caret_index = ugui.internal.control_data
-                    [control.uid]
-                    .caret_index + 1
-            end
-            if key == 'up' then
-                increment_digit(ugui.internal.control_data[control.uid].caret_index, 1)
-            end
-            if key == 'down' then
-                increment_digit(ugui.internal.control_data[control.uid].caret_index, -1)
-            end
-        end
-
-        if ugui.internal.is_mouse_wheel_up() then
-            increment_digit(ugui.internal.control_data[control.uid].caret_index, 1)
-        end
-        if ugui.internal.is_mouse_wheel_down() then
-            increment_digit(ugui.internal.control_data[control.uid].caret_index, -1)
-        end
-        -- draw the char at caret index in inverted color
-        BreitbandGraphics.fill_rectangle(selected_char_rect, ugui.standard_styler.params.numberbox.selection)
-        BreitbandGraphics.push_clip(selected_char_rect)
-        BreitbandGraphics.draw_text2({
-            text = text,
-            rectangle = control.rectangle,
-            color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
-            font_name = font_name,
-            font_size = font_size,
-            aliased = not ugui.standard_styler.params.cleartype,
-        })
-        BreitbandGraphics.pop_clip()
-    end
-
-    ugui.internal.control_data[control.uid].caret_index = ugui.internal.clamp(
-        ugui.internal.control_data[control.uid].caret_index, 1,
-        control.places)
-
-    ugui.internal.handle_tooltip(control)
-    return math.floor(control.value) * (is_positive and 1 or -1)
+    return math.floor(data.value)
 end
 
 --#endregion
