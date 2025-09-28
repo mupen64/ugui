@@ -92,21 +92,22 @@ group.tests[#group.tests + 1] = {
     func = function(ctx)
         local position = {x = 0, y = 0}
 
-        ugui.begin_frame({
-            mouse_position = ctx.data.mouse_position,
-            wheel = 0,
-            is_primary_down = true,
-            held_keys = {},
-        })
-        ugui.internal.captured_control = 5
-        position = ugui.joystick({
-            uid = 5,
-            rectangle = ctx.data.rect,
-            position = position,
-            x_snap = ctx.data.x_snap,
-            y_snap = ctx.data.y_snap,
-        })
-        ugui.end_frame()
+        for i = 1, 3, 1 do
+            ugui.begin_frame({
+                mouse_position = ctx.data.mouse_position,
+                wheel = 0,
+                is_primary_down = i > 1,
+                held_keys = {},
+            })
+            position = ugui.joystick({
+                uid = 5,
+                rectangle = ctx.data.rect,
+                position = position,
+                x_snap = ctx.data.x_snap,
+                y_snap = ctx.data.y_snap,
+            })
+            ugui.end_frame()
+        end
 
         ctx.assert(math.floor(position.x) == math.floor(ctx.data.expected_joystick_position.x), string.format('Expected x position %f, got %f', ctx.data.expected_joystick_position.x, position.x))
         ctx.assert(math.floor(position.y) == math.floor(ctx.data.expected_joystick_position.y), string.format('Expected y position %f, got %f', ctx.data.expected_joystick_position.y, position.y))
