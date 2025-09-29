@@ -191,27 +191,15 @@ ugui.internal = {
     ---Whether a frame is currently in progress.
     frame_in_progress = false,
 
-    ---Validates all controls in the current scene.
-    validate_scene = function()
-        ---@type { [UID]: boolean }
-        local known_uids = {}
-
-        for i = 1, #ugui.internal.scene, 1 do
-            local control = ugui.internal.scene[i].control
-            if not control.uid
-                or not control.rectangle
-                or not control.rectangle.x
-                or not control.rectangle.y
-                or not control.rectangle.width
-                or not control.rectangle.height
-            then
-                error('Attempted to show a malformed control.\r\n' .. debug.traceback())
-            end
-            if known_uids[control.uid] then
-                error(string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', control.uid))
-            end
-            known_uids[control.uid] = true
+    ---Asserts that the specified condition is true, printing the stacktrace if it's false.
+    ---@param condition boolean
+    ---@param message string
+    assert = function(condition, message)
+        if condition then
+            return
         end
+        print(debug.traceback())
+        assert(condition, message)
     end,
 
     ---Sorts controls stably in the scene by their Z-index.
@@ -1877,6 +1865,7 @@ ugui.standard_styler = {
 }
 
 ---@class ControlRegistryEntry
+---@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
 ---@field public logic fun(control: Control, data: any): any Executes control logic.
@@ -1885,6 +1874,10 @@ ugui.standard_styler = {
 ---@type { [ControlType]: ControlRegistryEntry }
 ugui.registry = {
     button = {
+        validate = function(control)
+            ---@cast control Button
+            ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
+        end,
         logic = function(control, data)
             ---@cast control Button
             return ugui.internal.clicked_control == control.uid
@@ -1895,6 +1888,11 @@ ugui.registry = {
         end,
     },
     toggle_button = {
+        validate = function(control)
+            ---@cast control ToggleButton
+            ugui.registry.button.validate(control)
+            ugui.internal.assert(type(control.is_checked) == 'boolean', 'expected is_checked to be boolean')
+        end,
         logic = function(control, data)
             ---@cast control ToggleButton
             data.is_checked = control.is_checked
@@ -1909,6 +1907,11 @@ ugui.registry = {
         end,
     },
     carrousel_button = {
+        validate = function(control)
+            ---@cast control CarrouselButton
+            ugui.internal.assert(type(control.items) == 'table', 'expected items to be string[]')
+            ugui.internal.assert(type(control.selected_index) == 'number', 'expected selected_index to be number')
+        end,
         logic = function(control, data)
             ---@cast control CarrouselButton
             data.selected_index = control.selected_index
@@ -1936,6 +1939,10 @@ ugui.registry = {
         end,
     },
     textbox = {
+        validate = function(control)
+            ---@cast control TextBox
+            ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
+        end,
         setup = function(control, data)
             ---@cast control TextBox
             if data.caret_index == nil then
@@ -2027,6 +2034,15 @@ ugui.registry = {
         end,
     },
     joystick = {
+        validate = function(control)
+            ---@cast control Joystick
+            ugui.internal.assert(type(control.position) == 'table', 'expected position to be table')
+            ugui.internal.assert(type(control.position.x) == 'number', 'expected position.x to be number')
+            ugui.internal.assert(type(control.position.y) == 'number', 'expected position.y to be number')
+            ugui.internal.assert(type(control.mag) == 'nil' or type(control.mag) == 'number', 'expected mag to be nil or number')
+            ugui.internal.assert(type(control.x_snap) == 'nil' or type(control.x_snap) == 'number', 'expected x_snap to be nil or number')
+            ugui.internal.assert(type(control.y_snap) == 'nil' or type(control.y_snap) == 'number', 'expected y_snap to be nil or number')
+        end,
         logic = function(control, data)
             ---@cast control Joystick
             data.position = control.position
@@ -2054,6 +2070,10 @@ ugui.registry = {
         end,
     },
     trackbar = {
+        validate = function(control)
+            ---@cast control Trackbar
+            ugui.internal.assert(type(control.value) == 'number', 'expected position to be number')
+        end,
         logic = function(control, data)
             ---@cast control Trackbar
             data.value = control.value
@@ -2076,6 +2096,12 @@ ugui.registry = {
         end,
     },
     listbox = {
+        validate = function(control)
+            ---@cast control ListBox
+            ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
+            ugui.internal.assert(type(control.selected_index) == 'number', 'expected selected_index to be number')
+            ugui.internal.assert(type(control.horizontal_scroll) == 'nil' or type(control.horizontal_scroll) == 'boolean', 'expected horizontal_scroll to be boolean or nil')
+        end,
         setup = function(control, data)
             ---@cast control ListBox
             if data.scroll_x == nil then
@@ -2170,6 +2196,11 @@ ugui.registry = {
         end,
     },
     scrollbar = {
+        validate = function(control)
+            ---@cast control ScrollBar
+            ugui.internal.assert(type(control.value) == 'number', 'expected value to be number')
+            ugui.internal.assert(type(control.ratio) == 'number', 'expected ratio to be number')
+        end,
         logic = function(control, data)
             ---@cast control ScrollBar
             data.value = control.value
@@ -2231,6 +2262,11 @@ ugui.registry = {
         end,
     },
     combobox = {
+        validate = function(control)
+            ---@cast control ComboBox
+            ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
+            ugui.internal.assert(type(control.selected_index) == 'number', 'expected selected_index to be number')
+        end,
         setup = function(control, data)
             ---@cast control ComboBox
             if data.open == nil then
@@ -2272,6 +2308,10 @@ ugui.registry = {
         end,
     },
     menu = {
+        validate = function(control)
+            ---@cast control Menu
+            ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
+        end,
         setup = function(control, data)
             data.dismissed = 0
         end,
@@ -2338,6 +2378,12 @@ ugui.registry = {
         end,
     },
     numberbox = {
+        validate = function(control)
+            ---@cast control NumberBox
+            ugui.internal.assert(type(control.value) == 'number', 'expected value to be number')
+            ugui.internal.assert(type(control.places) == 'number', 'expected places to be number')
+            ugui.internal.assert(type(control.show_negative) == 'boolean' or type(control.show_negative) == 'nil', 'expected show_negative to be boolean or nil')
+        end,
         setup = function(control, data)
             data.caret_index = 1
         end,
@@ -2518,19 +2564,16 @@ ugui.end_frame = function()
         error("Tried to call end_frame() while a frame wasn't already in progress. Start a frame with begin_frame() before ending an in-progress one.")
     end
 
-    -- 1. Scene validation pass
-    ugui.internal.validate_scene()
-
-    -- 2. Z-Sorting pass
+    -- 1. Z-Sorting pass
     ugui.internal.sort_scene()
 
-    -- 3. Input processing pass
+    -- 2. Input processing pass
     ugui.internal.do_input_processing()
 
-    -- 4. Event dispatching pass
+    -- 3. Event dispatching pass
     ugui.internal.dispatch_events()
 
-    -- 5. Rendering pass
+    -- 4. Rendering pass
     for i = 1, #ugui.internal.scene, 1 do
         local control = ugui.internal.scene[i].control
         local type = ugui.internal.scene[i].type
@@ -2571,7 +2614,9 @@ ugui.control = function(control, type)
         return
     end
 
+    ---@type ControlRegistryEntry?
     local registry_entry = ugui.registry[type]
+
     if registry_entry == nil then
         error(string.format("Unknown control type '%s'", type))
     end
@@ -2588,6 +2633,16 @@ ugui.control = function(control, type)
         -- Run logic once to stabilize the return value for the first state
         return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
     end
+
+    -- Check for UID duplicates
+    for i = 1, #ugui.internal.scene, 1 do
+        local uid = ugui.internal.scene[i].control.uid
+        if control.uid == uid then
+            error(string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', control.uid))
+        end
+    end
+
+    registry_entry.validate(control)
 
     -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
     return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
