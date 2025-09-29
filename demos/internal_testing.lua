@@ -235,7 +235,7 @@ emu.atdrawd2d(function()
             height = 30,
         },
         items = {'A', 'B', 'C'},
-        selected_index = nil,
+        selected_index = 1,
     })
 
     end_frame()
