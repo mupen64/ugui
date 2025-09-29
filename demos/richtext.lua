@@ -92,6 +92,7 @@ emu.atdrawd2d(function()
             'ok[icon:arrow_right][icon:arrow_right]',
         },
         plaintext = plaintext,
+        selected_index = 1,
     })
 
     local rect = {
