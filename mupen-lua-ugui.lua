@@ -592,6 +592,7 @@ ugui.internal = {
                 point.x <= rectangle.x + rectangle.width and
                 point.y <= rectangle.y + rectangle.height
         end
+
         ---@type Control?
         local clicked_control = nil
 
@@ -603,6 +604,16 @@ ugui.internal = {
                 mouse_captured_control = entry
             end
         end
+
+        ---@type SceneEntry?
+        local keyboard_captured_control = nil
+        for i = 1, #ugui.internal.scene, 1 do
+            local entry = ugui.internal.scene[i]
+            if entry.control.uid == ugui.internal.keyboard_captured_control then
+                keyboard_captured_control = entry
+            end
+        end
+
 
         local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
@@ -616,7 +627,7 @@ ugui.internal = {
                 if ugui.internal.is_mouse_just_down() then
                     if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
-                        ugui.internal.keyboard_captured_control = control.uid
+                        keyboard_captured_control = entry
                         mouse_captured_control = entry
                     end
                 end
@@ -658,7 +669,18 @@ ugui.internal = {
             end
         end
 
+        -- Clear mouse captured control if it's disabled
+        if mouse_captured_control and mouse_captured_control.control.is_enabled == false then
+            mouse_captured_control = nil
+        end
+
+        -- Clear keyboard captured control if it's disabled
+        if keyboard_captured_control and keyboard_captured_control.control.is_enabled == false then
+            keyboard_captured_control = nil
+        end
+
         ugui.internal.mouse_captured_control = mouse_captured_control and mouse_captured_control.control.uid or nil
+        ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 }
