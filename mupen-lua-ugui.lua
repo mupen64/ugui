@@ -82,7 +82,7 @@ end
 
 ---@class ListBox : Control
 ---@field public items RichText[] The items contained in the control.
----@field public selected_index integer The index of the currently selected item into the items array.
+---@field public selected_index integer? The index of the currently selected item into the items array.
 ---@field public horizontal_scroll boolean? Whether horizontal scrolling will be enabled when items go beyond the width of the control. Will impact performance greatly, use with care.
 ---A listbox which allows the user to choose from a list of items.
 ---If the items don't fit in the control's bounds vertically, vertical scrolling will be enabled.
@@ -2121,7 +2121,7 @@ ugui.registry = {
         validate = function(control)
             ---@cast control ListBox
             ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
-            ugui.internal.assert(type(control.selected_index) == 'number', 'expected selected_index to be number')
+            ugui.internal.assert(type(control.selected_index) == 'number' or type(control.selected_index) == 'nil', 'expected selected_index to be number or nil')
             ugui.internal.assert(type(control.horizontal_scroll) == 'nil' or type(control.horizontal_scroll) == 'boolean', 'expected horizontal_scroll to be boolean or nil')
         end,
         setup = function(control, data)

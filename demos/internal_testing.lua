@@ -178,6 +178,18 @@ emu.atdrawd2d(function()
         horizontal_scroll = false,
     })
 
+    ugui.listbox({
+        uid = 6000,
+        is_enabled = true,
+        rectangle = {
+            x = 300,
+            y = 80,
+            width = 200,
+            height = 300,
+        },
+        items = items
+    })
+
     text = ugui.textbox({
         uid = 1500,
         rectangle = {
