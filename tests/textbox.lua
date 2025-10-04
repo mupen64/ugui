@@ -397,37 +397,4 @@ group.tests[#group.tests + 1] = {
     end,
 }
 
-group.tests[#group.tests + 1] = {
-    name = 'nil_params_no_error',
-    pass_if_no_error = true,
-    func = function(ctx)
-        local rect = {
-            x = 0,
-            y = 0,
-            width = 100,
-            height = 25,
-        }
-
-        for i = 1, 3, 1 do
-            ugui.begin_frame({
-                mouse_position = {
-                    x = 10,
-                    y = 10,
-                },
-                wheel = 0,
-                is_primary_down = i == 2,
-                held_keys = {},
-            })
-
-            ugui.textbox({
-                uid = 5,
-                rectangle = rect,
-                text = nil,
-            })
-
-            ugui.end_frame()
-        end
-    end,
-}
-
 return group

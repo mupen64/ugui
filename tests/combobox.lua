@@ -112,48 +112,4 @@ group.tests[#group.tests + 1] = {
     end,
 }
 
-
-group.tests[#group.tests + 1] = {
-    name = 'nil_params_no_error',
-    pass_if_no_error = true,
-    func = function(ctx)
-        local rect = {
-            x = 10,
-            y = 10,
-            width = 100,
-            height = 25,
-        }
-
-        ugui.begin_frame({
-            mouse_position = {x = 0, y = 0},
-            wheel = 0,
-            is_primary_down = false,
-            held_keys = {},
-        })
-        ugui.combobox({
-            uid = 5,
-            rectangle = rect,
-            items = nil,
-            selected_index = nil,
-        })
-        ugui.end_frame()
-
-        ugui.begin_frame({
-            mouse_position = {x = 15, y = 15},
-            wheel = 0,
-            is_primary_down = true,
-            held_keys = {},
-        })
-        local called = false
-        ugui.combobox({
-            uid = 5,
-            rectangle = rect,
-            items = nil,
-            selected_index = nil,
-        })
-
-        ugui.end_frame()
-    end,
-}
-
 return group

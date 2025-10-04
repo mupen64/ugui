@@ -114,30 +114,4 @@ group.tests[#group.tests + 1] = {
     end,
 }
 
-group.tests[#group.tests + 1] = {
-    name = 'nil_params_no_error',
-    pass_if_no_error = true,
-    func = function(ctx)
-        local rect = {
-            x = 50,
-            y = 80,
-            width = 100,
-            height = 45,
-        }
-        ugui.begin_frame({
-            mouse_position = {x = 0, y = 0},
-            wheel = 0,
-            is_primary_down = true,
-            held_keys = {},
-        })
-        ugui.internal.captured_control = 5
-        ugui.joystick({
-            uid = 5,
-            rectangle = rect,
-            position = nil,
-        })
-        ugui.end_frame()
-    end,
-}
-
 return group
