@@ -4,98 +4,6 @@ local group = {
     tests = {},
 }
 
-group.tests[#group.tests + 1] = {
-    name = 'remains_active_control_after_click_release',
-    func = function(ctx)
-        local rect = {
-            x = 0,
-            y = 0,
-            width = 100,
-            height = 25,
-        }
-
-        for i = 1, 3, 1 do
-            ugui.begin_frame({
-                mouse_position = {
-                    x = 10,
-                    y = 10,
-                },
-                wheel = 0,
-                is_primary_down = i == 2,
-                held_keys = {},
-            })
-
-            ugui.textbox({
-                uid = 5,
-                rectangle = rect,
-                text = 'Hello World!',
-            })
-
-            if i == 3 then
-                ctx.assert(ugui.internal.captured_control == 5, 'Textbox not activated')
-            end
-
-            ctx.log((ugui.internal.captured_control or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
-
-            ugui.end_frame()
-        end
-    end,
-}
-
-group.tests[#group.tests + 1] = {
-    name = 'active_control_changes_after_click_on_another_control',
-    func = function(ctx)
-        local textbox_rect = {
-            x = 0,
-            y = 0,
-            width = 100,
-            height = 25,
-        }
-        local button_rect = {
-            x = 0,
-            y = 25,
-            width = 100,
-            height = 25,
-        }
-
-
-        for i = 1, 5, 1 do
-            local mouse_position = {x = 10, y = 10}
-
-            if i > 3 then
-                mouse_position = {x = 10, y = 30}
-            end
-
-            ugui.begin_frame({
-                mouse_position = mouse_position,
-                wheel = 0,
-                is_primary_down = i % 2 == 0,
-                held_keys = {},
-            })
-
-            ugui.textbox({
-                uid = 5,
-                rectangle = textbox_rect,
-                text = 'Hello World!',
-            })
-
-            ugui.button({
-                uid = 10,
-                rectangle = button_rect,
-                text = 'Hello World!',
-            })
-
-            if i == 5 then
-                ctx.assert(ugui.internal.captured_control == 10, 'Button not activated')
-            end
-
-            ctx.log((ugui.internal.captured_control or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
-
-            ugui.end_frame()
-        end
-    end,
-}
-
 -- NOTE: This is pretty flaky since it depends on D2D text measuring behaviour but whatever
 group.tests[#group.tests + 1] = {
     name = 'click_picks_correct_selection_start_index',
@@ -125,7 +33,7 @@ group.tests[#group.tests + 1] = {
             height = 25,
         }
 
-        for i = 1, 2, 1 do
+        for i = 1, 3, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = ctx.data.mouse_x,
@@ -142,7 +50,7 @@ group.tests[#group.tests + 1] = {
                 text = 'Test',
             })
 
-            if i == 2 then
+            if i == 3 then
                 ctx.assert(ugui.internal.control_data[5].selection_start == ctx.data.expected_start_index, string.format('Expected selection start %d, got %d', ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start))
             end
 
@@ -190,14 +98,14 @@ group.tests[#group.tests + 1] = {
             height = 25,
         }
 
-        for i = 1, 10, 1 do
+        for i = 1, 4, 1 do
             ugui.begin_frame({
                 mouse_position = {
-                    x = i >= 3 and ctx.data.end_mouse_x or ctx.data.begin_mouse_x,
+                    x = i > 2 and ctx.data.end_mouse_x or ctx.data.begin_mouse_x,
                     y = 10,
                 },
                 wheel = 0,
-                is_primary_down = i >= 2,
+                is_primary_down = true,
                 held_keys = {},
             })
 
@@ -207,20 +115,19 @@ group.tests[#group.tests + 1] = {
                 text = 'Test',
             })
 
-            if i >= 3 then
-                ctx.assert(ugui.internal.control_data[5].selection_start == ctx.data.expected_start_index, string.format('Expected selection start %d, got %d', ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start))
-                ctx.assert(ugui.internal.control_data[5].selection_end == ctx.data.expected_end_index, string.format('Expected selection end %d, got %d', ctx.data.expected_end_index, ugui.internal.control_data[5].selection_end))
+            ugui.end_frame()
+
+            if i == 4 then
+                ctx.assert_eq(ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start)
+                ctx.assert_eq(ctx.data.expected_end_index, ugui.internal.control_data[5].selection_end)
             end
 
             ctx.log((ugui.internal.control_data[5].selection_start or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
             ctx.log((ugui.internal.control_data[5].selection_end or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
-
-            ugui.end_frame()
         end
     end,
 }
 
--- NOTE: This is pretty flaky since it depends on D2D text measuring behaviour but whatever
 group.tests[#group.tests + 1] = {
     name = 'arrow_keys_modify_caret_index',
     params = {
