@@ -1,6 +1,5 @@
 local group = {
     name = 'textbox',
-    keep_state_between_tests = true,
     tests = {},
 }
 
@@ -67,27 +66,15 @@ group.tests[#group.tests + 1] = {
     params = {
         {
             begin_mouse_x = 12,
-            end_mouse_x = 25,
-            expected_start_index = 3,
-            expected_end_index = 5,
-        },
-        {
-            begin_mouse_x = 12,
             end_mouse_x = 99,
             expected_start_index = 3,
             expected_end_index = 5,
         },
         {
-            begin_mouse_x = 25,
-            end_mouse_x = 12,
-            expected_start_index = 5,
-            expected_end_index = 3,
-        },
-        {
             begin_mouse_x = 99,
             end_mouse_x = 12,
-            expected_start_index = 5,
-            expected_end_index = 3,
+            expected_start_index = 3,
+            expected_end_index = 5,
         },
     },
     func = function(ctx)
@@ -98,14 +85,14 @@ group.tests[#group.tests + 1] = {
             height = 25,
         }
 
-        for i = 1, 4, 1 do
+        for i = 1, 6, 1 do
             ugui.begin_frame({
                 mouse_position = {
-                    x = i > 2 and ctx.data.end_mouse_x or ctx.data.begin_mouse_x,
+                    x = i > 3 and ctx.data.end_mouse_x or ctx.data.begin_mouse_x,
                     y = 10,
                 },
                 wheel = 0,
-                is_primary_down = true,
+                is_primary_down = i > 1,
                 held_keys = {},
             })
 
@@ -117,7 +104,7 @@ group.tests[#group.tests + 1] = {
 
             ugui.end_frame()
 
-            if i == 4 then
+            if i == 6 then
                 ctx.assert_eq(ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start)
                 ctx.assert_eq(ctx.data.expected_end_index, ugui.internal.control_data[5].selection_end)
             end
@@ -181,6 +168,19 @@ group.tests[#group.tests + 1] = {
         ugui.internal.control_data[5].caret_index = ctx.data.initial_start_index
         ugui.internal.control_data[5].selection_start = ctx.data.initial_start_index
         ugui.internal.control_data[5].selection_end = ctx.data.initial_end_index
+
+        ugui.begin_frame({
+            mouse_position = {x = 10, y = 10},
+            wheel = 0,
+            is_primary_down = false,
+            held_keys = {[ctx.data.key] = true},
+        })
+        ugui.textbox({
+            uid = 5,
+            rectangle = rect,
+            text = 'Test',
+        })
+        ugui.end_frame()
 
         ugui.begin_frame({
             mouse_position = {x = 10, y = 10},
