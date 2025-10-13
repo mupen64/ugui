@@ -2823,6 +2823,8 @@ end
 ---@param control Menu The control table.
 ---@return MenuResult # The menu result.
 ugui.menu = function(control)
+    control.z_index = control.z_index or 1000
+
     -- We adjust the dimensions with what should fit the content
     local max_text_width = 0
     for _, item in pairs(control.items) do
