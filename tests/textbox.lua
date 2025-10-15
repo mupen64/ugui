@@ -157,7 +157,19 @@ group.tests[#group.tests + 1] = {
             is_primary_down = false,
             held_keys = {},
         })
-        ugui.internal.captured_control = 5
+        ugui.textbox({
+            uid = 5,
+            rectangle = rect,
+            text = 'Test',
+        })
+        ugui.end_frame()
+
+        ugui.begin_frame({
+            mouse_position = {x = 10, y = 10},
+            wheel = 0,
+            is_primary_down = true,
+            held_keys = {},
+        })
         ugui.textbox({
             uid = 5,
             rectangle = rect,
