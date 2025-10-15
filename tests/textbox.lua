@@ -287,7 +287,8 @@ group.tests[#group.tests + 1] = {
             is_primary_down = false,
             held_keys = {},
         })
-        ugui.internal.captured_control = 5
+        ugui.internal.keyboard_captured_control = 5
+        ugui.internal.mouse_captured_control = 5
         text = ugui.textbox({
             uid = 5,
             rectangle = rect,
