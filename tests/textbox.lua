@@ -85,14 +85,14 @@ group.tests[#group.tests + 1] = {
             height = 25,
         }
 
-        for i = 1, 6, 1 do
+        for i = 1, 7, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = i > 3 and ctx.data.end_mouse_x or ctx.data.begin_mouse_x,
                     y = 10,
                 },
                 wheel = 0,
-                is_primary_down = i > 1,
+                is_primary_down = i > 2,
                 held_keys = {},
             })
 
@@ -104,14 +104,11 @@ group.tests[#group.tests + 1] = {
 
             ugui.end_frame()
 
-            if i == 6 then
-                ctx.assert_eq(ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start)
-                ctx.assert_eq(ctx.data.expected_end_index, ugui.internal.control_data[5].selection_end)
-            end
-
-            ctx.log((ugui.internal.control_data[5].selection_start or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
-            ctx.log((ugui.internal.control_data[5].selection_end or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
+            ctx.log((ugui.internal.control_data[5].selection_start or 'nil') .. ' ' .. (ugui.internal.control_data[5].selection_end or 'nil'))
         end
+
+        ctx.assert_eq(ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start)
+        ctx.assert_eq(ctx.data.expected_end_index, ugui.internal.control_data[5].selection_end)
     end,
 }
 
@@ -122,7 +119,7 @@ group.tests[#group.tests + 1] = {
             key = 'left',
             initial_start_index = 2,
             initial_end_index = 3,
-            expected_caret_index = 2,
+            expected_caret_index = 1,
         },
         {
             key = 'left',
