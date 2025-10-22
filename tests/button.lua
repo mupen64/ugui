@@ -13,7 +13,9 @@ group.tests[#group.tests + 1] = {
             height = 25,
         }
 
-        for i = 1, 2, 1 do
+        local pressed
+
+        for i = 1, 3, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = 10,
@@ -24,18 +26,16 @@ group.tests[#group.tests + 1] = {
                 held_keys = {},
             })
 
-            local pressed = ugui.button({
+            pressed = ugui.button({
                 uid = 5,
                 rectangle = button_rect,
                 text = 'Hello World!',
             })
 
-            if i == 2 then
-                ctx.assert(pressed, 'Button not pressed')
-            end
-
             ugui.end_frame()
         end
+
+        ctx.assert_eq(true, pressed)
     end,
 }
 
