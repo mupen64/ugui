@@ -83,6 +83,7 @@ group.tests[#group.tests + 1] = {
             rectangle = ctx.data.rect,
             text = 'Hello World!',
             tooltip = 'tooltip',
+            is_enabled = ctx.data.enabled,
         })
         ugui.end_frame()
 
