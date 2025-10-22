@@ -15,11 +15,15 @@ ugui = nil
 ---@module "mupen-lua-ugui-ext"
 ugui_ext = nil
 
+local load_BreitbandGraphics = loadfile(path_root .. 'breitbandgraphics.lua')
+local load_ugui = loadfile(path_root .. 'mupen-lua-ugui.lua')
+local load_ugui_ext = loadfile(path_root .. 'mupen-lua-ugui-ext.lua')
+
 local function reset_ugui_state()
     UGUI_QUIET = true
-    BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
-    ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
-    ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
+    BreitbandGraphics = load_BreitbandGraphics()
+    ugui = load_ugui()
+    ugui_ext = load_ugui_ext()
 end
 
 reset_ugui_state()
