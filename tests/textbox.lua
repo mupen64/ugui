@@ -73,8 +73,8 @@ group.tests[#group.tests + 1] = {
         {
             begin_mouse_x = 99,
             end_mouse_x = 12,
-            expected_start_index = 3,
-            expected_end_index = 5,
+            expected_start_index = 5,
+            expected_end_index = 3,
         },
     },
     func = function(ctx)
@@ -85,14 +85,14 @@ group.tests[#group.tests + 1] = {
             height = 25,
         }
 
-        for i = 1, 7, 1 do
+        for i = 1, 6, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = i > 3 and ctx.data.end_mouse_x or ctx.data.begin_mouse_x,
                     y = 10,
                 },
                 wheel = 0,
-                is_primary_down = i > 2,
+                is_primary_down = i > 1,
                 held_keys = {},
             })
 
