@@ -87,6 +87,19 @@ emu.atdrawd2d(function()
             x = math.sin(os.clock() / 2) * 50,
             y = math.cos(os.clock() / 2) * 50,
         },
+        styler_mixin = {
+            joystick = {
+                tip_size = 50,
+            },
+        },
+    })
+    ugui.joystick({
+        uid = 56,
+        rectangle = {x = 355, y = 350, width = 150, height = 150},
+        position = {
+            x = math.sin(os.clock() / 2) * 50,
+            y = math.cos(os.clock() / 2) * 50,
+        },
     })
     index = ugui.carrousel_button({
         uid = 60,
@@ -124,6 +137,6 @@ emu.atdrawd2d(function()
         font_name = ugui.standard_styler.params.font_name,
         font_size = ugui.standard_styler.params.font_size,
     })
-    
+
     end_frame()
 end)
