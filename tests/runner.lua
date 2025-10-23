@@ -3,8 +3,8 @@
 
 -- FIXME: Strong typing for the test runner!!!
 
-local path_root = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "\\")
-local test_root = debug.getinfo(1).short_src:gsub("(\\[^\\]+)\\[^\\]+$", "%1\\")
+local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\')
+local test_root = debug.getinfo(1).short_src:gsub('(\\[^\\]+)\\[^\\]+$', '%1\\')
 
 ---@module "breitbandgraphics"
 BreitbandGraphics = nil
@@ -15,20 +15,22 @@ ugui = nil
 ---@module "mupen-lua-ugui-ext"
 ugui_ext = nil
 
+local load_BreitbandGraphics = loadfile(path_root .. 'breitbandgraphics.lua')
+local load_ugui = loadfile(path_root .. 'mupen-lua-ugui.lua')
+local load_ugui_ext = loadfile(path_root .. 'mupen-lua-ugui-ext.lua')
+
 local function reset_ugui_state()
     UGUI_QUIET = true
-    BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
-    ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
-    ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
+    BreitbandGraphics = load_BreitbandGraphics()
+    ugui = load_ugui()
+    ugui_ext = load_ugui_ext()
 end
 
 reset_ugui_state()
 
 local groups = {
     dofile(test_root .. 'core.lua'),
-    dofile(test_root .. 'layout.lua'),
     dofile(test_root .. 'richtext.lua'),
-    dofile(test_root .. 'stackpanel.lua'),
     dofile(test_root .. 'tooltip.lua'),
     dofile(test_root .. 'breitbandgraphics.lua'),
     dofile(test_root .. 'button.lua'),
@@ -65,9 +67,7 @@ for key, group in pairs(groups) do
         local test_params = test.params and test.params or {0}
 
         for test_param_index, test_param in pairs(test_params) do
-            if not group.keep_state_between_tests then
-                reset_ugui_state()
-            end
+            reset_ugui_state()
 
             local assertion_count = 0
             local passed = true

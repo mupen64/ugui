@@ -1,13 +1,5 @@
-local path_root = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "\\")
-
----@module "breitbandgraphics"
-BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
-
----@module "mupen-lua-ugui"
-ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
-
-local initial_size = wgui.info()
-local mouse_wheel = 0
+local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
+dofile(path_root .. 'base.lua')
 
 local align_x = 2
 local align_y = 2
@@ -20,32 +12,7 @@ local alignments = {
 }
 
 emu.atdrawd2d(function()
-    BreitbandGraphics.fill_rectangle({
-        x = 0,
-        y = 0,
-        width = wgui.info().width,
-        height = wgui.info().height,
-    }, {
-        r = 253,
-        g = 253,
-        b = 253,
-    })
-
-    local keys = input.get()
-    ugui.begin_frame({
-        mouse_position = {
-            x = keys.xmouse,
-            y = keys.ymouse,
-        },
-        wheel = mouse_wheel,
-        is_primary_down = keys.leftclick,
-        held_keys = keys,
-        window_size = {
-            x = wgui.info().width,
-            y = wgui.info().height,
-        },
-    })
-    mouse_wheel = 0
+    begin_frame()
 
     ugui.button({
         uid = 1,
@@ -92,6 +59,7 @@ emu.atdrawd2d(function()
             'ok[icon:arrow_right][icon:arrow_right]',
         },
         plaintext = plaintext,
+        selected_index = 1,
     })
 
     local rect = {
@@ -104,16 +72,5 @@ emu.atdrawd2d(function()
     BreitbandGraphics.draw_rectangle(rect, BreitbandGraphics.colors.red, 2)
     ugui.standard_styler.draw_rich_text(rect, align_x, align_y, '[icon:arrow_up:#FF00FF]party time[icon:arrow_up:textbox.selection]', BreitbandGraphics.colors.black, ugui.visual_states.normal, plaintext)
 
-    ugui.end_frame()
-end)
-
-emu.atwindowmessage(function(_, msg_id, wparam, _)
-    if msg_id == 522 then
-        local scroll = math.floor(wparam / 65536)
-        if scroll == 120 then
-            mouse_wheel = 1
-        elseif scroll == 65416 then
-            mouse_wheel = -1
-        end
-    end
+    end_frame()
 end)

@@ -1,10 +1,5 @@
-local path_root = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "\\")
-
----@module "breitbandgraphics"
-BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
-
----@module "mupen-lua-ugui"
-ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
+local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
+dofile(path_root .. 'base.lua')
 
 local rectangle = {
     x = 5,
@@ -14,31 +9,7 @@ local rectangle = {
 }
 
 emu.atdrawd2d(function()
-    BreitbandGraphics.fill_rectangle({
-        x = 0,
-        y = 0,
-        width = wgui.info().width,
-        height = wgui.info().height,
-    }, {
-        r = 253,
-        g = 253,
-        b = 253,
-    })
-
-    local keys = input.get()
-    ugui.begin_frame({
-        mouse_position = {
-            x = keys.xmouse,
-            y = keys.ymouse,
-        },
-        wheel = mouse_wheel,
-        is_primary_down = keys.leftclick,
-        held_keys = keys,
-        window_size = {
-            x = wgui.info().width,
-            y = wgui.info().height,
-        },
-    })
+    begin_frame()
 
     BreitbandGraphics.draw_rectangle(rectangle, BreitbandGraphics.colors.red, 1)
     BreitbandGraphics.draw_text2({
@@ -82,9 +53,9 @@ emu.atdrawd2d(function()
         rectangle.y = math.max(1, keys.ymouse)
     end
 
-    if ugui.internal.get_just_pressed_keys()["F1"] then
+    if ugui.internal.get_just_pressed_keys()['F1'] then
         print(rectangle)
     end
 
-    ugui.end_frame()
+    end_frame()
 end)

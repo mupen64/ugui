@@ -63,7 +63,8 @@ group.tests[#group.tests + 1] = {
         ugui.internal.control_data[1] = {
             caret_index = ctx.data.selected_index,
         }
-        ugui.internal.active_control = 1
+        ugui.internal.keyboard_captured_control = 1
+        ugui.internal.mouse_captured_control = 1
 
         local real_position = nil
 

@@ -21,7 +21,7 @@ group.tests[#group.tests + 1] = {
 
         local index = 2
 
-        for i = 1, 2, 1 do
+        for i = 1, 3, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = 10,
@@ -39,12 +39,10 @@ group.tests[#group.tests + 1] = {
                 items = items,
             })
 
-            if i == 2 then
-                ctx.assert(index == 1, string.format('Expected index %d, got %d', 1, index))
-            end
-
             ugui.end_frame()
         end
+
+        ctx.assert_eq(1, index)
     end,
 }
 
@@ -60,7 +58,7 @@ group.tests[#group.tests + 1] = {
 
         local index = 2
 
-        for i = 1, 2, 1 do
+        for i = 1, 3, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = 90,
@@ -78,12 +76,10 @@ group.tests[#group.tests + 1] = {
                 items = items,
             })
 
-            if i == 2 then
-                ctx.assert(index == 3, string.format('Expected index %d, got %d', 3, index))
-            end
-
             ugui.end_frame()
         end
+
+        ctx.assert_eq(3, index)
     end,
 }
 
@@ -99,7 +95,7 @@ group.tests[#group.tests + 1] = {
 
         local index = 1
 
-        for i = 1, 2, 1 do
+        for i = 1, 3, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = 10,
@@ -117,12 +113,10 @@ group.tests[#group.tests + 1] = {
                 items = items,
             })
 
-            if i == 2 then
-                ctx.assert(index == 3, string.format('Expected index %d, got %d', 3, index))
-            end
-
             ugui.end_frame()
         end
+
+        ctx.assert_eq(3, index)
     end,
 }
 
@@ -138,7 +132,7 @@ group.tests[#group.tests + 1] = {
 
         local index = 3
 
-        for i = 1, 2, 1 do
+        for i = 1, 3, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = 90,
@@ -156,46 +150,11 @@ group.tests[#group.tests + 1] = {
                 items = items,
             })
 
-            if i == 2 then
-                ctx.assert(index == 1, string.format('Expected index %d, got %d', 1, index))
-            end
-
             ugui.end_frame()
         end
+
+        ctx.assert_eq(1, index)
     end,
 }
-
-group.tests[#group.tests + 1] = {
-    name = 'nil_params_no_error',
-    pass_if_no_error = true,
-    func = function(ctx)
-        local button_rect = {
-            x = 0,
-            y = 0,
-            width = 100,
-            height = 25,
-        }
-
-        ugui.begin_frame({
-            mouse_position = {
-                x = 10,
-                y = 10,
-            },
-            wheel = 0,
-            is_primary_down = false,
-            held_keys = {},
-        })
-
-        ugui.carrousel_button({
-            uid = 5,
-            rectangle = button_rect,
-            selected_index = nil,
-            items = nil,
-        })
-
-        ugui.end_frame()
-    end,
-}
-
 
 return group

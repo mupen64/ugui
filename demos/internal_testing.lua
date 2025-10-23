@@ -1,10 +1,5 @@
-local path_root = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "\\")
-
----@module "breitbandgraphics"
-BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
-
----@module "mupen-lua-ugui"
-ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
+local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
+dofile(path_root .. 'base.lua')
 
 local items = {}
 for i = 1, 1000, 1 do
@@ -116,34 +111,8 @@ local menu_items = {
     },
 }
 
--- wgui.resize(initial_size.width + 300, initial_size.height)
 emu.atdrawd2d(function()
-    BreitbandGraphics.fill_rectangle({
-        x = 0,
-        y = 0,
-        width = wgui.info().width,
-        height = wgui.info().height,
-    }, {
-        r = 253,
-        g = 253,
-        b = 253,
-    })
-
-    local keys = input.get()
-    ugui.begin_frame({
-        mouse_position = {
-            x = keys.xmouse,
-            y = keys.ymouse,
-        },
-        wheel = mouse_wheel,
-        is_primary_down = keys.leftclick,
-        held_keys = keys,
-        window_size = {
-            x = wgui.info().width,
-            y = wgui.info().height,
-        },
-    })
-    mouse_wheel = 0
+    begin_frame()
 
     selected_index = ugui.combobox({
         uid = 0,
@@ -161,10 +130,11 @@ emu.atdrawd2d(function()
         local result = ugui.menu({
             uid = 5,
             rectangle = {
-                x = 500,
+                x = 50,
                 y = 76,
             },
             items = menu_items,
+            z_index = 1,
         })
 
         if result.dismissed then
@@ -182,7 +152,7 @@ emu.atdrawd2d(function()
     end
 
     if ugui.button({
-            uid = 123,
+            uid = 500,
             rectangle = {
                 x = 5,
                 y = 55,
@@ -195,7 +165,7 @@ emu.atdrawd2d(function()
     end
 
     selected_index_2 = ugui.listbox({
-        uid = 555,
+        uid = 1000,
         is_enabled = true,
         rectangle = {
             x = 5,
@@ -208,8 +178,20 @@ emu.atdrawd2d(function()
         horizontal_scroll = false,
     })
 
+    ugui.listbox({
+        uid = 6000,
+        is_enabled = true,
+        rectangle = {
+            x = 300,
+            y = 80,
+            width = 200,
+            height = 300,
+        },
+        items = items
+    })
+
     text = ugui.textbox({
-        uid = 5255,
+        uid = 1500,
         rectangle = {
             x = 5,
             y = 30,
@@ -220,7 +202,7 @@ emu.atdrawd2d(function()
     })
 
     if ugui.button({
-            uid = 5010,
+            uid = 2000,
             rectangle = {
                 x = initial_size.width - 90,
                 y = initial_size.height - 90,
@@ -233,7 +215,7 @@ emu.atdrawd2d(function()
     end
 
     selected_index = ugui.combobox({
-        uid = 110123,
+        uid = 2500,
         rectangle = {
             x = 720,
             y = 10,
@@ -243,47 +225,30 @@ emu.atdrawd2d(function()
         items = items,
         selected_index = selected_index,
     })
-    
+
     ugui.combobox({
-        uid = 5015,
+        uid = 3000,
         rectangle = {
             x = initial_size.width - 90,
             y = initial_size.height - 250,
             width = 200,
             height = 30,
         },
-        items = {"A", "B", "C"},
+        items = {'A', 'B', 'C'},
         selected_index = 1,
     })
 
     ugui.combobox({
-        uid = 10000,
+        uid = 3500,
         rectangle = {
             x = 300,
             y = 10,
             width = 200,
             height = 30,
         },
-        items = {"A", "B", "C"},
-        selected_index = nil,
+        items = {'A', 'B', 'C'},
+        selected_index = 1,
     })
 
-    
-
-    ugui.end_frame()
-end)
-
-emu.atstop(function()
-    -- wgui.resize(initial_size.width, initial_size.height)
-end)
-
-emu.atwindowmessage(function(_, msg_id, wparam, _)
-    if msg_id == 522 then
-        local scroll = math.floor(wparam / 65536)
-        if scroll == 120 then
-            mouse_wheel = 1
-        elseif scroll == 65416 then
-            mouse_wheel = -1
-        end
-    end
+    end_frame()
 end)
