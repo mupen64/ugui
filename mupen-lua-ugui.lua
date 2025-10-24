@@ -1979,7 +1979,7 @@ ugui.registry.button = {
     ---@return ControlReturnValue
     logic = function(control, data)
         return {
-            clicked = ugui.internal.clicked_control == control.uid,
+            primary = ugui.internal.clicked_control == control.uid,
             meta = {
                 {interaction = ugui.interaction_states.none}, -- FIXME
             },
