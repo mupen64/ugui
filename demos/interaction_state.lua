@@ -12,7 +12,16 @@ end
 
 ---@param meta Meta
 local function log_interaction(meta)
-    local text_interaction = tostring(meta.interaction)
+    local text_interaction
+    if meta.interaction == ugui.interaction_states.none then
+        text_interaction = 'none'
+    elseif meta.interaction == ugui.interaction_states.started then
+        text_interaction = 'started'
+    elseif meta.interaction == ugui.interaction_states.ongoing then
+        text_interaction = 'ongoing'
+    elseif meta.interaction == ugui.interaction_states.ended then
+        text_interaction = 'ended'
+    end
     if interaction_logs[#interaction_logs] == text_interaction then
         return
     end
