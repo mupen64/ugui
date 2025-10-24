@@ -591,21 +591,6 @@ ugui.internal = {
         end
     end,
 
-    ---Performs default `started` -> `ongoing` and `ended` -> `none` interaction state transitions.
-    ---@param interaction InteractionState The control's interaction state.
-    ---@return InteractionState # The new interaction state.
-    handle_default_interaction_state_transitions = function(interaction)
-        if interaction == ugui.interaction_states.started then
-            interaction = ugui.interaction_states.ongoing
-        end
-
-        if interaction == ugui.interaction_states.ended then
-            interaction = ugui.interaction_states.none
-        end
-
-        return interaction
-    end,
-
     ---Performs full interaction state transitions based on a boolean interaction state.
     ---@param interaction InteractionState The control's interaction state.
     ---@param ongoing boolean Whether interaction is ongoing.
@@ -2102,10 +2087,13 @@ ugui.registry.carrousel_button = {
         end
 
         local selected_index = (control.items and ugui.internal.clamp(data.selected_index, 1, #control.items) or nil)
+
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, selected_index ~= control.selected_index)
+
         return {
             primary = selected_index,
             meta = {
-                {interaction = ugui.interaction_states.none}, -- FIXME
+                {interaction = data.interaction},
             },
         }
     end,
@@ -2205,9 +2193,11 @@ ugui.registry.textbox = {
 
         data.caret_index = ugui.internal.clamp(data.caret_index, 1, #data.text + 1)
 
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.text ~= data.text)
+
         return {
             primary = data.text,
-            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+            meta = {interaction = data.interaction},
         }
     end,
     ---@param control TextBox
@@ -2237,8 +2227,6 @@ ugui.registry.joystick = {
     logic = function(control, data)
         data.position = control.position
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, ugui.internal.mouse_captured_control == control.uid)
-
         if ugui.internal.mouse_captured_control == control.uid then
             data.position.x = ugui.internal.clamp(
                 ugui.internal.remap(ugui.internal.environment.mouse_position.x - control.rectangle.x, 0,
@@ -2253,6 +2241,8 @@ ugui.registry.joystick = {
                 data.position.y = 0
             end
         end
+
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.position.x ~= data.position.x or control.position.y ~= data.position.y)
 
         return {
             primary = data.position,
@@ -2286,9 +2276,11 @@ ugui.registry.trackbar = {
 
         data.value = ugui.internal.clamp(data.value, 0, 1)
 
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= data.value)
+
         return {
             primary = data.value,
-            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+            meta = {interaction = data.interaction},
         }
     end,
     ---@param control Trackbar
@@ -2392,9 +2384,11 @@ ugui.registry.listbox = {
 
         control.rectangle = prev_rect
 
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.selected_index ~= data.selected_index)
+
         return {
             primary = data.selected_index,
-            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+            meta = {interaction = data.interaction},
         }
     end,
     ---@param control ListBox
@@ -2438,9 +2432,11 @@ ugui.registry.scrollbar = {
             data.value = ugui.internal.clamp(start + (current - start), 0, 1)
         end
 
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= data.value)
+
         return {
             primary = data.value,
-            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+            meta = {interaction = data.interaction},
         }
     end,
     ---@param control ScrollBar
@@ -2516,9 +2512,11 @@ ugui.registry.combobox = {
             end
         end
 
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.selected_index ~= data.selected_index)
+
         return {
             primary = data.selected_index,
-            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+            meta = {interaction = data.interaction},
         }
     end,
     ---@param control ComboBox
@@ -2591,9 +2589,12 @@ ugui.registry.menu = {
             reset_hovered_index_for_all_child_menus(control.uid, control.items)
         end
 
+        -- FIXME: Cursed flag... does this make sense?
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, result.item ~= nil or result.dismissed)
+
         return {
             primary = result,
-            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+            meta = {interaction = data.interaction},
         }
     end,
     ---@param control Menu
@@ -2698,9 +2699,10 @@ ugui.registry.numberbox = {
             data.value = -math.abs(data.value)
         end
 
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= data.value)
         return {
             value = data.value,
-            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+            meta = {interaction = data.interaction},
         }
     end,
     ---@param control NumberBox
@@ -3125,6 +3127,9 @@ end
 ---@param control Spinner The control table.
 ---@return number, Meta # The new value.
 ugui.spinner = function(control)
+    local _ = ugui.control(control, '')
+    local data = ugui.internal.control_data[control.uid]
+
     local increment = control.increment or 1
     local value = control.value or 0
 
@@ -3152,7 +3157,7 @@ ugui.spinner = function(control)
     }
 
     local new_text = ugui.textbox({
-        uid = control.uid,
+        uid = control.uid + 1,
         rectangle = textbox_rect,
         text = tostring(value),
     })
@@ -3174,7 +3179,7 @@ ugui.spinner = function(control)
 
     if control.is_horizontal then
         if (ugui.button({
-                uid = control.uid + 1,
+                uid = control.uid + 2,
                 is_enabled = not (value == control.minimum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
@@ -3190,7 +3195,7 @@ ugui.spinner = function(control)
         end
 
         if (ugui.button({
-                uid = control.uid + 2,
+                uid = control.uid + 3,
                 is_enabled = not (value == control.maximum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
@@ -3206,7 +3211,7 @@ ugui.spinner = function(control)
         end
     else
         if (ugui.button({
-                uid = control.uid + 1,
+                uid = control.uid + 2,
                 is_enabled = not (value == control.maximum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
@@ -3222,7 +3227,7 @@ ugui.spinner = function(control)
         end
 
         if (ugui.button({
-                uid = control.uid + 2,
+                uid = control.uid + 3,
                 is_enabled = not (value == control.minimum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
@@ -3238,7 +3243,9 @@ ugui.spinner = function(control)
         end
     end
 
-    return clamp_value(value), {interaction = ugui.interaction_states.none} -- FIXME
+    data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= value)
+
+    return clamp_value(value), {interaction = data.interaction}
 end
 
 ---Places a TabControl.
@@ -3299,6 +3306,8 @@ ugui.tabcontrol = function(control)
         x = x + width + ugui.standard_styler.params.tabcontrol.gap_x
     end
 
+    data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.selected_index ~= selected_index)
+
     return {
         selected_index = selected_index,
         rectangle = {
@@ -3307,7 +3316,7 @@ ugui.tabcontrol = function(control)
             width = control.rectangle.width,
             height = control.rectangle.height - y - ugui.standard_styler.params.tabcontrol.rail_size,
         },
-    }, {interaction = ugui.interaction_states.none} -- FIXME
+    }, {interaction = data.interaction}
 end
 
 ---Places a NumberBox.

@@ -43,7 +43,6 @@ emu.atdrawd2d(function()
         rectangle = {x = 120, y = 10, width = 100, height = 23},
         text = 'Hello, world!',
     })
-    log_interaction(meta)
 
     checked, meta = ugui.toggle_button({
         uid = 15,
@@ -59,6 +58,7 @@ emu.atdrawd2d(function()
         items = items,
         selected_index = index,
     })
+    log_interaction(meta)
 
     end_frame()
 end)
