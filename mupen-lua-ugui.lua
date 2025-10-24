@@ -592,30 +592,49 @@ ugui.internal = {
     end,
 
     ---Performs default `started` -> `ongoing` and `ended` -> `none` interaction state transitions.
-    ---@param data any The control's data.
-    handle_default_interaction_state_transitions = function(data)
-        if data.interaction == ugui.interaction_states.started then
-            data.interaction = ugui.interaction_states.ongoing
+    ---@param interaction InteractionState The control's interaction state.
+    ---@return InteractionState # The new interaction state.
+    handle_default_interaction_state_transitions = function(interaction)
+        if interaction == ugui.interaction_states.started then
+            interaction = ugui.interaction_states.ongoing
         end
 
-        if data.interaction == ugui.interaction_states.ended then
-            data.interaction = ugui.interaction_states.none
+        if interaction == ugui.interaction_states.ended then
+            interaction = ugui.interaction_states.none
         end
+
+        return interaction
     end,
 
     ---Performs full interaction state transitions based on a boolean interaction state.
-    ---@param data any The control's data.
+    ---@param interaction InteractionState The control's interaction state.
     ---@param ongoing boolean Whether interaction is ongoing.
-    do_full_interaction_state_transitions = function(data, ongoing)
-        ugui.internal.handle_default_interaction_state_transitions(data)
-
-        if ongoing then
-            data.interaction = ugui.interaction_states.started
+    do_full_interaction_state_transitions = function(interaction, ongoing)
+        if interaction == ugui.interaction_states.started then
+            return ugui.interaction_states.ongoing
         end
 
-        if not ongoing and data.interaction == ugui.interaction_states.ongoing then
-            data.interaction = ugui.interaction_states.ended
+        if interaction == ugui.interaction_states.ended then
+            return ugui.interaction_states.none
         end
+
+        if interaction == ugui.interaction_states.ongoing and ongoing then
+            return ugui.interaction_states.ongoing
+        end
+
+        if interaction == ugui.interaction_states.ongoing and not ongoing then
+            return ugui.interaction_states.ended
+        end
+
+        if interaction == ugui.interaction_states.none and ongoing then
+            return ugui.interaction_states.started
+        end
+
+        if interaction == ugui.interaction_states.none and not ongoing then
+            return ugui.interaction_states.none
+        end
+
+        ugui.internal.assert(false, 'Unreachable code reached in do_full_interaction_state_transitions')
     end,
 
     ---Shows the tooltip for the currently hovered control.
@@ -2007,7 +2026,7 @@ ugui.registry.button = {
     logic = function(control, data)
         local pressed = ugui.internal.clicked_control == control.uid
 
-        ugui.internal.do_full_interaction_state_transitions(data, pressed)
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, pressed)
 
         return {
             primary = pressed,
@@ -2040,7 +2059,7 @@ ugui.registry.toggle_button = {
             data.is_checked = not data.is_checked
         end
 
-        ugui.internal.do_full_interaction_state_transitions(data, pressed)
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, pressed)
 
         return {
             primary = data.is_checked,
@@ -2218,7 +2237,7 @@ ugui.registry.joystick = {
     logic = function(control, data)
         data.position = control.position
 
-        ugui.internal.do_full_interaction_state_transitions(data, ugui.internal.mouse_captured_control == control.uid)
+        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, ugui.internal.mouse_captured_control == control.uid)
 
         if ugui.internal.mouse_captured_control == control.uid then
             data.position.x = ugui.internal.clamp(

@@ -51,7 +51,6 @@ emu.atdrawd2d(function()
         text = 'Hello, world!',
         is_checked = checked,
     })
-    log_interaction(meta)
 
     index, meta = ugui.listbox({
         uid = 20,
@@ -60,7 +59,6 @@ emu.atdrawd2d(function()
         items = items,
         selected_index = index,
     })
-    log_interaction(meta)
 
     end_frame()
 end)
