@@ -591,6 +591,33 @@ ugui.internal = {
         end
     end,
 
+    ---Performs default `started` -> `ongoing` and `ended` -> `none` interaction state transitions.
+    ---@param data any The control's data.
+    handle_default_interaction_state_transitions = function(data)
+        if data.interaction == ugui.interaction_states.started then
+            data.interaction = ugui.interaction_states.ongoing
+        end
+
+        if data.interaction == ugui.interaction_states.ended then
+            data.interaction = ugui.interaction_states.none
+        end
+    end,
+
+    ---Performs full interaction state transitions based on a boolean interaction state.
+    ---@param data any The control's data.
+    ---@param ongoing boolean Whether interaction is ongoing.
+    do_full_interaction_state_transitions = function(data, ongoing)
+        ugui.internal.handle_default_interaction_state_transitions(data)
+
+        if ongoing then
+            data.interaction = ugui.interaction_states.started
+        end
+
+        if not ongoing and data.interaction == ugui.interaction_states.ongoing then
+            data.interaction = ugui.interaction_states.ended
+        end
+    end,
+
     ---Shows the tooltip for the currently hovered control.
     tooltip = function()
         if ugui.internal.hovered_control == nil then
@@ -1978,10 +2005,14 @@ ugui.registry.button = {
     ---@param control Button
     ---@return ControlReturnValue
     logic = function(control, data)
+        local pressed = ugui.internal.clicked_control == control.uid
+
+        ugui.internal.do_full_interaction_state_transitions(data, pressed)
+
         return {
-            primary = ugui.internal.clicked_control == control.uid,
+            primary = pressed,
             meta = {
-                {interaction = ugui.interaction_states.none}, -- FIXME
+                interaction = data.interaction,
             },
         }
     end,
@@ -2002,13 +2033,19 @@ ugui.registry.toggle_button = {
     ---@return ControlReturnValue
     logic = function(control, data)
         data.is_checked = control.is_checked
-        if ugui.internal.clicked_control == control.uid then
+
+        local pressed = ugui.internal.clicked_control == control.uid
+
+        if pressed then
             data.is_checked = not data.is_checked
         end
+
+        ugui.internal.do_full_interaction_state_transitions(data, pressed)
+
         return {
             primary = data.is_checked,
             meta = {
-                {interaction = ugui.interaction_states.none}, -- FIXME
+                interaction = data.interaction,
             },
         }
     end,
@@ -2181,21 +2218,7 @@ ugui.registry.joystick = {
     logic = function(control, data)
         data.position = control.position
 
-        if data.interaction == ugui.interaction_states.started then
-            data.interaction = ugui.interaction_states.ongoing
-        end
-
-        if data.interaction == ugui.interaction_states.ended then
-            data.interaction = ugui.interaction_states.none
-        end
-
-        if ugui.internal.clicked_control == control.uid then
-            data.interaction = ugui.interaction_states.started
-        end
-
-        if ugui.internal.mouse_captured_control ~= control.uid and data.interaction == ugui.interaction_states.ongoing then
-            data.interaction = ugui.interaction_states.ended
-        end
+        ugui.internal.do_full_interaction_state_transitions(data, ugui.internal.mouse_captured_control == control.uid)
 
         if ugui.internal.mouse_captured_control == control.uid then
             data.position.x = ugui.internal.clamp(
@@ -2823,6 +2846,10 @@ ugui.control = function(control, type)
     -- If the control has only just been added, we run its setup.
     if ugui.internal.control_data[control.uid] == nil then
         ugui.internal.control_data[control.uid] = {}
+
+        -- Every control has an interaction state
+        ugui.internal.control_data[control.uid].interaction = ugui.interaction_states.none
+
         if registry_entry.setup then
             registry_entry.setup(control, ugui.internal.control_data[control.uid])
         end
