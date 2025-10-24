@@ -2189,12 +2189,12 @@ ugui.registry.joystick = {
             data.interaction = ugui.interaction_states.started
         end
 
-        if ugui.internal.mouse_captured_control ~= control.uid and data.interaction == ugui.interaction_states.ongoing then
-            data.interaction = ugui.interaction_states.ended
-        end
-
         if data.interaction == ugui.interaction_states.ended then
             data.interaction = ugui.interaction_states.none
+        end
+
+        if ugui.internal.mouse_captured_control ~= control.uid and data.interaction == ugui.interaction_states.ongoing then
+            data.interaction = ugui.interaction_states.ended
         end
 
         if ugui.internal.mouse_captured_control == control.uid then
