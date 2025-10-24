@@ -619,7 +619,8 @@ ugui.internal = {
             return ugui.signal_change_states.none
         end
 
-        ugui.internal.assert(false, 'Unreachable code reached in process_signal_changes')
+        ugui.internal.assert(false, string.format('Got unexpected signal change state %s and changing %s combination',
+            tostring(signal_change_state), tostring(signal_changing)))
     end,
 
     ---Shows the tooltip for the currently hovered control.
