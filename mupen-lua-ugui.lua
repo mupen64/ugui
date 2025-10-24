@@ -138,7 +138,7 @@ end
 ---A numberbox, which allows modifying a number by typing or by adjusting its individual digits.
 
 ---@class Meta
----@field public interaction InteractionState The interaction state of the control.
+---@field public signal_change SignalChangeState The change state of the control's primary signal.
 ---Additional information about a placed control.
 
 ---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
@@ -591,35 +591,35 @@ ugui.internal = {
         end
     end,
 
-    ---Performs full interaction state transitions based on a boolean interaction state.
-    ---@param interaction InteractionState The control's interaction state.
-    ---@param ongoing boolean Whether interaction is ongoing.
-    do_full_interaction_state_transitions = function(interaction, ongoing)
-        if interaction == ugui.interaction_states.started then
-            return ugui.interaction_states.ongoing
+    ---Handles transitions between signal change state.
+    ---@param signal_change_state SignalChangeState The control's current signal change state.
+    ---@param signal_changing boolean Whether the control's signal is changing.
+    process_signal_changes = function(signal_change_state, signal_changing)
+        if signal_change_state == ugui.signal_change_states.started then
+            return ugui.signal_change_states.ongoing
         end
 
-        if interaction == ugui.interaction_states.ended then
-            return ugui.interaction_states.none
+        if signal_change_state == ugui.signal_change_states.ended then
+            return ugui.signal_change_states.none
         end
 
-        if interaction == ugui.interaction_states.ongoing and ongoing then
-            return ugui.interaction_states.ongoing
+        if signal_change_state == ugui.signal_change_states.ongoing and signal_changing then
+            return ugui.signal_change_states.ongoing
         end
 
-        if interaction == ugui.interaction_states.ongoing and not ongoing then
-            return ugui.interaction_states.ended
+        if signal_change_state == ugui.signal_change_states.ongoing and not signal_changing then
+            return ugui.signal_change_states.ended
         end
 
-        if interaction == ugui.interaction_states.none and ongoing then
-            return ugui.interaction_states.started
+        if signal_change_state == ugui.signal_change_states.none and signal_changing then
+            return ugui.signal_change_states.started
         end
 
-        if interaction == ugui.interaction_states.none and not ongoing then
-            return ugui.interaction_states.none
+        if signal_change_state == ugui.signal_change_states.none and not signal_changing then
+            return ugui.signal_change_states.none
         end
 
-        ugui.internal.assert(false, 'Unreachable code reached in do_full_interaction_state_transitions')
+        ugui.internal.assert(false, 'Unreachable code reached in process_signal_changes')
     end,
 
     ---Shows the tooltip for the currently hovered control.
@@ -800,16 +800,16 @@ ugui.visual_states = {
     active = 3,
 }
 
----@enum InteractionState
---- The interaction state of a control.
-ugui.interaction_states = {
-    --- The control is not being interacted with.
+---@enum SignalChangeState
+--- The change in the primary signal ("return value") of a control.
+ugui.signal_change_states = {
+    --- The signal isn't changing.
     none = 0,
-    --- A control interaction has just started.
+    --- The signal has just started changing.
     started = 1,
-    --- A control interaction is ongoing.
+    --- The signal is currently changing.
     ongoing = 2,
-    --- A control interaction has just ended.
+    --- The signal has just stopped changing.
     ended = 3,
 }
 
@@ -2011,12 +2011,12 @@ ugui.registry.button = {
     logic = function(control, data)
         local pressed = ugui.internal.clicked_control == control.uid
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, pressed)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, pressed)
 
         return {
             primary = pressed,
             meta = {
-                interaction = data.interaction,
+                signal_change = data.signal_change,
             },
         }
     end,
@@ -2044,12 +2044,12 @@ ugui.registry.toggle_button = {
             data.is_checked = not data.is_checked
         end
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, pressed)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, pressed)
 
         return {
             primary = data.is_checked,
             meta = {
-                interaction = data.interaction,
+                signal_change = data.signal_change,
             },
         }
     end,
@@ -2088,12 +2088,12 @@ ugui.registry.carrousel_button = {
 
         local selected_index = (control.items and ugui.internal.clamp(data.selected_index, 1, #control.items) or nil)
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, selected_index ~= control.selected_index)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, selected_index ~= control.selected_index)
 
         return {
             primary = selected_index,
             meta = {
-                {interaction = data.interaction},
+                {signal_change = data.signal_change},
             },
         }
     end,
@@ -2193,11 +2193,11 @@ ugui.registry.textbox = {
 
         data.caret_index = ugui.internal.clamp(data.caret_index, 1, #data.text + 1)
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.text ~= data.text)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.text ~= data.text)
 
         return {
             primary = data.text,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control TextBox
@@ -2218,8 +2218,8 @@ ugui.registry.joystick = {
         ugui.internal.assert(type(control.y_snap) == 'nil' or type(control.y_snap) == 'number', 'expected y_snap to be nil or number')
     end,
     setup = function(control, data)
-        if data.interaction == nil then
-            data.interaction = ugui.interaction_states.none
+        if data.signal_change == nil then
+            data.signal_change = ugui.signal_change_states.none
         end
     end,
     ---@param control Joystick
@@ -2242,11 +2242,11 @@ ugui.registry.joystick = {
             end
         end
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.position.x ~= data.position.x or control.position.y ~= data.position.y)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.position.x ~= data.position.x or control.position.y ~= data.position.y)
 
         return {
             primary = data.position,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Joystick
@@ -2276,11 +2276,11 @@ ugui.registry.trackbar = {
 
         data.value = ugui.internal.clamp(data.value, 0, 1)
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= data.value)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= data.value)
 
         return {
             primary = data.value,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Trackbar
@@ -2384,11 +2384,11 @@ ugui.registry.listbox = {
 
         control.rectangle = prev_rect
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.selected_index ~= data.selected_index)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.selected_index ~= data.selected_index)
 
         return {
             primary = data.selected_index,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control ListBox
@@ -2432,11 +2432,11 @@ ugui.registry.scrollbar = {
             data.value = ugui.internal.clamp(start + (current - start), 0, 1)
         end
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= data.value)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= data.value)
 
         return {
             primary = data.value,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control ScrollBar
@@ -2512,11 +2512,11 @@ ugui.registry.combobox = {
             end
         end
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.selected_index ~= data.selected_index)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.selected_index ~= data.selected_index)
 
         return {
             primary = data.selected_index,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control ComboBox
@@ -2590,11 +2590,11 @@ ugui.registry.menu = {
         end
 
         -- FIXME: Cursed flag... does this make sense?
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, result.item ~= nil or result.dismissed)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, result.item ~= nil or result.dismissed)
 
         return {
             primary = result,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Menu
@@ -2699,10 +2699,10 @@ ugui.registry.numberbox = {
             data.value = -math.abs(data.value)
         end
 
-        data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= data.value)
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= data.value)
         return {
             value = data.value,
-            meta = {interaction = data.interaction},
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control NumberBox
@@ -2868,8 +2868,7 @@ ugui.control = function(control, type)
     if ugui.internal.control_data[control.uid] == nil then
         ugui.internal.control_data[control.uid] = {}
 
-        -- Every control has an interaction state
-        ugui.internal.control_data[control.uid].interaction = ugui.interaction_states.none
+        ugui.internal.control_data[control.uid].signal_change = ugui.signal_change_states.none
 
         if registry_entry.setup then
             registry_entry.setup(control, ugui.internal.control_data[control.uid])
@@ -3243,9 +3242,9 @@ ugui.spinner = function(control)
         end
     end
 
-    data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.value ~= value)
+    data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= value)
 
-    return clamp_value(value), {interaction = data.interaction}
+    return clamp_value(value), {signal_change = data.signal_change}
 end
 
 ---Places a TabControl.
@@ -3306,7 +3305,7 @@ ugui.tabcontrol = function(control)
         x = x + width + ugui.standard_styler.params.tabcontrol.gap_x
     end
 
-    data.interaction = ugui.internal.do_full_interaction_state_transitions(data.interaction, control.selected_index ~= selected_index)
+    data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.selected_index ~= selected_index)
 
     return {
         selected_index = selected_index,
@@ -3316,7 +3315,7 @@ ugui.tabcontrol = function(control)
             width = control.rectangle.width,
             height = control.rectangle.height - y - ugui.standard_styler.params.tabcontrol.rail_size,
         },
-    }, {interaction = data.interaction}
+    }, {signal_change = data.signal_change}
 end
 
 ---Places a NumberBox.
