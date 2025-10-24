@@ -137,13 +137,19 @@ end
 ---@field public show_negative boolean? Whether a button for viewing and toggling the value's sign is shown. If nil, false is assumed.
 ---A numberbox, which allows modifying a number by typing or by adjusting its individual digits.
 
+---@class Meta
+---@field public interaction InteractionState The interaction state of the control.
+---Additional information about a placed control.
+
 ---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
+
+---@alias ControlReturnValue { primary: any, meta: Meta }
 
 ---@class ControlRegistryEntry
 ---@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
----@field public logic fun(control: Control, data: any): any Executes control logic.
+---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
 ---Represents an entry in the control registry.
 
@@ -761,6 +767,19 @@ ugui.visual_states = {
     hovered = 2,
     --- The control is currently capturing inputs.
     active = 3,
+}
+
+---@enum InteractionState
+--- The interaction state of a control.
+ugui.interaction_states = {
+    --- The control is not being interacted with.
+    none = 0,
+    --- A control interaction has just started.
+    started = 1,
+    --- A control interaction is ongoing.
+    ongoing = 2,
+    --- A control interaction has just ended.
+    ended = 3,
 }
 
 ---Gets the basic visual state of a control.
@@ -1957,8 +1976,14 @@ ugui.registry.button = {
         ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
     end,
     ---@param control Button
+    ---@return ControlReturnValue
     logic = function(control, data)
-        return ugui.internal.clicked_control == control.uid
+        return {
+            clicked = ugui.internal.clicked_control == control.uid,
+            meta = {
+                {interaction = ugui.interaction_states.none}, -- FIXME
+            },
+        }
     end,
     ---@param control Button
     draw = function(control)
@@ -1974,12 +1999,18 @@ ugui.registry.toggle_button = {
         ugui.internal.assert(type(control.is_checked) == 'boolean', 'expected is_checked to be boolean')
     end,
     ---@param control ToggleButton
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.is_checked = control.is_checked
         if ugui.internal.clicked_control == control.uid then
             data.is_checked = not data.is_checked
         end
-        return data.is_checked
+        return {
+            primary = data.is_checked,
+            meta = {
+                {interaction = ugui.interaction_states.none}, -- FIXME
+            },
+        }
     end,
     ---@param control ToggleButton
     draw = function(control)
@@ -1995,6 +2026,7 @@ ugui.registry.carrousel_button = {
         ugui.internal.assert(type(control.selected_index) == 'number', 'expected selected_index to be number')
     end,
     ---@param control CarrouselButton
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.selected_index = control.selected_index
 
@@ -2013,7 +2045,13 @@ ugui.registry.carrousel_button = {
             end
         end
 
-        return (control.items and ugui.internal.clamp(data.selected_index, 1, #control.items) or nil)
+        local selected_index = (control.items and ugui.internal.clamp(data.selected_index, 1, #control.items) or nil)
+        return {
+            primary = selected_index,
+            meta = {
+                {interaction = ugui.interaction_states.none}, -- FIXME
+            },
+        }
     end,
     ---@param control CarrouselButton
     draw = function(control)
@@ -2040,6 +2078,7 @@ ugui.registry.textbox = {
         end
     end,
     ---@param control TextBox
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.text = control.text
 
@@ -2110,7 +2149,10 @@ ugui.registry.textbox = {
 
         data.caret_index = ugui.internal.clamp(data.caret_index, 1, #data.text + 1)
 
-        return data.text
+        return {
+            primary = data.text,
+            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+        }
     end,
     ---@param control TextBox
     draw = function(control)
@@ -2129,9 +2171,31 @@ ugui.registry.joystick = {
         ugui.internal.assert(type(control.x_snap) == 'nil' or type(control.x_snap) == 'number', 'expected x_snap to be nil or number')
         ugui.internal.assert(type(control.y_snap) == 'nil' or type(control.y_snap) == 'number', 'expected y_snap to be nil or number')
     end,
+    setup = function(control, data)
+        if data.interaction == nil then
+            data.interaction = ugui.interaction_states.none
+        end
+    end,
     ---@param control Joystick
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.position = control.position
+
+        if data.interaction == ugui.interaction_states.started then
+            data.interaction = ugui.interaction_states.ongoing
+        end
+
+        if ugui.internal.clicked_control == control.uid then
+            data.interaction = ugui.interaction_states.started
+        end
+
+        if ugui.internal.mouse_captured_control ~= control.uid and data.interaction == ugui.interaction_states.ongoing then
+            data.interaction = ugui.interaction_states.ended
+        end
+
+        if data.interaction == ugui.interaction_states.ended then
+            data.interaction = ugui.interaction_states.none
+        end
 
         if ugui.internal.mouse_captured_control == control.uid then
             data.position.x = ugui.internal.clamp(
@@ -2148,7 +2212,10 @@ ugui.registry.joystick = {
             end
         end
 
-        return data.position
+        return {
+            primary = data.position,
+            meta = {interaction = data.interaction},
+        }
     end,
     ---@param control Joystick
     draw = function(control)
@@ -2163,6 +2230,7 @@ ugui.registry.trackbar = {
         ugui.internal.assert(type(control.value) == 'number', 'expected position to be number')
     end,
     ---@param control Trackbar
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.value = control.value
 
@@ -2176,7 +2244,10 @@ ugui.registry.trackbar = {
 
         data.value = ugui.internal.clamp(data.value, 0, 1)
 
-        return data.value
+        return {
+            primary = data.value,
+            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+        }
     end,
     ---@param control Trackbar
     draw = function(control)
@@ -2202,6 +2273,7 @@ ugui.registry.listbox = {
         end
     end,
     ---@param control ListBox
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.selected_index = control.selected_index
 
@@ -2278,7 +2350,10 @@ ugui.registry.listbox = {
 
         control.rectangle = prev_rect
 
-        return data.selected_index
+        return {
+            primary = data.selected_index,
+            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+        }
     end,
     ---@param control ListBox
     draw = function(control)
@@ -2294,6 +2369,7 @@ ugui.registry.scrollbar = {
         ugui.internal.assert(type(control.ratio) == 'number', 'expected ratio to be number')
     end,
     ---@param control ScrollBar
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.value = control.value
 
@@ -2320,7 +2396,10 @@ ugui.registry.scrollbar = {
             data.value = ugui.internal.clamp(start + (current - start), 0, 1)
         end
 
-        return data.value
+        return {
+            primary = data.value,
+            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+        }
     end,
     ---@param control ScrollBar
     draw = function(control)
@@ -2371,6 +2450,7 @@ ugui.registry.combobox = {
         end
     end,
     ---@param control ComboBox
+    ---@return ControlReturnValue
     logic = function(control, data)
         data.selected_index = control.selected_index
 
@@ -2394,7 +2474,10 @@ ugui.registry.combobox = {
             end
         end
 
-        return data.selected_index
+        return {
+            primary = data.selected_index,
+            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+        }
     end,
     ---@param control ComboBox
     draw = function(control)
@@ -2413,6 +2496,7 @@ ugui.registry.menu = {
         data.dismissed = 0
     end,
     ---@param control Menu
+    ---@return ControlReturnValue
     logic = function(control, data)
         local function reset_hovered_index_for_all_child_menus(uid, items)
             if ugui.internal.control_data[uid] then
@@ -2465,7 +2549,10 @@ ugui.registry.menu = {
             reset_hovered_index_for_all_child_menus(control.uid, control.items)
         end
 
-        return result
+        return {
+            primary = result,
+            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+        }
     end,
     ---@param control Menu
     draw = function(control)
@@ -2486,6 +2573,7 @@ ugui.registry.numberbox = {
         data.caret_index = 1
     end,
     ---@param control NumberBox
+    ---@return ControlReturnValue
     logic = function(control, data)
         local prev_value_negative = control.value < 0
         data.value = math.abs(control.value)
@@ -2568,7 +2656,10 @@ ugui.registry.numberbox = {
             data.value = -math.abs(data.value)
         end
 
-        return data.value
+        return {
+            value = data.value,
+            meta = {interaction = ugui.interaction_states.none}, -- FIXME
+        }
     end,
     ---@param control NumberBox
     draw = function(control)
@@ -2710,11 +2801,11 @@ end
 ---Places a Control of the specified type.
 ---@param control Control The control.
 ---@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
----@return any # The control's return value.
+---@return ControlReturnValue # The control's return value, or `nil` if the type is `""`.
 ugui.control = function(control, type)
     if type == '' then
         ugui.internal.control_data[control.uid] = {}
-        return
+        return nil
     end
     ---@cast type ControlType
 
@@ -2772,51 +2863,57 @@ end
 
 ---Places a Button.
 ---@param control Button The control table.
----@return boolean # Whether the button has been pressed.
+---@return boolean, Meta # Whether the button has been pressed.
 ugui.button = function(control)
-    return ugui.control(control, 'button')
+    local result = ugui.control(control, 'button')
+    return result.primary, result.meta
 end
 
 ---Places a ToggleButton.
 ---@param control ToggleButton The control table.
----@return boolean # The new check state.
+---@return boolean, Meta # The new check state.
 ugui.toggle_button = function(control)
-    return ugui.control(control, 'toggle_button')
+    local result = ugui.control(control, 'toggle_button')
+    return result.primary, result.meta
 end
 
 ---Places a CarrouselButton.
 ---@param control CarrouselButton The control table.
----@return integer # The new selected index.
+---@return integer, Meta # The new selected index.
 ugui.carrousel_button = function(control)
-    return ugui.control(control, 'carrousel_button')
+    local result = ugui.control(control, 'carrousel_button')
+    return result.primary, result.meta
 end
 
 ---Places a TextBox.
 ---@param control TextBox The control table.
----@return string # The new text.
+---@return string, Meta # The new text.
 ugui.textbox = function(control)
-    return ugui.control(control, 'textbox')
+    local result = ugui.control(control, 'textbox')
+    return result.primary, result.meta
 end
 
 ---Places a Joystick.
 ---@param control Joystick The control table.
----@return Vector2 # The joystick's new position.
+---@return Vector2, Meta
 ugui.joystick = function(control)
-    return ugui.control(control, 'joystick')
+    local result = ugui.control(control, 'joystick')
+    return result.primary, result.meta
 end
 
 ---Places a Trackbar.
 ---@param control Trackbar The control table.
----@return number # The trackbar's new value.
+---@return number, Meta # The trackbar's new value.
 ugui.trackbar = function(control)
-    return ugui.control(control, 'trackbar')
+    local result = ugui.control(control, 'trackbar')
+    return result.primary, result.meta
 end
 
 ---Places a ComboBox.
 ---@param control ComboBox The control table.
----@return integer # The new selected index.
+---@return integer, Meta # The new selected index.
 ugui.combobox = function(control)
-    local _ = ugui.control(control, 'combobox')
+    local result = ugui.control(control, 'combobox')
     local data = ugui.internal.control_data[control.uid]
 
     if data.open then
@@ -2849,12 +2946,12 @@ ugui.combobox = function(control)
         })
     end
 
-    return data.selected_index
+    return data.selected_index, result.meta
 end
 
 ---Places a ListBox.
 ---@param control ListBox The control table.
----@return integer # The new selected index.
+---@return integer, Meta # The new selected index.
 ugui.listbox = function(control)
     local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
     local x_overflow = content_bounds.width > control.rectangle.width
@@ -2903,19 +3000,21 @@ ugui.listbox = function(control)
         })
     end
 
-    return result
+    return result.primary, result.meta
 end
 
 ---Places a ScrollBar.
 ---@param control ScrollBar The control table.
----@return number # The new value.
+---@return number, Meta # The new value.
 ugui.scrollbar = function(control)
-    return ugui.control(control, 'scrollbar')
+    local result = ugui.control(control, 'scrollbar')
+    ---@cast result ControlReturnValue
+    return result.primary, result.meta
 end
 
 ---Places a Menu.
 ---@param control Menu The control table.
----@return MenuResult # The menu result.
+---@return MenuResult, Meta # The menu result.
 ugui.menu = function(control)
     control.z_index = control.z_index or 1000
 
@@ -2973,12 +3072,12 @@ ugui.menu = function(control)
         end
     end
 
-    return result
+    return result, result.meta
 end
 
 ---Places a Spinner.
 ---@param control Spinner The control table.
----@return number # The new value.
+---@return number, Meta # The new value.
 ugui.spinner = function(control)
     local increment = control.increment or 1
     local value = control.value or 0
@@ -3093,12 +3192,12 @@ ugui.spinner = function(control)
         end
     end
 
-    return clamp_value(value)
+    return clamp_value(value), {interaction = ugui.interaction_states.none} -- FIXME
 end
 
 ---Places a TabControl.
 ---@param control TabControl The control table.
----@return TabControlResult # The result.
+---@return TabControlResult, Meta # The result.
 ugui.tabcontrol = function(control)
     local _ = ugui.control(control, '')
     local data = ugui.internal.control_data[control.uid]
@@ -3162,12 +3261,12 @@ ugui.tabcontrol = function(control)
             width = control.rectangle.width,
             height = control.rectangle.height - y - ugui.standard_styler.params.tabcontrol.rail_size,
         },
-    }
+    }, {interaction = ugui.interaction_states.none} -- FIXME
 end
 
 ---Places a NumberBox.
 ---@param control NumberBox The control table.
----@return integer # The new value.
+---@return integer, Meta # The new value.
 ugui.numberbox = function(control)
     local _ = ugui.control(control, 'numberbox')
     local data = ugui.internal.control_data[control.uid]
@@ -3197,7 +3296,7 @@ ugui.numberbox = function(control)
         end
     end
 
-    return math.floor(data.value)
+    return math.floor(data.value), data.meta
 end
 
 --#endregion
