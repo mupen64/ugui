@@ -11,6 +11,16 @@ if not BreitbandGraphics then
     return
 end
 
+-- Cursed global shims, good for now.
+if not math.pow then
+    math.pow = function(base, exponent)
+        return base ^ exponent
+    end
+end
+if not math.atan2 then
+    math.atan2 = math.atan
+end
+
 --#region Types
 
 ---@alias UID number
@@ -852,7 +862,7 @@ ugui.standard_styler = {
         --- The monospace variant font name.
         monospace_font_name = 'Consolas',
 
-        --- The color filter used for rendering controls. Only applies to cached control rendering using ugui-ext.  
+        --- The color filter used for rendering controls. Only applies to cached control rendering using ugui-ext.
         color_filter = BreitbandGraphics.hex_to_color('#FFFFFFFF'),
 
         --- The font size.
