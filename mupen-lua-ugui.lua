@@ -2677,11 +2677,10 @@ ugui.registry.numberbox = {
             for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
                 local num_1 = tonumber(key)
                 local num_2 = tonumber(key:sub(7))
-                local value = num_1 and num_1 or num_2
+                local digit = num_1 and num_1 or num_2
 
-                if value then
-                    local oldkey = math.floor(value / math.pow(10, control.places - data.caret_index)) % 10
-                    value = value + (value - oldkey) * math.pow(10, control.places - data.caret_index)
+                if digit then
+                    data.value = ugui.internal.set_digit(data.value, control.places, digit, data.caret_index)
                     data.caret_index = data.caret_index + 1
                 end
 
