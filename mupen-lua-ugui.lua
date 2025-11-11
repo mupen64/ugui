@@ -769,6 +769,12 @@ ugui.internal = {
             clicked_control = nil
         end
 
+        -- If we click outside of any control, we reset mouse and keyboard capture.
+        if ugui.internal.is_mouse_just_down() and clicked_control == nil then
+            mouse_captured_control = nil
+            keyboard_captured_control = nil
+        end
+
         -- Clear hovered control if it's disabled
         for i = 1, #ugui.internal.scene, 1 do
             local control = ugui.internal.scene[i].control
