@@ -170,8 +170,8 @@ end
 ---@field public arrange fun(panel: Panel, node: SceneNode): Rectangle[] Arranges the panel's children, assigning them their final rectangles.
 
 ---@class Panel
----@field public x number The panel's X offset from its parent.
----@field public y number The panel's Y offset from its parent.
+---@field public x number? The panel's X offset from its parent. If nil, `0` is assumed.
+---@field public y number? The panel's Y offset from its parent. If nil, `0` is assumed.
 ---A panel which can contain child controls and control their position and size.
 
 ---@class Canvas : Panel
@@ -364,6 +364,13 @@ ugui.internal = {
     ---@param type PanelType
     ---@param panel Panel
     append_panel_to_scene = function(type, panel)
+        if panel.x == nil then
+            panel.x = 0
+        end
+        if panel.y == nil then
+            panel.y = 0
+        end
+        
         local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
         local new_node = {
             panel_type = type,

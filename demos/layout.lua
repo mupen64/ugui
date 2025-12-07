@@ -5,8 +5,6 @@ emu.atdrawd2d(function()
     begin_frame()
 
     ugui.with_stackpanel({
-        x = 0,
-        y = 0,
         spacing = 10,
     }, function()
         ugui.button({
