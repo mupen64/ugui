@@ -50,7 +50,7 @@ end
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
----@field public rectangle Rectangle The rectangle in which the control is drawn.
+---@field public rectangle Rectangle The control's rectangle. The X/Y components are relative to the control's parent panel.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field package plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
@@ -3121,9 +3121,8 @@ ugui.internal.do_layout = function()
     ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
         node.desired_size = ugui.internal.measure_shim(node)
 
-        if not node.render_bounds then
-            node.render_bounds = {x = 0, y = 0, width = 0, height = 0}
-        end
+        local parent_render_bounds = node.parent and node.parent.render_bounds or {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y}
+        node.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = node.desired_size.x, height = node.desired_size.y}, parent_render_bounds, ugui.alignments.stretch, ugui.alignments.stretch)
     end)
 
     -- 2. Arrange
@@ -3150,6 +3149,10 @@ ugui.internal.do_layout = function()
                 child_bounds[i],
                 ugui.alignments.stretch,
                 ugui.alignments.stretch)
+
+            local offset = child.control and {x = child.control.rectangle.x, y = child.control.rectangle.y} or {x = child.panel.x, y = child.panel.y}
+            child.render_bounds.x = child.render_bounds.x + offset.x
+            child.render_bounds.y = child.render_bounds.y + offset.y
         end
     end)
 
