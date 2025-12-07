@@ -152,6 +152,7 @@ end
 ---Additional information about a placed control.
 
 ---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
+---@alias PanelType "canvas" | "stackpanel"
 
 ---@alias ControlReturnValue { primary: any, meta: Meta }
 
@@ -163,7 +164,10 @@ end
 ---@field public draw fun(control: Control) Draws the control.
 ---Represents an entry in the control registry.
 
----@alias PanelType "canvas" | "stackpanel"
+---@class PanelRegistryEntry
+---@field public validate fun(panel: Panel) Verifies that a panel instance matches the desired type.
+---@field public measure fun(panel: Panel, node: SceneNode): Vector2 Measures the desired size of the panel based on its children.
+---@field public arrange fun(panel: Panel, node: SceneNode): Rectangle[] Arranges the panel's children, assigning them their final rectangles.
 
 ---@class Panel
 ---@field public x number The panel's X offset from its parent.
@@ -173,31 +177,28 @@ end
 ---@class Canvas : Panel
 ---A canvas panel which allows children to specify their positions absolutely.
 
----@class Stack : Panel
+---@class StackPanel : Panel
 ---@field public horizontal boolean? Whether the stack panel arranges its children horizontally.
 ---@field public spacing number? The spacing between child controls. Defaults to `0` if nil.
 ---A stack panel which positions its child controls in a horizontal or vertical stack.
 
----@class PanelRegistryEntry
----@field public validate fun(panel: Panel) Verifies that a panel instance matches the desired type.
----@field public measure fun(panel: Panel, node: SceneNode): Vector2 Measures the desired size of the panel based on its children.
----@field public arrange fun(panel: Panel, node: SceneNode) Arranges the panel's children, assigning them their final rectangles.
+---@alias RegistryEntry ControlRegistryEntry | PanelRegistryEntry
+
+---@class SceneNode
+---@field public control Control The control contained in this node. Present if `panel_type` is nil.
+---@field public panel Panel The panel contained in this node. Present if `type` is nil.
+---@field public type ControlType The type of control contained in this node. Present if `panel_type` is nil.
+---@field public panel_type PanelType? The type of panel contained in this node. Present if `type` is nil.
+---@field public parent SceneNode? The parent node of this node. Nil if this is the root node.
+---@field public children SceneNode[] The child nodes of this node.
+---@field public desired_size Vector2 The desired size of this node, as computed during the measure phase.
+---@field public render_bounds Rectangle The final rectangle assigned to this node during the arrange phase.
 
 --#endregion
 
 --#region ugui.internal
 
 ugui.internal = {
-    ---@class SceneNode
-    ---@field public control Control The control contained in this node. Present if `panel_type` is nil.
-    ---@field public panel Panel The panel contained in this node. Present if `type` is nil.
-    ---@field public type ControlType The type of control contained in this node. Present if `panel_type` is nil.
-    ---@field public panel_type PanelType? The type of panel contained in this node. Present if `type` is nil.
-    ---@field public parent SceneNode? The parent node of this node. Nil if this is the root node.
-    ---@field public children SceneNode[] The child nodes of this node.
-    ---@field public desired_size Vector2 The desired size of this node, as computed during the measure phase.
-    ---@field public render_bounds Rectangle The final rectangle assigned to this node during the arrange phase.
-
     ---@type SceneNode
     root = {},
 
@@ -372,6 +373,19 @@ ugui.internal = {
         }
         parent_node.children[#parent_node.children + 1] = new_node
         ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = new_node
+    end,
+
+    ---Shim for measuring a node's desired size, which delegates to the appropriate panel registry entry.
+    ---@param node SceneNode
+    ---@return Vector2
+    measure_shim = function(node)
+        -- Controls can determine their own size - for now...
+        if node.type then
+            return {x = node.control.rectangle.width, y = node.control.rectangle.height}
+        end
+
+        local registry_entry = ugui.registry[node.panel_type]
+        return registry_entry.measure(node.panel, node)
     end,
 
     ---Prints the scene tree for debugging purposes.
@@ -2228,7 +2242,7 @@ ugui.standard_styler = {
     end,
 }
 
----@type { [string]: ControlRegistryEntry }
+---@type { [string]: RegistryEntry }
 ugui.registry = {}
 
 ---@type ControlRegistryEntry
@@ -2991,6 +3005,86 @@ ugui.registry.numberbox = {
     end,
 }
 
+---@type PanelRegistryEntry
+ugui.registry.canvas = {
+    ---@param panel Canvas
+    validate = function(panel)
+        ugui.internal.assert(type(panel.x) == 'number', 'expected x to be number')
+        ugui.internal.assert(type(panel.y) == 'number', 'expected y to be number')
+    end,
+    ---@param panel Canvas
+    measure = function(panel, node)
+        return ugui.internal.environment.window_size
+    end,
+    ---@param panel Canvas
+    arrange = function(panel, node)
+        local rects = {}
+        for _, child in pairs(node.children) do
+            rects[#rects + 1] = {
+                x = child.panel and child.panel.x or child.control.rectangle.x,
+                y = child.panel and child.panel.y or child.control.rectangle.y,
+                width = child.desired_size.x,
+                height = child.desired_size.y,
+            }
+        end
+        return rects
+    end,
+}
+
+---@type PanelRegistryEntry
+ugui.registry.stackpanel = {
+    ---@param panel StackPanel
+    validate = function(panel)
+        ugui.internal.assert(type(panel.x) == 'number', 'expected x to be number')
+        ugui.internal.assert(type(panel.y) == 'number', 'expected y to be number')
+        ugui.internal.assert(type(panel.horizontal) == 'boolean' or panel.horizontal == nil, 'expected horizontal to be boolean or nil')
+        ugui.internal.assert(type(panel.spacing) == 'number' or panel.spacing == nil, 'expected spacing to be number or nil')
+    end,
+    ---@param panel StackPanel
+    measure = function(panel, node)
+        local sum = 0
+        if panel.horizontal then
+            for _, child in pairs(node.children) do
+                sum = sum + ugui.internal.measure_shim(child).x
+            end
+            return {x = sum, y = 0}
+        else
+            for _, child in pairs(node.children) do
+                sum = sum + ugui.internal.measure_shim(child).y
+            end
+            return {x = 0, y = sum}
+        end
+    end,
+    ---@param panel StackPanel
+    arrange = function(panel, node)
+        local rects = {}
+        local sum = 0
+        if panel.horizontal then
+            for _, child in pairs(node.children) do
+                rects[#rects + 1] = {
+                    x = sum,
+                    y = 0,
+                    width = child.desired_size.x,
+                    height = child.desired_size.y,
+                }
+                sum = sum + child.desired_size.x
+            end
+        else
+            for _, child in pairs(node.children) do
+                rects[#rects + 1] = {
+                    x = 0,
+                    y = sum,
+                    width = child.desired_size.x,
+                    height = child.desired_size.y,
+                }
+                sum = sum + child.desired_size.y
+            end
+        end
+
+        return rects
+    end,
+}
+
 --#endregion
 
 --#region Main API
@@ -3023,110 +3117,9 @@ ugui.begin_frame = function(environment)
 end
 
 ugui.internal.do_layout = function()
-    ---FIXME: Hacked in here for now, of course this should move to registry
-    ---@param node SceneNode
-    ---@return Vector2
-    local function measure_node(node)
-        if node.control then
-            return {x = node.control.rectangle.width, y = node.control.rectangle.height}
-        end
-
-        if node.panel_type == 'canvas' then
-            return {x = 0, y = 0}
-        end
-
-        if node.panel_type == 'stackpanel' then
-            local stackpanel = node.panel
-            ---@cast stackpanel Stack
-
-            local sum = 0
-            if stackpanel.horizontal then
-                for _, child in pairs(node.children) do
-                    sum = sum + measure_node(child).x
-                end
-                return {x = sum, y = 0}
-            else
-                for _, child in pairs(node.children) do
-                    sum = sum + measure_node(child).y
-                end
-                return {x = 0, y = sum}
-            end
-        end
-
-        error('Unknown panel type: ' .. tostring(node.panel_type))
-    end
-
-    ---FIXME: Hacked in here for now, of course this should move to registry
-    ---@param node SceneNode
-    ---@return Rectangle[]
-    local function arrange_node(node)
-        if node.control then
-            return {}
-        end
-
-        local rects = {}
-
-        if node.panel_type == 'canvas' then
-            for _, child in pairs(node.children) do
-                local child_position
-                if node.control then
-                    child_position = {
-                        x = node.control.rectangle.x,
-                        y = node.control.rectangle.y,
-                    }
-                else
-                    child_position = {
-                        x = node.panel.x,
-                        y = node.panel.y,
-                    }
-                end
-
-                rects[#rects + 1] = {
-                    x = child_position.x,
-                    y = child_position.y,
-                    width = child.desired_size.x,
-                    height = child.desired_size.y,
-                }
-            end
-            return rects
-        end
-
-        if node.panel_type == 'stackpanel' then
-            local stackpanel = node.panel
-            ---@cast stackpanel Stack
-
-            local sum = 0
-            if stackpanel.horizontal then
-                for _, child in pairs(node.children) do
-                    rects[#rects + 1] = {
-                        x = sum,
-                        y = 0,
-                        width = child.desired_size.x,
-                        height = child.desired_size.y,
-                    }
-                    sum = sum + child.desired_size.x
-                end
-            else
-                for _, child in pairs(node.children) do
-                    rects[#rects + 1] = {
-                        x = 0,
-                        y = sum,
-                        width = child.desired_size.x,
-                        height = child.desired_size.y,
-                    }
-                    sum = sum + child.desired_size.y
-                end
-            end
-
-            return rects
-        end
-
-        error('Unknown panel type: ' .. tostring(node.panel_type))
-    end
-
     -- 1. Measure
     ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
-        node.desired_size = measure_node(node)
+        node.desired_size = ugui.internal.measure_shim(node)
 
         if not node.render_bounds then
             node.render_bounds = {x = 0, y = 0, width = 0, height = 0}
@@ -3139,7 +3132,10 @@ ugui.internal.do_layout = function()
             return
         end
 
-        local child_bounds = arrange_node(node)
+        ---@type PanelRegistryEntry
+        local registry_entry = ugui.registry[node.panel_type]
+
+        local child_bounds = registry_entry.arrange(node.panel, node)
         assert(#child_bounds == #node.children)
 
         -- Results from arrange are control-relative
