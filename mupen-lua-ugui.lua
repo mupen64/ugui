@@ -370,7 +370,7 @@ ugui.internal = {
         if panel.y == nil then
             panel.y = 0
         end
-        
+
         local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
         local new_node = {
             panel_type = type,
@@ -1021,6 +1021,67 @@ ugui.internal = {
         ugui.internal.mouse_captured_control = mouse_captured_control and mouse_captured_control.control.uid or nil
         ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
+    end,
+
+    ---Performs layouting of the scene tree.
+    do_layout = function()
+        -- 1. Measure
+        ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+            node.desired_size = ugui.internal.measure_shim(node)
+
+            local parent_render_bounds = node.parent and node.parent.render_bounds or {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y}
+            node.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = node.desired_size.x, height = node.desired_size.y}, parent_render_bounds, ugui.alignments.stretch, ugui.alignments.stretch)
+        end)
+
+        -- 2. Arrange
+        ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+            if not node.panel_type then
+                return
+            end
+
+            ---@type PanelRegistryEntry
+            local registry_entry = ugui.registry[node.panel_type]
+
+            local child_bounds = registry_entry.arrange(node.panel, node)
+            assert(#child_bounds == #node.children)
+
+            -- Results from arrange are control-relative
+            for _, rect in pairs(child_bounds) do
+                rect.x = node.render_bounds.x + rect.x
+                rect.y = node.render_bounds.y + rect.y
+            end
+
+            for i, child in pairs(node.children) do
+                child.render_bounds = ugui.internal.align_rect(
+                    {x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y},
+                    child_bounds[i],
+                    ugui.alignments.stretch,
+                    ugui.alignments.stretch)
+
+                local offset = child.control and {x = child.control.rectangle.x, y = child.control.rectangle.y} or {x = child.panel.x, y = child.panel.y}
+                child.render_bounds.x = child.render_bounds.x + offset.x
+                child.render_bounds.y = child.render_bounds.y + offset.y
+            end
+        end)
+
+        -- Just a hack for compat with the later shit code
+        ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+            if node.control then
+                node.control.rectangle = node.render_bounds
+            end
+        end)
+    end,
+
+    ---Resets the scene to its initial state.
+    ---By default, the scene contains a single canvas panel that allows absolute positioning.
+    reset_scene = function()
+        ugui.internal.root = {
+            panel_type = 'canvas',
+            panel = {},
+            children = {},
+            parent = nil,
+        }
+        ugui.internal.parent_stack = {ugui.internal.root}
     end,
 }
 
@@ -3125,68 +3186,6 @@ ugui.begin_frame = function(environment)
     end
 
     ugui.internal.reset_scene()
-end
-
-ugui.internal.do_layout = function()
-    -- 1. Measure
-    ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
-        node.desired_size = ugui.internal.measure_shim(node)
-
-        local parent_render_bounds = node.parent and node.parent.render_bounds or {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y}
-        node.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = node.desired_size.x, height = node.desired_size.y}, parent_render_bounds, ugui.alignments.stretch, ugui.alignments.stretch)
-    end)
-
-    -- 2. Arrange
-    ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
-        if not node.panel_type then
-            return
-        end
-
-        ---@type PanelRegistryEntry
-        local registry_entry = ugui.registry[node.panel_type]
-
-        local child_bounds = registry_entry.arrange(node.panel, node)
-        assert(#child_bounds == #node.children)
-
-        -- Results from arrange are control-relative
-        for _, rect in pairs(child_bounds) do
-            rect.x = node.render_bounds.x + rect.x
-            rect.y = node.render_bounds.y + rect.y
-        end
-
-        for i, child in pairs(node.children) do
-            child.render_bounds = ugui.internal.align_rect(
-                {x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y},
-                child_bounds[i],
-                ugui.alignments.stretch,
-                ugui.alignments.stretch)
-
-            local offset = child.control and {x = child.control.rectangle.x, y = child.control.rectangle.y} or {x = child.panel.x, y = child.panel.y}
-            child.render_bounds.x = child.render_bounds.x + offset.x
-            child.render_bounds.y = child.render_bounds.y + offset.y
-        end
-    end)
-
-    -- Just a hack for compat with the later shit code
-    ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
-        if node.control then
-            node.control.rectangle = node.render_bounds
-        end
-    end)
-end
-
-ugui.internal.reset_scene = function()
-    -- By default, the scene contains a single canvas panel that allows absolute positioning.
-    ugui.internal.root = {
-        panel_type = 'canvas',
-        panel = {
-            x = 0,
-            y = 0,
-        },
-        children = {},
-        parent = nil,
-    }
-    ugui.internal.parent_stack = {ugui.internal.root}
 end
 
 ---Pushes a panel of the specified type onto the panel stack.

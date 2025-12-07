@@ -4,9 +4,7 @@ dofile(path_root .. 'base.lua')
 emu.atdrawd2d(function()
     begin_frame()
 
-    ugui.with_stackpanel({
-        spacing = 10,
-    }, function()
+    ugui.with_stackpanel({spacing = 10}, function()
         ugui.button({
             uid = 1,
             rectangle = {x = 0, y = 0, width = 50, height = 50},
@@ -19,8 +17,6 @@ emu.atdrawd2d(function()
         })
 
         ugui.with_stackpanel({
-            x = 0,
-            y = 0,
             horizontal = true,
             spacing = 10,
         }, function()
@@ -33,6 +29,11 @@ emu.atdrawd2d(function()
                 uid = 4,
                 rectangle = {x = 0, y = 0, width = 50, height = 50},
                 text = '4',
+            })
+            ugui.button({
+                uid = 5,
+                rectangle = {x = 0, y = 0, width = 50, height = 50},
+                text = '5',
             })
         end)
     end)
