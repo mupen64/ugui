@@ -163,18 +163,39 @@ end
 ---@field public draw fun(control: Control) Draws the control.
 ---Represents an entry in the control registry.
 
+---@alias PanelType "canvas" | "stackpanel"
+
+---@class Panel
+---@field public x number The panel's X position.
+---@field public y number The panel's Y position.
+---A panel which can contain child controls and control their position and size.
+
+---@class Canvas : Panel
+---A canvas panel which allows children to specify their positions absolutely.
+
+---@class Stack : Panel
+---@field public orientation "horizontal" | "vertical" The stack panel's orientation.
+---@field public spacing number The spacing between child controls.
+---A stack panel which positions its child controls in a horizontal or vertical stack.
+
 --#endregion
 
 --#region ugui.internal
 
 ugui.internal = {
-    ---@alias SceneEntry { control: Control, type: ControlType }
+    ---@alias SceneNode { control: Control, panel: Panel, type: ControlType, panel_type: PanelType?, children: SceneNode[] }
 
-    ---@type SceneEntry[]
-    scene = {},
+    ---@type SceneNode
+    root = {},
+
+    ---@type SceneNode[]
+    parent_stack = nil,
 
     ---@type table<UID, ControlType>
     control_types = {},
+
+    ---@type table<UID, Rectangle>
+    computed_rectangles = {},
 
     ---@type table<UID, any>
     ---Map of control UIDs to their data.
@@ -232,14 +253,141 @@ ugui.internal = {
 
     ---Sorts controls stably in the scene by their Z-index.
     sort_scene = function()
-        ugui.internal.stable_sort(ugui.internal.scene, function(a, b)
+        ugui.internal.stable_sort(ugui.internal.root, function(a, b)
             return (a.control.z_index or 0) < (b.control.z_index or 0)
         end)
     end,
 
+    ---Walks the scene tree depth-first, calling the specified predicate for each node.
+    ---@param node SceneNode
+    ---@param predicate fun(node: SceneNode)
+    walk_scene_tree = function(node, predicate)
+        predicate(node)
+
+        for _, entry in pairs(node.children) do
+            ugui.internal.walk_scene_tree(entry, predicate)
+        end
+    end,
+
+    ---Finds a node in the scene tree starting from the specified node.
+    ---@param from_node SceneNode
+    ---@param node SceneNode
+    ---@return SceneNode?
+    find_node = function(from_node, node)
+        if from_node == node then
+            return from_node
+        end
+
+        for _, child in pairs(from_node.children) do
+            local result = ugui.internal.find_node(child, node)
+            if result then
+                return result
+            end
+        end
+
+        return nil
+    end,
+
+
+    ---Purges panel nodes from the scene tree, flattening their children into their parent.
+    ---@param node SceneNode
+    ---@return SceneNode[]
+    purge_panel_nodes = function(node)
+        local new_children = {}
+        for _, child in ipairs(node.children or {}) do
+            local result = ugui.internal.purge_panel_nodes(child)
+
+            for _, r in ipairs(result) do
+                table.insert(new_children, r)
+            end
+        end
+
+        if node.panel_type ~= nil then
+            return new_children
+        end
+
+        node.children = new_children
+        return {node}
+    end,
+
+    --- Flattens the scene tree into a list of nodes.
+    ---@param node SceneNode
+    ---@param out SceneNode[]?
+    ---@return SceneNode[]
+    flatten_tree = function(node, out)
+        out = out or {}
+
+        table.insert(out, node)
+
+        for _, child in ipairs(node.children or {}) do
+            ugui.internal.flatten_tree(child, out)
+        end
+
+        return out
+    end,
+
+    ---Appends a control to the scene tree at the appropriate place.
+    ---@param type ControlType
+    ---@param control Control
+    append_control_to_scene = function(type, control)
+        local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
+        local new_node = {
+            control = control,
+            type = type,
+            children = {},
+        }
+        parent_node.children[#parent_node.children + 1] = new_node
+    end,
+
+    ---Appends a panel to the scene tree at the appropriate place.
+    ---@param type PanelType
+    ---@param panel Panel
+    append_panel_to_scene = function(type, panel)
+        local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
+        local new_node = {
+            panel_type = type,
+            panel = panel,
+            children = {},
+        }
+        parent_node.children[#parent_node.children + 1] = new_node
+        ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = new_node
+    end,
+
+    ---Prints the scene tree for debugging purposes.
+    ---@param node SceneNode
+    print_tree = function(node)
+        local function print_tree_impl(node, prefix, is_last)
+            prefix = prefix or ''
+            local connector = is_last and '└─ ' or '├─ '
+
+            local label = ''
+            if node == ugui.internal.root then
+                label = '<root>'
+            end
+            if node.type then
+                label = label .. ' ' .. node.type
+            end
+            if node.panel_type then
+                label = label .. ' ' .. node.panel_type
+            end
+
+            print(prefix .. connector .. label)
+
+            local child_prefix = prefix .. (is_last and '   ' or '│  ')
+
+            local children = node.children or {}
+            for i, child in ipairs(children) do
+                print_tree_impl(child, child_prefix, i == #children)
+            end
+        end
+
+        print_tree_impl(node)
+        print('')
+    end,
+
     ---Dispatches events related to controls in the scene.
     dispatch_events = function()
-        for _, value in pairs(ugui.internal.scene) do
+        for _, value in pairs(ugui.internal.root) do
             local existed_in_previous_frame = false
             for uid, _ in pairs(ugui.internal.previous_uids) do
                 if value.control.uid == uid then
@@ -643,7 +791,7 @@ ugui.internal = {
         end
 
         -- Find hovered control
-        for _, entry in pairs(ugui.internal.scene) do
+        for _, entry in pairs(ugui.internal.root) do
             if entry.control.uid == ugui.internal.hovered_control then
                 ugui.standard_styler.draw_tooltip(entry.control, {
                     x = ugui.internal.environment.mouse_position.x,
@@ -705,19 +853,19 @@ ugui.internal = {
         ---@type Control?
         local clicked_control = nil
 
-        ---@type SceneEntry?
+        ---@type SceneNode?
         local mouse_captured_control = nil
-        for i = 1, #ugui.internal.scene, 1 do
-            local entry = ugui.internal.scene[i]
+        for i = 1, #ugui.internal.root, 1 do
+            local entry = ugui.internal.root[i]
             if entry.control.uid == ugui.internal.mouse_captured_control then
                 mouse_captured_control = entry
             end
         end
 
-        ---@type SceneEntry?
+        ---@type SceneNode?
         local keyboard_captured_control = nil
-        for i = 1, #ugui.internal.scene, 1 do
-            local entry = ugui.internal.scene[i]
+        for i = 1, #ugui.internal.root, 1 do
+            local entry = ugui.internal.root[i]
             if entry.control.uid == ugui.internal.keyboard_captured_control then
                 keyboard_captured_control = entry
             end
@@ -727,8 +875,8 @@ ugui.internal = {
         local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
 
-        for i = #ugui.internal.scene, 1, -1 do
-            local entry = ugui.internal.scene[i]
+        for i = #ugui.internal.root, 1, -1 do
+            local entry = ugui.internal.root[i]
             local control = entry.control
 
             -- Determine the clicked control if we haven't already
@@ -776,8 +924,8 @@ ugui.internal = {
         end
 
         -- Clear hovered control if it's disabled
-        for i = 1, #ugui.internal.scene, 1 do
-            local control = ugui.internal.scene[i].control
+        for i = 1, #ugui.internal.root, 1 do
+            local control = ugui.internal.root[i].control
             if control.uid == ugui.internal.hovered_control
                 and control.is_enabled == false then
                 ugui.internal.hovered_control = nil
@@ -2807,6 +2955,42 @@ ugui.begin_frame = function(environment)
     if ugui.internal.is_mouse_just_down() then
         ugui.internal.mouse_down_position = ugui.internal.environment.mouse_position
     end
+
+    ugui.internal.reset_scene()
+end
+
+ugui.internal.do_layout = function()
+
+end
+
+ugui.internal.reset_scene = function()
+    -- By default, the scene contains a single canvas panel that allows absolute positioning.
+    ugui.internal.root = {
+        panel_type = 'canvas',
+        panel = {
+            x = 0,
+            y = 0,
+        },
+        children = {},
+    }
+    ugui.internal.parent_stack = {ugui.internal.root}
+end
+
+---Pushes a panel of the specified type onto the panel stack.
+---Controls and panels placed will be parented to this panel until it is popped.
+---@param type PanelType The panel type.
+---@param panel any
+ugui.push_panel = function(type, panel)
+    ugui.internal.append_panel_to_scene(type, panel)
+end
+
+---Pops the current panel from the panel stack.
+ugui.pop_panel = function()
+    if #ugui.internal.parent_stack <= 1 then
+        error('Tried to call pop_panel() when there are no panels to pop.')
+    end
+
+    table.remove(ugui.internal.parent_stack, #ugui.internal.parent_stack)
 end
 
 --- Ends the current frame.
@@ -2815,19 +2999,29 @@ ugui.end_frame = function()
         error("Tried to call end_frame() while a frame wasn't already in progress. Start a frame with begin_frame() before ending an in-progress one.")
     end
 
-    -- 1. Z-Sorting pass
+
+    ugui.internal.print_tree(ugui.internal.root)
+
+    -- 1. Layout pass
+    ugui.internal.do_layout()
+
+    -- HACK: Purge layout panels and transform the tree into a list so the shitty old code can work with it
+    ugui.internal.root = ugui.internal.purge_panel_nodes(ugui.internal.root)[1]
+    ugui.internal.root = ugui.internal.flatten_tree(ugui.internal.root)
+
+    -- 3. Z-Sorting pass
     ugui.internal.sort_scene()
 
-    -- 2. Input processing pass
+    -- 4. Input processing pass
     ugui.internal.do_input_processing()
 
-    -- 3. Event dispatching pass
+    -- 5. Event dispatching pass
     ugui.internal.dispatch_events()
 
-    -- 4. Rendering pass
-    for i = 1, #ugui.internal.scene, 1 do
-        local control = ugui.internal.scene[i].control
-        local type = ugui.internal.scene[i].type
+    -- 6. Rendering pass
+    for i = 1, #ugui.internal.root, 1 do
+        local control = ugui.internal.root[i].control
+        local type = ugui.internal.root[i].type
 
         local entry = ugui.registry[type]
 
@@ -2847,16 +3041,16 @@ ugui.end_frame = function()
         end
     end
 
+
     ugui.internal.tooltip()
 
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
-    for i = 1, #ugui.internal.scene, 1 do
-        local control = ugui.internal.scene[i].control
+    for i = 1, #ugui.internal.root, 1 do
+        local control = ugui.internal.root[i].control
         ugui.internal.previous_uids[control.uid] = true
     end
 
-    ugui.internal.scene = {}
     ugui.internal.last_control_rectangle = nil
     ugui.internal.frame_in_progress = false
 end
@@ -2902,8 +3096,8 @@ ugui.control = function(control, type)
     end
 
     -- Check for UID duplicates
-    for i = 1, #ugui.internal.scene, 1 do
-        local uid = ugui.internal.scene[i].control.uid
+    for i = 1, #ugui.internal.root, 1 do
+        local uid = ugui.internal.root[i].control.uid
         if control.uid == uid then
             error(string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', control.uid))
         end
@@ -2920,10 +3114,7 @@ ugui.control = function(control, type)
     -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
     return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
 
-    ugui.internal.scene[#ugui.internal.scene + 1] = {
-        control = control,
-        type = type,
-    }
+    ugui.internal.append_control_to_scene(type, control)
     ugui.internal.control_types[control.uid] = type
 
     revert_styler_mixin()
