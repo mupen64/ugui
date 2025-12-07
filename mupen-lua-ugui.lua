@@ -166,24 +166,37 @@ end
 ---@alias PanelType "canvas" | "stackpanel"
 
 ---@class Panel
----@field public x number The panel's X position.
----@field public y number The panel's Y position.
+---@field public x number The panel's X offset from its parent.
+---@field public y number The panel's Y offset from its parent.
 ---A panel which can contain child controls and control their position and size.
 
 ---@class Canvas : Panel
 ---A canvas panel which allows children to specify their positions absolutely.
 
 ---@class Stack : Panel
----@field public orientation "horizontal" | "vertical" The stack panel's orientation.
----@field public spacing number The spacing between child controls.
+---@field public horizontal boolean? Whether the stack panel arranges its children horizontally.
+---@field public spacing number? The spacing between child controls. Defaults to `0` if nil.
 ---A stack panel which positions its child controls in a horizontal or vertical stack.
+
+---@class PanelRegistryEntry
+---@field public validate fun(panel: Panel) Verifies that a panel instance matches the desired type.
+---@field public measure fun(panel: Panel, node: SceneNode): Vector2 Measures the desired size of the panel based on its children.
+---@field public arrange fun(panel: Panel, node: SceneNode) Arranges the panel's children, assigning them their final rectangles.
 
 --#endregion
 
 --#region ugui.internal
 
 ugui.internal = {
-    ---@alias SceneNode { control: Control, panel: Panel, type: ControlType, panel_type: PanelType?, children: SceneNode[] }
+    ---@class SceneNode
+    ---@field public control Control The control contained in this node. Present if `panel_type` is nil.
+    ---@field public panel Panel The panel contained in this node. Present if `type` is nil.
+    ---@field public type ControlType The type of control contained in this node. Present if `panel_type` is nil.
+    ---@field public panel_type PanelType? The type of panel contained in this node. Present if `type` is nil.
+    ---@field public parent SceneNode? The parent node of this node. Nil if this is the root node.
+    ---@field public children SceneNode[] The child nodes of this node.
+    ---@field public desired_size Vector2 The desired size of this node, as computed during the measure phase.
+    ---@field public render_bounds Rectangle The final rectangle assigned to this node during the arrange phase.
 
     ---@type SceneNode
     root = {},
@@ -269,6 +282,25 @@ ugui.internal = {
         end
     end,
 
+    ---Walks the scene tree breadth-first, calling the specified predicate for each node.
+    ---@param root SceneNode
+    ---@param predicate fun(node: SceneNode)
+    walk_scene_tree_breadth_first = function(root, predicate)
+        local queue = {root}
+        local head = 1
+
+        while head <= #queue do
+            local node = queue[head]
+            head = head + 1
+
+            predicate(node)
+
+            for _, child in pairs(node.children) do
+                table.insert(queue, child)
+            end
+        end
+    end,
+
     ---Finds a node in the scene tree starting from the specified node.
     ---@param from_node SceneNode
     ---@param node SceneNode
@@ -289,41 +321,28 @@ ugui.internal = {
     end,
 
 
-    ---Purges panel nodes from the scene tree, flattening their children into their parent.
+    ---Purges panel nodes and flattens the scene tree.
     ---@param node SceneNode
+    ---@param out SceneNode[]?
     ---@return SceneNode[]
-    purge_panel_nodes = function(node)
-        local new_children = {}
-        for _, child in ipairs(node.children or {}) do
-            local result = ugui.internal.purge_panel_nodes(child)
+    purge_and_flatten = function(node, out)
+        out = out or {}
 
-            for _, r in ipairs(result) do
-                table.insert(new_children, r)
+        local flat_children = {}
+        for _, child in ipairs(node.children or {}) do
+            local child_flat = ugui.internal.purge_and_flatten(child, out)
+            for _, c in ipairs(child_flat) do
+                table.insert(flat_children, c)
             end
         end
 
         if node.panel_type ~= nil then
-            return new_children
+            return flat_children
         end
-
-        node.children = new_children
-        return {node}
-    end,
-
-    --- Flattens the scene tree into a list of nodes.
-    ---@param node SceneNode
-    ---@param out SceneNode[]?
-    ---@return SceneNode[]
-    flatten_tree = function(node, out)
-        out = out or {}
 
         table.insert(out, node)
 
-        for _, child in ipairs(node.children or {}) do
-            ugui.internal.flatten_tree(child, out)
-        end
-
-        return out
+        return {node}
     end,
 
     ---Appends a control to the scene tree at the appropriate place.
@@ -334,6 +353,7 @@ ugui.internal = {
         local new_node = {
             control = control,
             type = type,
+            parent = parent_node,
             children = {},
         }
         parent_node.children[#parent_node.children + 1] = new_node
@@ -347,6 +367,7 @@ ugui.internal = {
         local new_node = {
             panel_type = type,
             panel = panel,
+            parent = parent_node,
             children = {},
         }
         parent_node.children[#parent_node.children + 1] = new_node
@@ -383,6 +404,40 @@ ugui.internal = {
 
         print_tree_impl(node)
         print('')
+    end,
+
+    ---Aligns rect1 inside rect2 by the specified alignments.
+    ---@param rect1 Rectangle
+    ---@param rect2 Rectangle
+    ---@param x_align LayoutAlignment
+    ---@param y_align LayoutAlignment
+    ---@return Rectangle
+    align_rect = function(rect1, rect2, x_align, y_align)
+        local out = {x = rect1.x, y = rect1.y, width = rect1.width, height = rect1.height}
+
+        if x_align == ugui.alignments.start then
+            out.x = rect2.x
+        elseif x_align == ugui.alignments.center then
+            out.x = rect2.x + (rect2.width - out.width) / 2
+        elseif x_align == ugui.alignments['end'] then
+            out.x = rect2.x + rect2.width - out.width
+        else
+            out.x = rect2.x
+            out.width = rect2.width
+        end
+
+        if y_align == ugui.alignments.start then
+            out.y = rect2.y
+        elseif y_align == ugui.alignments.center then
+            out.y = rect2.y + (rect2.height - out.height) / 2
+        elseif y_align == ugui.alignments['end'] then
+            out.y = rect2.y + rect2.height - out.height
+        else
+            out.y = rect2.y
+            out.height = rect2.height
+        end
+
+        return out
     end,
 
     ---Dispatches events related to controls in the scene.
@@ -976,6 +1031,14 @@ ugui.signal_change_states = {
     ongoing = 2,
     --- The signal has just stopped changing.
     ended = 3,
+}
+
+---@enum LayoutAlignment
+ugui.alignments = {
+    start = 1,
+    center = 2,
+    ['end'] = 3,
+    stretch = 4,
 }
 
 ---Gets the basic visual state of a control.
@@ -2960,7 +3023,146 @@ ugui.begin_frame = function(environment)
 end
 
 ugui.internal.do_layout = function()
+    ---FIXME: Hacked in here for now, of course this should move to registry
+    ---@param node SceneNode
+    ---@return Vector2
+    local function measure_node(node)
+        if node.control then
+            return {x = node.control.rectangle.width, y = node.control.rectangle.height}
+        end
 
+        if node.panel_type == 'canvas' then
+            return {x = 0, y = 0}
+        end
+
+        if node.panel_type == 'stackpanel' then
+            local stackpanel = node.panel
+            ---@cast stackpanel Stack
+
+            local sum = 0
+            if stackpanel.horizontal then
+                for _, child in pairs(node.children) do
+                    sum = sum + measure_node(child).x
+                end
+                return {x = sum, y = 0}
+            else
+                for _, child in pairs(node.children) do
+                    sum = sum + measure_node(child).y
+                end
+                return {x = 0, y = sum}
+            end
+        end
+
+        error('Unknown panel type: ' .. tostring(node.panel_type))
+    end
+
+    ---FIXME: Hacked in here for now, of course this should move to registry
+    ---@param node SceneNode
+    ---@return Rectangle[]
+    local function arrange_node(node)
+        if node.control then
+            return {}
+        end
+
+        local rects = {}
+
+        if node.panel_type == 'canvas' then
+            for _, child in pairs(node.children) do
+                local child_position
+                if node.control then
+                    child_position = {
+                        x = node.control.rectangle.x,
+                        y = node.control.rectangle.y,
+                    }
+                else
+                    child_position = {
+                        x = node.panel.x,
+                        y = node.panel.y,
+                    }
+                end
+
+                rects[#rects + 1] = {
+                    x = child_position.x,
+                    y = child_position.y,
+                    width = child.desired_size.x,
+                    height = child.desired_size.y,
+                }
+            end
+            return rects
+        end
+
+        if node.panel_type == 'stackpanel' then
+            local stackpanel = node.panel
+            ---@cast stackpanel Stack
+
+            local sum = 0
+            if stackpanel.horizontal then
+                for _, child in pairs(node.children) do
+                    rects[#rects + 1] = {
+                        x = sum,
+                        y = 0,
+                        width = child.desired_size.x,
+                        height = child.desired_size.y,
+                    }
+                    sum = sum + child.desired_size.x
+                end
+            else
+                for _, child in pairs(node.children) do
+                    rects[#rects + 1] = {
+                        x = 0,
+                        y = sum,
+                        width = child.desired_size.x,
+                        height = child.desired_size.y,
+                    }
+                    sum = sum + child.desired_size.y
+                end
+            end
+
+            return rects
+        end
+
+        error('Unknown panel type: ' .. tostring(node.panel_type))
+    end
+
+    -- 1. Measure
+    ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+        node.desired_size = measure_node(node)
+
+        if not node.render_bounds then
+            node.render_bounds = {x = 0, y = 0, width = 0, height = 0}
+        end
+    end)
+
+    -- 2. Arrange
+    ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+        if not node.panel_type then
+            return
+        end
+
+        local child_bounds = arrange_node(node)
+        assert(#child_bounds == #node.children)
+
+        -- Results from arrange are control-relative
+        for _, rect in pairs(child_bounds) do
+            rect.x = node.render_bounds.x + rect.x
+            rect.y = node.render_bounds.y + rect.y
+        end
+
+        for i, child in pairs(node.children) do
+            child.render_bounds = ugui.internal.align_rect(
+                {x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y},
+                child_bounds[i],
+                ugui.alignments.stretch,
+                ugui.alignments.stretch)
+        end
+    end)
+
+    -- Just a hack for compat with the later shit code
+    ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+        if node.control then
+            node.control.rectangle = node.render_bounds
+        end
+    end)
 end
 
 ugui.internal.reset_scene = function()
@@ -2972,6 +3174,7 @@ ugui.internal.reset_scene = function()
             y = 0,
         },
         children = {},
+        parent = nil,
     }
     ugui.internal.parent_stack = {ugui.internal.root}
 end
@@ -2999,15 +3202,11 @@ ugui.end_frame = function()
         error("Tried to call end_frame() while a frame wasn't already in progress. Start a frame with begin_frame() before ending an in-progress one.")
     end
 
-
-    ugui.internal.print_tree(ugui.internal.root)
-
     -- 1. Layout pass
     ugui.internal.do_layout()
 
     -- HACK: Purge layout panels and transform the tree into a list so the shitty old code can work with it
-    ugui.internal.root = ugui.internal.purge_panel_nodes(ugui.internal.root)[1]
-    ugui.internal.root = ugui.internal.flatten_tree(ugui.internal.root)
+    ugui.internal.root = ugui.internal.purge_and_flatten(ugui.internal.root)
 
     -- 3. Z-Sorting pass
     ugui.internal.sort_scene()
