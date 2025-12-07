@@ -3043,14 +3043,16 @@ ugui.registry.stackpanel = {
     ---@param panel StackPanel
     measure = function(panel, node)
         local sum = 0
+        local spacing = panel.spacing or 0
+
         if panel.horizontal then
             for _, child in pairs(node.children) do
-                sum = sum + ugui.internal.measure_shim(child).x
+                sum = sum + ugui.internal.measure_shim(child).x + spacing
             end
             return {x = sum, y = 0}
         else
             for _, child in pairs(node.children) do
-                sum = sum + ugui.internal.measure_shim(child).y
+                sum = sum + ugui.internal.measure_shim(child).y + spacing
             end
             return {x = 0, y = sum}
         end
@@ -3059,6 +3061,8 @@ ugui.registry.stackpanel = {
     arrange = function(panel, node)
         local rects = {}
         local sum = 0
+        local spacing = panel.spacing or 0
+
         if panel.horizontal then
             for _, child in pairs(node.children) do
                 rects[#rects + 1] = {
@@ -3067,7 +3071,7 @@ ugui.registry.stackpanel = {
                     width = child.desired_size.x,
                     height = child.desired_size.y,
                 }
-                sum = sum + child.desired_size.x
+                sum = sum + child.desired_size.x + spacing
             end
         else
             for _, child in pairs(node.children) do
@@ -3077,7 +3081,7 @@ ugui.registry.stackpanel = {
                     width = child.desired_size.x,
                     height = child.desired_size.y,
                 }
-                sum = sum + child.desired_size.y
+                sum = sum + child.desired_size.y + spacing
             end
         end
 

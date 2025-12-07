@@ -7,6 +7,7 @@ emu.atdrawd2d(function()
     ugui.push_panel('stackpanel', {
         x = 0,
         y = 0,
+        spacing = 10,
     })
     ugui.button({
         uid = 1,
@@ -22,6 +23,7 @@ emu.atdrawd2d(function()
         x = 0,
         y = 0,
         horizontal = true,
+        spacing = 10
     })
     ugui.button({
         uid = 3,
