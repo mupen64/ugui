@@ -151,24 +151,6 @@ end
 ---@field public signal_change SignalChangeState The change state of the control's primary signal.
 ---Additional information about a placed control.
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
----@alias PanelType "canvas" | "stackpanel"
-
----@alias ControlReturnValue { primary: any, meta: Meta }
-
----@class ControlRegistryEntry
----@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
----@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
----@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
----@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
----@field public draw fun(control: Control) Draws the control.
----Represents an entry in the control registry.
-
----@class PanelRegistryEntry
----@field public validate fun(panel: Panel) Verifies that a panel instance matches the desired type.
----@field public measure fun(panel: Panel, node: SceneNode): Vector2 Measures the desired size of the panel based on its children.
----@field public arrange fun(panel: Panel, node: SceneNode): Rectangle[] Arranges the panel's children, assigning them their final rectangles.
-
 ---@class Panel
 ---@field public x number? The panel's X offset from its parent. If nil, `0` is assumed.
 ---@field public y number? The panel's Y offset from its parent. If nil, `0` is assumed.
@@ -182,17 +164,28 @@ end
 ---@field public spacing number? The spacing between child controls. Defaults to `0` if nil.
 ---A stack panel which positions its child controls in a horizontal or vertical stack.
 
----@alias RegistryEntry ControlRegistryEntry | PanelRegistryEntry
-
 ---@class SceneNode
----@field public control Control The control contained in this node. Present if `panel_type` is nil.
----@field public panel Panel The panel contained in this node. Present if `type` is nil.
----@field public type ControlType The type of control contained in this node. Present if `panel_type` is nil.
----@field public panel_type PanelType? The type of panel contained in this node. Present if `type` is nil.
+---@field public control Control The control contained in this node.
+---@field public panel Panel The panel contained in this node.
+---@field public type ControlType The type of control contained in this node.
 ---@field public parent SceneNode? The parent node of this node. Nil if this is the root node.
 ---@field public children SceneNode[] The child nodes of this node.
 ---@field public desired_size Vector2 The desired size of this node, as computed during the measure phase.
 ---@field public render_bounds Rectangle The final rectangle assigned to this node during the arrange phase.
+
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox" | "canvas" | "stackpanel"
+
+---@alias ControlReturnValue { primary: any, meta: Meta }
+
+---@class ControlRegistryEntry
+---@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
+---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
+---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
+---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
+---@field public draw fun(control: Control) Draws the control.
+---@field public measure fun(panel: Panel, node: SceneNode): Vector2 Measures the desired size of the panel based on its children.
+---@field public arrange fun(panel: Panel, node: SceneNode): Rectangle[] Arranges the panel's children, assigning them their final rectangles.
+---Represents an entry in the control registry.
 
 --#endregion
 
@@ -266,28 +259,49 @@ ugui.internal = {
     end,
 
     ---Sorts controls stably in the scene by their Z-index.
-    sort_scene = function()
-        ugui.internal.stable_sort(ugui.internal.root, function(a, b)
-            return (a.control.z_index or 0) < (b.control.z_index or 0)
+    sort_scene = function(node)
+        -- Sort children in-place by Z index
+        table.sort(node.children, function(a, b)
+            local za = a.control and (a.control.z_index or 0) or 0
+            local zb = b.control and (b.control.z_index or 0) or 0
+            return za < zb
         end)
-    end,
 
-    ---Walks the scene tree depth-first, calling the specified predicate for each node.
-    ---@param node SceneNode
-    ---@param predicate fun(node: SceneNode)
-    walk_scene_tree = function(node, predicate)
-        predicate(node)
-
-        for _, entry in pairs(node.children) do
-            ugui.internal.walk_scene_tree(entry, predicate)
+        -- Recursively reorder all children
+        for _, child in ipairs(node.children) do
+            ugui.internal.sort_scene(child)
         end
     end,
 
-    ---Walks the scene tree breadth-first, calling the specified predicate for each node.
-    ---@param root SceneNode
+    ---Walks the scene tree depth-first, calling the specified predicate for each node that is a control.
+    ---@param node SceneNode
     ---@param predicate fun(node: SceneNode)
-    walk_scene_tree_breadth_first = function(root, predicate)
-        local queue = {root}
+    ---@param reverse boolean? Whether to traverse children in reverse order.
+    foreach_control = function(node, predicate, reverse)
+        ugui.internal.foreach_node_depth_first(node, function(n)
+            if n.control then
+                predicate(n)
+            end
+        end, reverse)
+    end,
+
+    ---Walks the scene tree depth-first, calling the specified predicate for each node that is a panel.
+    ---@param node SceneNode
+    ---@param predicate fun(node: SceneNode)
+    ---@param reverse boolean? Whether to traverse children in reverse order.
+    foreach_panel = function(node, predicate, reverse)
+        ugui.internal.foreach_node_depth_first(node, function(n)
+            if n.panel then
+                predicate(n)
+            end
+        end, reverse)
+    end,
+
+    ---Walks the scene tree breadth-first, calling the specified predicate for each node.
+    ---@param node SceneNode
+    ---@param predicate fun(node: SceneNode)
+    foreach_node_breadth_first = function(node, predicate)
+        local queue = {node}
         local head = 1
 
         while head <= #queue do
@@ -299,6 +313,25 @@ ugui.internal = {
             for _, child in pairs(node.children) do
                 table.insert(queue, child)
             end
+        end
+    end,
+
+    ---Walks the scene tree depth-first, calling the specified predicate for each node.
+    ---@param node SceneNode
+    ---@param predicate fun(node: SceneNode)
+    ---@param reverse boolean? Whether to traverse children in reverse order.
+    foreach_node_depth_first = function(node, predicate, reverse)
+        predicate(node)
+
+        if reverse then
+            for i = #node.children, 1, -1 do
+                ugui.internal.foreach_node_depth_first(node.children[i], predicate, reverse)
+            end
+            return
+        end
+
+        for _, child in pairs(node.children) do
+            ugui.internal.foreach_node_depth_first(child, predicate)
         end
     end,
 
@@ -319,31 +352,6 @@ ugui.internal = {
         end
 
         return nil
-    end,
-
-
-    ---Purges panel nodes and flattens the scene tree.
-    ---@param node SceneNode
-    ---@param out SceneNode[]?
-    ---@return SceneNode[]
-    purge_and_flatten = function(node, out)
-        out = out or {}
-
-        local flat_children = {}
-        for _, child in ipairs(node.children or {}) do
-            local child_flat = ugui.internal.purge_and_flatten(child, out)
-            for _, c in ipairs(child_flat) do
-                table.insert(flat_children, c)
-            end
-        end
-
-        if node.panel_type ~= nil then
-            return flat_children
-        end
-
-        table.insert(out, node)
-
-        return {node}
     end,
 
     ---Appends a control to the scene tree at the appropriate place.
@@ -407,10 +415,7 @@ ugui.internal = {
                 label = '<root>'
             end
             if node.type then
-                label = label .. ' ' .. node.type
-            end
-            if node.panel_type then
-                label = label .. ' ' .. node.panel_type
+                label = label .. ' ' .. node.type .. ' ' .. tostring(node.control.uid)
             end
 
             print(prefix .. connector .. label)
@@ -463,22 +468,22 @@ ugui.internal = {
 
     ---Dispatches events related to controls in the scene.
     dispatch_events = function()
-        for _, value in pairs(ugui.internal.root) do
+        ugui.internal.foreach_control(ugui.internal.root, function(node)
             local existed_in_previous_frame = false
             for uid, _ in pairs(ugui.internal.previous_uids) do
-                if value.control.uid == uid then
+                if node.control.uid == uid then
                     existed_in_previous_frame = true
                     break
                 end
             end
 
             if not existed_in_previous_frame then
-                local registry_entry = ugui.registry[value.type]
+                local registry_entry = ugui.registry[node.type]
                 if registry_entry.added then
-                    registry_entry.added(value.control, ugui.internal.control_data[value.control.uid])
+                    registry_entry.added(node.control, ugui.internal.control_data[node.control.uid])
                 end
             end
-        end
+        end)
     end,
 
     ---Deeply clones a table.
@@ -867,14 +872,14 @@ ugui.internal = {
         end
 
         -- Find hovered control
-        for _, entry in pairs(ugui.internal.root) do
-            if entry.control.uid == ugui.internal.hovered_control then
-                ugui.standard_styler.draw_tooltip(entry.control, {
+        ugui.internal.foreach_control(ugui.internal.root, function(node)
+            if node.control.uid == ugui.internal.hovered_control then
+                ugui.standard_styler.draw_tooltip(node.control, {
                     x = ugui.internal.environment.mouse_position.x,
                     y = ugui.internal.environment.mouse_position.y,
                 })
             end
-        end
+        end)
     end,
 
     ---Parses rich text into content segments.
@@ -930,45 +935,41 @@ ugui.internal = {
         local clicked_control = nil
 
         ---@type SceneNode?
-        local mouse_captured_control = nil
-        for i = 1, #ugui.internal.root, 1 do
-            local entry = ugui.internal.root[i]
-            if entry.control.uid == ugui.internal.mouse_captured_control then
-                mouse_captured_control = entry
+        local mouse_captured_node = nil
+        ugui.internal.foreach_control(ugui.internal.root, function(node)
+            if node.control.uid == ugui.internal.mouse_captured_control then
+                mouse_captured_node = node
             end
-        end
+        end, true)
 
         ---@type SceneNode?
-        local keyboard_captured_control = nil
-        for i = 1, #ugui.internal.root, 1 do
-            local entry = ugui.internal.root[i]
-            if entry.control.uid == ugui.internal.keyboard_captured_control then
-                keyboard_captured_control = entry
+        local keyboard_captured_node = nil
+        ugui.internal.foreach_control(ugui.internal.root, function(node)
+            if node.control.uid == ugui.internal.keyboard_captured_control then
+                keyboard_captured_node = node
             end
-        end
-
+        end, true)
 
         local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
 
-        for i = #ugui.internal.root, 1, -1 do
-            local entry = ugui.internal.root[i]
-            local control = entry.control
+        ugui.internal.foreach_control(ugui.internal.root, function(node)
+            local control = node.control
 
             -- Determine the clicked control if we haven't already
             if clicked_control == nil then
                 if ugui.internal.is_mouse_just_down() then
-                    if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+                    if is_point_inside_rectangle(ugui.internal.mouse_down_position, node.render_bounds) then
                         clicked_control = control
-                        keyboard_captured_control = entry
-                        mouse_captured_control = entry
+                        keyboard_captured_node = node
+                        mouse_captured_node = node
                     end
                 end
             end
 
             -- Determine the hovered control if we haven't already
             if ugui.internal.hovered_control == nil then
-                if is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
+                if is_point_inside_rectangle(ugui.internal.environment.mouse_position, node.render_bounds) then
                     ugui.internal.hovered_control = control.uid
 
                     if ugui.internal.hovered_control ~= prev_hovered_control then
@@ -976,16 +977,16 @@ ugui.internal = {
                     end
                 end
             end
-        end
+        end, true)
 
         -- Clear the mouse captured control if we released the mouse
         if not ugui.internal.environment.is_primary_down then
-            mouse_captured_control = nil
+            mouse_captured_node = nil
         end
 
         -- If we have a captured control, the hovered control must be locked to that as well.
-        if mouse_captured_control ~= nil then
-            ugui.internal.hovered_control = mouse_captured_control.control.uid
+        if mouse_captured_node ~= nil then
+            ugui.internal.hovered_control = mouse_captured_node.control.uid
         end
 
         -- If the clicked control is disabled, we clear it now at the end of input processing, effectively "swallowing" the click.
@@ -995,51 +996,56 @@ ugui.internal = {
 
         -- If we click outside of any control, we reset mouse and keyboard capture.
         if ugui.internal.is_mouse_just_down() and clicked_control == nil then
-            mouse_captured_control = nil
-            keyboard_captured_control = nil
+            mouse_captured_node = nil
+            keyboard_captured_node = nil
         end
 
         -- Clear hovered control if it's disabled
-        for i = 1, #ugui.internal.root, 1 do
-            local control = ugui.internal.root[i].control
+        ugui.internal.foreach_control(ugui.internal.root, function(node)
+            local control = node.control
             if control.uid == ugui.internal.hovered_control
                 and control.is_enabled == false then
                 ugui.internal.hovered_control = nil
             end
-        end
+        end, true)
 
         -- Clear mouse captured control if it's disabled
-        if mouse_captured_control and mouse_captured_control.control.is_enabled == false then
-            mouse_captured_control = nil
+        if mouse_captured_node and mouse_captured_node.control.is_enabled == false then
+            mouse_captured_node = nil
         end
 
         -- Clear keyboard captured control if it's disabled
-        if keyboard_captured_control and keyboard_captured_control.control.is_enabled == false then
-            keyboard_captured_control = nil
+        if keyboard_captured_node and keyboard_captured_node.control.is_enabled == false then
+            keyboard_captured_node = nil
         end
 
-        ugui.internal.mouse_captured_control = mouse_captured_control and mouse_captured_control.control.uid or nil
-        ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or nil
+        ugui.internal.mouse_captured_control = mouse_captured_node and mouse_captured_node.control.uid or nil
+        ugui.internal.keyboard_captured_control = keyboard_captured_node and keyboard_captured_node.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 
     ---Performs layouting of the scene tree.
     do_layout = function()
         -- 1. Measure
-        ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+        local window_bounds = {
+            x = 0,
+            y = 0,
+            width = ugui.internal.environment.window_size.x,
+            height = ugui.internal.environment.window_size.y,
+        }
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             node.desired_size = ugui.internal.measure_shim(node)
-
-            local parent_render_bounds = node.parent and node.parent.render_bounds or {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y}
-            node.render_bounds = ugui.internal.align_rect({x = 0, y = 0, width = node.desired_size.x, height = node.desired_size.y}, parent_render_bounds, ugui.alignments.stretch, ugui.alignments.stretch)
+            local parent_render_bounds = node.parent and node.parent.render_bounds or window_bounds
+            local base_bounds = {x = 0, y = 0, width = node.desired_size.x, height = node.desired_size.y}
+            node.render_bounds = ugui.internal.align_rect(base_bounds, parent_render_bounds, ugui.alignments.stretch, ugui.alignments.stretch)
         end)
 
         -- 2. Arrange
-        ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             if not node.panel_type then
                 return
             end
 
-            ---@type PanelRegistryEntry
             local registry_entry = ugui.registry[node.panel_type]
 
             local child_bounds = registry_entry.arrange(node.panel, node)
@@ -1065,7 +1071,7 @@ ugui.internal = {
         end)
 
         -- Just a hack for compat with the later shit code
-        ugui.internal.walk_scene_tree(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             if node.control then
                 node.control.rectangle = node.render_bounds
             end
@@ -2337,6 +2343,9 @@ ugui.registry.button = {
     draw = function(control)
         ugui.standard_styler.draw_button(control)
     end,
+    measure = function(panel, node)
+
+    end,
 }
 
 ---@type ControlRegistryEntry
@@ -3244,24 +3253,19 @@ ugui.end_frame = function()
     -- 1. Layout pass
     ugui.internal.do_layout()
 
-    -- HACK: Purge layout panels and transform the tree into a list so the shitty old code can work with it
-    ugui.internal.root = ugui.internal.purge_and_flatten(ugui.internal.root)
+    -- 2. Z-Sorting pass
+    ugui.internal.sort_scene(ugui.internal.root)
 
-    -- 3. Z-Sorting pass
-    ugui.internal.sort_scene()
-
-    -- 4. Input processing pass
+    -- 3. Input processing pass
     ugui.internal.do_input_processing()
 
-    -- 5. Event dispatching pass
+    -- 4. Event dispatching pass
     ugui.internal.dispatch_events()
 
-    -- 6. Rendering pass
-    for i = 1, #ugui.internal.root, 1 do
-        local control = ugui.internal.root[i].control
-        local type = ugui.internal.root[i].type
-
-        local entry = ugui.registry[type]
+    -- 5. Rendering pass
+    ugui.internal.foreach_control(ugui.internal.root, function(node)
+        local control = node.control
+        local entry = ugui.registry[node.type]
 
         local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
@@ -3277,17 +3281,16 @@ ugui.end_frame = function()
                 BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
             end
         end
-    end
+    end)
 
 
     ugui.internal.tooltip()
 
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
-    for i = 1, #ugui.internal.root, 1 do
-        local control = ugui.internal.root[i].control
-        ugui.internal.previous_uids[control.uid] = true
-    end
+    ugui.internal.foreach_control(ugui.internal.root, function(node)
+        ugui.internal.previous_uids[node.control.uid] = true
+    end)
 
     ugui.internal.last_control_rectangle = nil
     ugui.internal.frame_in_progress = false
