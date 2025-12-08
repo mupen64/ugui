@@ -55,7 +55,6 @@ end
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
----@field public layout_mode LayoutMode? The control's layout mode. If nil, `relative` is assumed.
 ---The base class for all controls.
 
 ---@class Button : Control
@@ -337,9 +336,7 @@ ugui.internal = {
             if node == ugui.internal.root then
                 label = '<root>'
             end
-            if node.type then
-                label = label .. ' ' .. node.type .. ' ' .. tostring(node.control.uid)
-            end
+            label = label .. ' ' .. node.type .. ' ' .. tostring(node.control.uid)
 
             print(prefix .. connector .. label)
 
@@ -996,12 +993,7 @@ ugui.internal = {
 
         -- Just a hack for compat with the later shit code
         ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
-            if node.control then
-                local layout_mode = node.control.layout_mode or ugui.layout_modes.relative
-                if layout_mode == ugui.layout_modes.relative then
-                    node.control.rectangle = node.render_bounds
-                end
-            end
+            node.control.rectangle = node.render_bounds
         end)
     end,
 
@@ -1059,14 +1051,6 @@ ugui.alignments = {
     center = 2,
     ['end'] = 3,
     stretch = 4,
-}
-
----@enum LayoutMode
-ugui.layout_modes = {
-    --- The control is positioned in a block layout within its parent.
-    relative = 1,
-    --- The control is positioned absolutely and does not affect layout flow.
-    absolute = 2,
 }
 
 ---Gets the basic visual state of a control.
@@ -3448,7 +3432,6 @@ ugui.combobox = function(control)
             selected_index = data.selected_index,
             plaintext = control.plaintext,
             z_index = math.maxinteger,
-            layout_mode = ugui.layout_modes.absolute,
         })
     end
 
