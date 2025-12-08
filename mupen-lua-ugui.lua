@@ -3203,6 +3203,10 @@ ugui.end_frame = function()
         error("Tried to call end_frame() while a frame wasn't already in progress. Start a frame with begin_frame() before ending an in-progress one.")
     end
 
+    if #ugui.internal.parent_stack > 1 then
+        error("Unbalanced panels detected: some panels were not closed before ending the frame.")
+    end
+
     -- 1. Layout pass
     ugui.internal.do_layout()
 
