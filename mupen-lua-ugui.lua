@@ -53,8 +53,9 @@ end
 ---@field public rectangle Rectangle The control's rectangle. The X/Y components are relative to the control's parent panel.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
----@field package plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
----@field package z_index integer? The control's Z-index. If nil, `0` is assumed.
+---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
+---@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
+---@field public layout_mode LayoutMode? The control's layout mode. If nil, `relative` is assumed.
 ---The base class for all controls.
 
 ---@class Button : Control
@@ -1073,7 +1074,10 @@ ugui.internal = {
         -- Just a hack for compat with the later shit code
         ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             if node.control then
-                node.control.rectangle = node.render_bounds
+                local layout_mode = node.control.layout_mode or ugui.layout_modes.relative
+                if layout_mode == ugui.layout_modes.relative then
+                    node.control.rectangle = node.render_bounds
+                end
             end
         end)
     end,
@@ -1127,6 +1131,14 @@ ugui.alignments = {
     center = 2,
     ['end'] = 3,
     stretch = 4,
+}
+
+---@enum LayoutMode
+ugui.layout_modes = {
+    --- The control is positioned in a block layout within its parent.
+    relative = 1,
+    --- The control is positioned absolutely and does not affect layout flow.
+    absolute = 2,
 }
 
 ---Gets the basic visual state of a control.
@@ -3204,7 +3216,7 @@ ugui.end_frame = function()
     end
 
     if #ugui.internal.parent_stack > 1 then
-        error("Unbalanced panels detected: some panels were not closed before ending the frame.")
+        error('Unbalanced panels detected: some panels were not closed before ending the frame.')
     end
 
     -- 1. Layout pass
@@ -3346,7 +3358,7 @@ end
 ---@param type ControlType The panel type.
 ---@param panel Panel The panel.
 ---@param fn fun() The function to execute.
-ugui.with_panel = function (type, panel, fn)
+ugui.with_panel = function(type, panel, fn)
     ugui.push_panel(type, panel)
     fn()
     ugui.pop_panel()
@@ -3464,6 +3476,7 @@ ugui.combobox = function(control)
             selected_index = data.selected_index,
             plaintext = control.plaintext,
             z_index = math.maxinteger,
+            layout_mode = ugui.layout_modes.absolute,
         })
     end
 
