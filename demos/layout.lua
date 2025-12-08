@@ -7,46 +7,45 @@ emu.atdrawd2d(function()
 
     ugui.DEBUG = true
 
-    ugui.with_stackpanel({spacing = 10}, function()
-        ugui.combobox({
-            uid = 10,
-            rectangle = {x = 0, y = 0, width = 100, height = 30},
-            items = items,
-            selected_index = 1,
-        })
-        ugui.combobox({
-            uid = 20,
-            rectangle = {x = 0, y = 0, width = 100, height = 30},
-            items = items,
-            selected_index = 1,
-        })
+    ugui.push_control('stack', {uid = 0, rectangle = {x = 0, y = 0, width = 0, height = 0}, spacing = 10})
 
-        ugui.with_stackpanel({
-            horizontal = true,
-            spacing = -30,
-        }, function()
-            ugui.combobox({
-                uid = 30,
-                rectangle = {x = 0, y = 0, width = 100, height = 30},
-                items = items,
-                selected_index = 1,
-            })
-            ugui.combobox({
-                uid = 40,
-                rectangle = {x = 0, y = 0, width = 100, height = 30},
-                z_index = 1,
-                items = items,
-                selected_index = 1,
-            })
-            ugui.combobox({
-                uid = 50,
-                rectangle = {x = 0, y = 0, width = 100, height = 30},
-                items = items,
-                selected_index = 1,
-            })
-        end)
-    end)
+    ugui.combobox({
+        uid = 10,
+        rectangle = {x = 0, y = 0, width = 100, height = 30},
+        items = items,
+        selected_index = 1,
+    })
+    ugui.combobox({
+        uid = 20,
+        rectangle = {x = 0, y = 0, width = 100, height = 30},
+        items = items,
+        selected_index = 1,
+    })
 
+    ugui.push_control('stack', {uid = 30, rectangle = {x = 0, y = 0, width = 0, height = 0}, horizontal = true, spacing = -30})
+
+    ugui.combobox({
+        uid = 40,
+        rectangle = {x = 0, y = 0, width = 100, height = 30},
+        items = items,
+        selected_index = 1,
+    })
+    ugui.combobox({
+        uid = 50,
+        rectangle = {x = 0, y = 0, width = 100, height = 30},
+        z_index = 1,
+        items = items,
+        selected_index = 1,
+    })
+    ugui.combobox({
+        uid = 60,
+        rectangle = {x = 0, y = 0, width = 100, height = 30},
+        items = items,
+        selected_index = 1,
+    })
+
+    ugui.pop_control()
+    ugui.pop_control()
 
     end_frame()
 end)

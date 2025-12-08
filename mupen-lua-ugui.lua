@@ -50,7 +50,7 @@ end
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
----@field public rectangle Rectangle The control's rectangle. The X/Y components are relative to the control's parent panel.
+---@field public rectangle Rectangle The control's rectangle. The X/Y components are relative to the control's parent.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
@@ -152,40 +152,35 @@ end
 ---@field public signal_change SignalChangeState The change state of the control's primary signal.
 ---Additional information about a placed control.
 
----@class Panel
----@field public x number? The panel's X offset from its parent. If nil, `0` is assumed.
----@field public y number? The panel's Y offset from its parent. If nil, `0` is assumed.
----A panel which can contain child controls and control their position and size.
+---@class Canvas : Control
+---A control which positions its children absolutely.
 
----@class Canvas : Panel
----A canvas panel which allows children to specify their positions absolutely.
-
----@class StackPanel : Panel
----@field public horizontal boolean? Whether the stack panel arranges its children horizontally.
+---@class Stack : Control
+---@field public horizontal boolean? Whether the stack arranges its children horizontally.
 ---@field public spacing number? The spacing between child controls. Defaults to `0` if nil.
----A stack panel which positions its child controls in a horizontal or vertical stack.
+---A control which stacks its children either vertically or horizontally.
 
 ---@class SceneNode
 ---@field public control Control The control contained in this node.
----@field public panel Panel The panel contained in this node.
 ---@field public type ControlType The type of control contained in this node.
 ---@field public parent SceneNode? The parent node of this node. Nil if this is the root node.
 ---@field public children SceneNode[] The child nodes of this node.
 ---@field public desired_size Vector2 The desired size of this node, as computed during the measure phase.
 ---@field public render_bounds Rectangle The final rectangle assigned to this node during the arrange phase.
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox" | "canvas" | "stackpanel"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox" | "canvas" | "stack"
 
 ---@alias ControlReturnValue { primary: any, meta: Meta }
 
 ---@class ControlRegistryEntry
+---@field public hittest_passthrough boolean? Whether the control is ignored during hittesting and focus capturing. If nil, false is assumed.
 ---@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
 ---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
----@field public measure fun(panel: Panel, node: SceneNode): Vector2 Measures the desired size of the panel based on its children.
----@field public arrange fun(panel: Panel, node: SceneNode): Rectangle[] Arranges the panel's children, assigning them their final rectangles.
+---@field public measure fun(node: SceneNode): Vector2 Measures the desired size of the control based on its children.
+---@field public arrange fun(node: SceneNode): Rectangle[] Arranges the control's children, assigning them their final rectangles.
 ---Represents an entry in the control registry.
 
 --#endregion
@@ -274,30 +269,6 @@ ugui.internal = {
         end
     end,
 
-    ---Walks the scene tree depth-first, calling the specified predicate for each node that is a control.
-    ---@param node SceneNode
-    ---@param predicate fun(node: SceneNode)
-    ---@param reverse boolean? Whether to traverse children in reverse order.
-    foreach_control = function(node, predicate, reverse)
-        ugui.internal.foreach_node_depth_first(node, function(n)
-            if n.control then
-                predicate(n)
-            end
-        end, reverse)
-    end,
-
-    ---Walks the scene tree depth-first, calling the specified predicate for each node that is a panel.
-    ---@param node SceneNode
-    ---@param predicate fun(node: SceneNode)
-    ---@param reverse boolean? Whether to traverse children in reverse order.
-    foreach_panel = function(node, predicate, reverse)
-        ugui.internal.foreach_node_depth_first(node, function(n)
-            if n.panel then
-                predicate(n)
-            end
-        end, reverse)
-    end,
-
     ---Walks the scene tree breadth-first, calling the specified predicate for each node.
     ---@param node SceneNode
     ---@param predicate fun(node: SceneNode)
@@ -353,55 +324,6 @@ ugui.internal = {
         end
 
         return nil
-    end,
-
-    ---Appends a control to the scene tree at the appropriate place.
-    ---@param type ControlType
-    ---@param control Control
-    append_control_to_scene = function(type, control)
-        local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
-        local new_node = {
-            control = control,
-            type = type,
-            parent = parent_node,
-            children = {},
-        }
-        parent_node.children[#parent_node.children + 1] = new_node
-    end,
-
-    ---Appends a panel to the scene tree at the appropriate place.
-    ---@param type PanelType
-    ---@param panel Panel
-    append_panel_to_scene = function(type, panel)
-        if panel.x == nil then
-            panel.x = 0
-        end
-        if panel.y == nil then
-            panel.y = 0
-        end
-
-        local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
-        local new_node = {
-            panel_type = type,
-            panel = panel,
-            parent = parent_node,
-            children = {},
-        }
-        parent_node.children[#parent_node.children + 1] = new_node
-        ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = new_node
-    end,
-
-    ---Shim for measuring a node's desired size, which delegates to the appropriate panel registry entry.
-    ---@param node SceneNode
-    ---@return Vector2
-    measure_shim = function(node)
-        -- Controls can determine their own size - for now...
-        if node.type then
-            return {x = node.control.rectangle.width, y = node.control.rectangle.height}
-        end
-
-        local registry_entry = ugui.registry[node.panel_type]
-        return registry_entry.measure(node.panel, node)
     end,
 
     ---Prints the scene tree for debugging purposes.
@@ -469,7 +391,7 @@ ugui.internal = {
 
     ---Dispatches events related to controls in the scene.
     dispatch_events = function()
-        ugui.internal.foreach_control(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             local existed_in_previous_frame = false
             for uid, _ in pairs(ugui.internal.previous_uids) do
                 if node.control.uid == uid then
@@ -873,7 +795,7 @@ ugui.internal = {
         end
 
         -- Find hovered control
-        ugui.internal.foreach_control(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             if node.control.uid == ugui.internal.hovered_control then
                 ugui.standard_styler.draw_tooltip(node.control, {
                     x = ugui.internal.environment.mouse_position.x,
@@ -937,7 +859,7 @@ ugui.internal = {
 
         ---@type SceneNode?
         local mouse_captured_node = nil
-        ugui.internal.foreach_control(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             if node.control.uid == ugui.internal.mouse_captured_control then
                 mouse_captured_node = node
             end
@@ -945,7 +867,7 @@ ugui.internal = {
 
         ---@type SceneNode?
         local keyboard_captured_node = nil
-        ugui.internal.foreach_control(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             if node.control.uid == ugui.internal.keyboard_captured_control then
                 keyboard_captured_node = node
             end
@@ -954,8 +876,14 @@ ugui.internal = {
         local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
 
-        ugui.internal.foreach_control(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+            local entry = ugui.registry[node.type]
             local control = node.control
+
+            -- Don't even try with controls that are hittest-passthrough.
+            if entry.hittest_passthrough then
+                return
+            end
 
             -- Determine the clicked control if we haven't already
             if clicked_control == nil then
@@ -1002,7 +930,7 @@ ugui.internal = {
         end
 
         -- Clear hovered control if it's disabled
-        ugui.internal.foreach_control(ugui.internal.root, function(node)
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             local control = node.control
             if control.uid == ugui.internal.hovered_control
                 and control.is_enabled == false then
@@ -1035,7 +963,7 @@ ugui.internal = {
             height = ugui.internal.environment.window_size.y,
         }
         ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
-            node.desired_size = ugui.internal.measure_shim(node)
+            node.desired_size = ugui.measure(node)
             local parent_render_bounds = node.parent and node.parent.render_bounds or window_bounds
             local base_bounds = {x = 0, y = 0, width = node.desired_size.x, height = node.desired_size.y}
             node.render_bounds = ugui.internal.align_rect(base_bounds, parent_render_bounds, ugui.alignments.stretch, ugui.alignments.stretch)
@@ -1043,19 +971,15 @@ ugui.internal = {
 
         -- 2. Arrange
         ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
-            if not node.panel_type then
-                return
-            end
-
-            local registry_entry = ugui.registry[node.panel_type]
-
-            local child_bounds = registry_entry.arrange(node.panel, node)
+            -- Call the arrange function for this node type
+            local registry_entry = ugui.registry[node.type]
+            local child_bounds = registry_entry.arrange(node)
             assert(#child_bounds == #node.children)
 
-            -- Results from arrange are control-relative
+            -- Results from arrange are control-relative, so we need to apply the offsets
             for _, rect in pairs(child_bounds) do
-                rect.x = node.render_bounds.x + rect.x
-                rect.y = node.render_bounds.y + rect.y
+                rect.x = rect.x + node.render_bounds.x
+                rect.y = rect.y + node.render_bounds.y
             end
 
             for i, child in pairs(node.children) do
@@ -1065,9 +989,8 @@ ugui.internal = {
                     ugui.alignments.stretch,
                     ugui.alignments.stretch)
 
-                local offset = child.control and {x = child.control.rectangle.x, y = child.control.rectangle.y} or {x = child.panel.x, y = child.panel.y}
-                child.render_bounds.x = child.render_bounds.x + offset.x
-                child.render_bounds.y = child.render_bounds.y + offset.y
+                child.render_bounds.x = child.render_bounds.x + child.control.rectangle.x
+                child.render_bounds.y = child.render_bounds.y + child.control.rectangle.y
             end
         end)
 
@@ -1083,13 +1006,18 @@ ugui.internal = {
     end,
 
     ---Resets the scene to its initial state.
-    ---By default, the scene contains a single canvas panel that allows absolute positioning.
+    ---By default, the scene contains a single canvas that allows absolute positioning.
     reset_scene = function()
         ugui.internal.root = {
-            panel_type = 'canvas',
-            panel = {},
-            children = {},
+            control = {
+                uid = -1,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+            },
+            type = 'canvas',
             parent = nil,
+            children = {},
+            desired_size = {x = 0, y = 0},
+            render_bounds = {x = 0, y = 0, width = 0, height = 0},
         }
         ugui.internal.parent_stack = {ugui.internal.root}
     end,
@@ -2328,8 +2256,36 @@ ugui.standard_styler = {
     end,
 }
 
----@type { [string]: RegistryEntry }
+---@type { [string]: ControlRegistryEntry }
 ugui.registry = {}
+
+---Measures the control by returning the user-specified size.
+---@param node SceneNode The scene node.
+---@return Vector2 The desired size.
+ugui.measure_identity = function(node)
+    return {
+        x = node.control.rectangle.width,
+        y = node.control.rectangle.height,
+    }
+end
+
+---Arranges the control by returning the user-specified rectangles.
+---@param node SceneNode The scene node.
+---@return Rectangle[] The arranged rectangles.
+ugui.arrange_identity = function(node)
+    local rects = {}
+    for i = 1, #node.children, 1 do
+        local child = node.children[i]
+        local desired_size = ugui.measure_identity(child)
+        rects[i] = {
+            x = child.control.rectangle.x,
+            y = child.control.rectangle.y,
+            width = desired_size.x,
+            height = desired_size.y,
+        }
+    end
+    return rects
+end
 
 ---@type ControlRegistryEntry
 ugui.registry.button = {
@@ -2355,9 +2311,8 @@ ugui.registry.button = {
     draw = function(control)
         ugui.standard_styler.draw_button(control)
     end,
-    measure = function(panel, node)
-
-    end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2391,6 +2346,8 @@ ugui.registry.toggle_button = {
     draw = function(control)
         ugui.standard_styler.draw_togglebutton(control)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2435,6 +2392,8 @@ ugui.registry.carrousel_button = {
     draw = function(control)
         ugui.standard_styler.draw_carrousel_button(control)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2538,6 +2497,8 @@ ugui.registry.textbox = {
     draw = function(control)
         ugui.standard_styler.draw_textbox(control)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2587,6 +2548,8 @@ ugui.registry.joystick = {
     draw = function(control)
         ugui.standard_styler.draw_joystick(control)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2621,6 +2584,8 @@ ugui.registry.trackbar = {
     draw = function(control)
         ugui.standard_styler.draw_trackbar(control)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2729,6 +2694,8 @@ ugui.registry.listbox = {
     draw = function(control)
         ugui.standard_styler.draw_listbox(control)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2803,6 +2770,8 @@ ugui.registry.scrollbar = {
 
         ugui.standard_styler.draw_scrollbar(control, thumb_rectangle)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2857,6 +2826,8 @@ ugui.registry.combobox = {
     draw = function(control)
         ugui.standard_styler.draw_combobox(control)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -2935,6 +2906,8 @@ ugui.registry.menu = {
     draw = function(control)
         ugui.standard_styler.draw_menu(control, control.rectangle)
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
@@ -3092,26 +3065,37 @@ ugui.registry.numberbox = {
             BreitbandGraphics.pop_clip()
         end
     end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
----@type PanelRegistryEntry
+---@type ControlRegistryEntry
 ugui.registry.canvas = {
-    ---@param panel Canvas
-    validate = function(panel)
-        ugui.internal.assert(type(panel.x) == 'number', 'expected x to be number')
-        ugui.internal.assert(type(panel.y) == 'number', 'expected y to be number')
+    hittest_passthrough = true,
+
+    ---@param control Canvas
+    validate = function(control)
     end,
-    ---@param panel Canvas
-    measure = function(panel, node)
+    logic = function(control, data)
+        return {
+            primary = nil,
+            meta = {},
+        }
+    end,
+    draw = function()
+
+    end,
+    ---@param node SceneNode
+    measure = function(node)
         return ugui.internal.environment.window_size
     end,
-    ---@param panel Canvas
-    arrange = function(panel, node)
+    ---@param node SceneNode
+    arrange = function(node)
         local rects = {}
         for _, child in pairs(node.children) do
             rects[#rects + 1] = {
-                x = child.panel and child.panel.x or child.control.rectangle.x,
-                y = child.panel and child.panel.y or child.control.rectangle.y,
+                x = child.control.rectangle.x,
+                y = child.control.rectangle.y,
                 width = child.desired_size.x,
                 height = child.desired_size.y,
             }
@@ -3120,39 +3104,53 @@ ugui.registry.canvas = {
     end,
 }
 
----@type PanelRegistryEntry
-ugui.registry.stackpanel = {
-    ---@param panel StackPanel
-    validate = function(panel)
-        ugui.internal.assert(type(panel.x) == 'number', 'expected x to be number')
-        ugui.internal.assert(type(panel.y) == 'number', 'expected y to be number')
-        ugui.internal.assert(type(panel.horizontal) == 'boolean' or panel.horizontal == nil, 'expected horizontal to be boolean or nil')
-        ugui.internal.assert(type(panel.spacing) == 'number' or panel.spacing == nil, 'expected spacing to be number or nil')
-    end,
-    ---@param panel StackPanel
-    measure = function(panel, node)
-        local sum = 0
-        local spacing = panel.spacing or 0
+---@type ControlRegistryEntry
+ugui.registry.stack = {
+    hittest_passthrough = true,
 
-        if panel.horizontal then
+    ---@param control Stack
+    validate = function(control)
+        ugui.internal.assert(type(control.horizontal) == 'boolean' or control.horizontal == nil, 'expected horizontal to be boolean or nil')
+        ugui.internal.assert(type(control.spacing) == 'number' or control.spacing == nil, 'expected spacing to be number or nil')
+    end,
+    logic = function(control, data)
+        return {
+            primary = nil,
+            meta = {},
+        }
+    end,
+    draw = function()
+
+    end,
+    ---@param node SceneNode
+    measure = function(node)
+        local stack = node.control
+        ---@cast stack Stack
+
+        local sum = 0
+        local spacing = stack.spacing or 0
+
+        if stack.horizontal then
             for _, child in pairs(node.children) do
-                sum = sum + ugui.internal.measure_shim(child).x + spacing
+                sum = sum + ugui.measure(child).x + spacing
             end
             return {x = sum, y = 0}
         else
             for _, child in pairs(node.children) do
-                sum = sum + ugui.internal.measure_shim(child).y + spacing
+                sum = sum + ugui.measure(child).y + spacing
             end
             return {x = 0, y = sum}
         end
     end,
-    ---@param panel StackPanel
-    arrange = function(panel, node)
+    ---@param node SceneNode
+    arrange = function(node)
+        local stack = node.control
+        ---@cast stack Stack
+
         local rects = {}
         local sum = 0
-        local spacing = panel.spacing or 0
-
-        if panel.horizontal then
+        local spacing = stack.spacing or 0
+        if stack.horizontal then
             for _, child in pairs(node.children) do
                 rects[#rects + 1] = {
                     x = sum,
@@ -3216,7 +3214,7 @@ ugui.end_frame = function()
     end
 
     if #ugui.internal.parent_stack > 1 then
-        error('Unbalanced panels detected: some panels were not closed before ending the frame.')
+        error('Unbalanced controls detected: some controls were not closed before ending the frame.')
     end
 
     -- 1. Layout pass
@@ -3232,7 +3230,7 @@ ugui.end_frame = function()
     ugui.internal.dispatch_events()
 
     -- 5. Rendering pass
-    ugui.internal.foreach_control(ugui.internal.root, function(node)
+    ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
         local control = node.control
         local entry = ugui.registry[node.type]
 
@@ -3257,7 +3255,7 @@ ugui.end_frame = function()
 
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
-    ugui.internal.foreach_control(ugui.internal.root, function(node)
+    ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
         ugui.internal.previous_uids[node.control.uid] = true
     end)
 
@@ -3265,7 +3263,16 @@ ugui.end_frame = function()
     ugui.internal.frame_in_progress = false
 end
 
+---Measures a scene node.
+---@param node SceneNode The node.
+---@return Vector2 # The desired size.
+ugui.measure = function(node)
+    local entry = ugui.registry[node.type]
+    return entry.measure(node)
+end
+
 ---Places a Control of the specified type.
+---This operation is equivalent to pushing a control to the control stack then popping it again.
 ---@param control Control The control.
 ---@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
 ---@return ControlReturnValue # The control's return value, or `nil` if the type is `""`.
@@ -3324,74 +3331,39 @@ ugui.control = function(control, type)
     -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
     return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
 
-    ugui.internal.append_control_to_scene(type, control)
     ugui.internal.control_types[control.uid] = type
+
+    ugui.push_control(type, control)
+    ugui.pop_control()
 
     revert_styler_mixin()
 
     return return_value
 end
 
----Pushes a panel of the specified type onto the panel stack.
----Controls and panels placed will be parented to this panel until it is popped.
----@param type ControlType The panel type.
----@param panel any
-ugui.push_panel = function(type, panel)
-    local entry = ugui.registry[type]
-    if not entry.measure or not entry.arrange then
-        error(string.format("Panel type '%s' is not a valid panel type.", type))
-    end
-
-    ugui.internal.append_panel_to_scene(type, panel)
+---Pushes a control of the specified type onto the control stack.
+---Controls placed will be parented to this control until it is popped.
+---@param type ControlType The control type.
+---@param control Control The control.
+ugui.push_control = function(type, control)
+    local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
+    local new_node = {
+        control = control,
+        type = type,
+        parent = parent_node,
+        children = {},
+    }
+    parent_node.children[#parent_node.children + 1] = new_node
+    ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = new_node
 end
 
----Pops the current panel from the panel stack.
-ugui.pop_panel = function()
+---Pops the current control from the control stack.
+ugui.pop_control = function()
     if #ugui.internal.parent_stack <= 1 then
-        error('Tried to call pop_panel() when there are no panels to pop.')
+        error('Tried to call pop_control() when there are no controls to pop.')
     end
 
     table.remove(ugui.internal.parent_stack, #ugui.internal.parent_stack)
-end
-
---- Executes a function within the context of a panel of the specified type.
----@param type ControlType The panel type.
----@param panel Panel The panel.
----@param fn fun() The function to execute.
-ugui.with_panel = function(type, panel, fn)
-    ugui.push_panel(type, panel)
-    fn()
-    ugui.pop_panel()
-end
-
----Pushes a Canvas onto the panel stack.
----@param panel Canvas The Canvas.
-ugui.push_canvas = function(panel)
-    ugui.push_panel('canvas', panel)
-end
-
---- Executes a function within the context of a Canvas panel.
----@param panel Canvas The Canvas.
----@param fn fun() The function to execute.
-ugui.with_canvas = function(panel, fn)
-    ugui.push_canvas(panel)
-    fn()
-    ugui.pop_panel()
-end
-
----Pushes a StackPanel onto the panel stack.
----@param panel StackPanel The StackPanel.
-ugui.push_stackpanel = function(panel)
-    ugui.push_panel('stackpanel', panel)
-end
-
----Executes a function within the context of a StackPanel panel.
----@param panel StackPanel The StackPanel.
----@param fn fun() The function to execute.
-ugui.with_stackpanel = function(panel, fn)
-    ugui.push_stackpanel(panel)
-    fn()
-    ugui.pop_panel()
 end
 
 ---Places a Button.
