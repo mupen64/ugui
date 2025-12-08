@@ -1,42 +1,48 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
 dofile(path_root .. 'base.lua')
 
+local items = {'Test A', 'Test B', 'Test C'}
 emu.atdrawd2d(function()
     begin_frame()
 
     ugui.DEBUG = true
 
     ugui.with_stackpanel({spacing = 10}, function()
-        ugui.button({
-            uid = 1,
-            rectangle = {x = 0, y = 0, width = 50, height = 50},
-            text = '1',
+        ugui.combobox({
+            uid = 10,
+            rectangle = {x = 0, y = 0, width = 100, height = 30},
+            items = items,
+            selected_index = 1,
         })
-        ugui.button({
-            uid = 2,
-            rectangle = {x = 0, y = 0, width = 50, height = 50},
-            text = '2',
+        ugui.combobox({
+            uid = 20,
+            rectangle = {x = 0, y = 0, width = 100, height = 30},
+            items = items,
+            selected_index = 1,
         })
 
         ugui.with_stackpanel({
             horizontal = true,
             spacing = -30,
         }, function()
-            ugui.button({
-                uid = 3,
-                rectangle = {x = 0, y = 0, width = 50, height = 50},
-                text = '3',
+            ugui.combobox({
+                uid = 30,
+                rectangle = {x = 0, y = 0, width = 100, height = 30},
+                items = items,
+                selected_index = 1,
             })
-            ugui.button({
-                uid = 4,
-                rectangle = {x = 0, y = 0, width = 50, height = 50},
-                text = '4',
-                z_index = 1
+            ugui.combobox({
+                uid = 40,
+                rectangle = {x = 0, y = 0, width = 100, height = 30},
+                z_index = 1,
+                items = items,
+                selected_index = 1,
             })
-            ugui.button({
-                uid = 5,
-                rectangle = {x = 0, y = 0, width = 50, height = 50},
-                text = '5',
+            ugui.combobox({
+                uid = 50,
+                rectangle = {x = 0, y = 0, width = 100, height = 30},
+                items = items,
+                selected_index = 1,
             })
         end)
     end)
