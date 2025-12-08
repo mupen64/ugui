@@ -3201,6 +3201,7 @@ ugui.end_frame = function()
     -- 2. Z-Sorting pass
     ugui.internal.sort_scene(ugui.internal.root)
 
+    ugui.internal.print_tree(ugui.internal.root)
     -- 3. Input processing pass
     ugui.internal.do_input_processing()
 
@@ -3225,9 +3226,11 @@ ugui.end_frame = function()
             if ugui.internal.mouse_captured_control == control.uid then
                 BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(ugui.internal.render_bounds[control.uid], 8), '#FF0000', 2)
             end
+            if not entry.hittest_passthrough then
+                BreitbandGraphics.fill_rectangle(ugui.internal.render_bounds[control.uid], '#FF000033')
+            end
         end
     end)
-
 
     ugui.internal.tooltip()
 
@@ -3253,8 +3256,9 @@ end
 ---This operation is equivalent to pushing a control to the control stack then popping it again.
 ---@param control Control The control.
 ---@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
+---@param parent SceneNode? The parent node, or `nil` to use the current parent.
 ---@return ControlReturnValue # The control's return value, or `nil` if the type is `""`.
-ugui.control = function(control, type)
+ugui.control = function(control, type, parent)
     local function init_control_data(uid)
         ugui.internal.control_data[uid] = {
             signal_change = ugui.signal_change_states.none,
@@ -3317,7 +3321,7 @@ ugui.control = function(control, type)
 
     ugui.internal.control_types[control.uid] = type
 
-    ugui.push_control(type, control)
+    ugui.push_control(type, control, parent)
     ugui.pop_control()
 
     revert_styler_mixin()
@@ -3325,12 +3329,14 @@ ugui.control = function(control, type)
     return return_value
 end
 
----Pushes a control of the specified type onto the control stack.
----Controls placed will be parented to this control until it is popped.
+---Places a control in the scene and makes it the parent of subsequently placed controls.
+---Pop the control with `ugui.pop_control()`, and the parent will revert to the previous one.
+---If the parent is overriden via the `parent` parameter, the control will be placed as a child of that control instead of the current parent.
 ---@param type ControlType The control type.
 ---@param control Control The control.
-ugui.push_control = function(type, control)
-    local parent_node = ugui.internal.parent_stack[#ugui.internal.parent_stack]
+---@param parent SceneNode? The parent node, or `nil` to use the current parent.
+ugui.push_control = function(type, control, parent)
+    local parent_node = parent or ugui.internal.parent_stack[#ugui.internal.parent_stack]
     local new_node = {
         control = control,
         type = type,
@@ -3341,7 +3347,7 @@ ugui.push_control = function(type, control)
     ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = new_node
 end
 
----Pops the current control from the control stack.
+---Reverts the current parent control to the previous one.
 ugui.pop_control = function()
     if #ugui.internal.parent_stack <= 1 then
         error('Tried to call pop_control() when there are no controls to pop.')
@@ -3425,14 +3431,16 @@ ugui.combobox = function(control)
             height = height,
         }
 
-        data.selected_index = ugui.listbox({
+        ---@type ListBox
+        local listbox = {
             uid = control.uid + 1,
             rectangle = list_rect,
             items = control.items,
             selected_index = data.selected_index,
             plaintext = control.plaintext,
             z_index = math.maxinteger,
-        })
+        }
+        data.selected_index = ugui.control(listbox, 'listbox', ugui.internal.root)
     end
 
     return data.selected_index, result.meta
