@@ -3110,12 +3110,12 @@ ugui.registry.stack = {
 
         if stack.horizontal then
             for _, child in pairs(node.children) do
-                sum = sum + ugui.measure(child).x + spacing
+                sum = sum + ugui.measure(child).x + child.control.rectangle.x + spacing
             end
             return {x = sum, y = 0}
         else
             for _, child in pairs(node.children) do
-                sum = sum + ugui.measure(child).y + spacing
+                sum = sum + ugui.measure(child).y + child.control.rectangle.y + spacing
             end
             return {x = 0, y = sum}
         end
@@ -3136,7 +3136,7 @@ ugui.registry.stack = {
                     width = child.desired_size.x,
                     height = child.desired_size.y,
                 }
-                sum = sum + child.desired_size.x + spacing
+                sum = sum + child.desired_size.x + child.control.rectangle.x + spacing
             end
         else
             for _, child in pairs(node.children) do
@@ -3146,7 +3146,7 @@ ugui.registry.stack = {
                     width = child.desired_size.x,
                     height = child.desired_size.y,
                 }
-                sum = sum + child.desired_size.y + spacing
+                sum = sum + child.desired_size.y + child.control.rectangle.y + spacing
             end
         end
 
