@@ -3197,58 +3197,6 @@ ugui.begin_frame = function(environment)
     ugui.internal.reset_scene()
 end
 
----Pushes a panel of the specified type onto the panel stack.
----Controls and panels placed will be parented to this panel until it is popped.
----@param type ControlType The panel type.
----@param panel any
-ugui.push_panel = function(type, panel)
-    local entry = ugui.registry[type]
-    if not entry.measure or not entry.arrange then
-        error(string.format("Panel type '%s' is not a valid panel type.", type))
-    end
-    
-    ugui.internal.append_panel_to_scene(type, panel)
-end
-
----Pops the current panel from the panel stack.
-ugui.pop_panel = function()
-    if #ugui.internal.parent_stack <= 1 then
-        error('Tried to call pop_panel() when there are no panels to pop.')
-    end
-
-    table.remove(ugui.internal.parent_stack, #ugui.internal.parent_stack)
-end
-
----Pushes a Canvas onto the panel stack.
----@param panel Canvas The Canvas.
-ugui.push_canvas = function(panel)
-    ugui.push_panel('canvas', panel)
-end
-
---- Executes a function within the context of a Canvas panel.
----@param panel Canvas The Canvas.
----@param fn fun() The function to execute.
-ugui.with_canvas = function(panel, fn)
-    ugui.push_canvas(panel)
-    fn()
-    ugui.pop_panel()
-end
-
----Pushes a StackPanel onto the panel stack.
----@param panel StackPanel The StackPanel.
-ugui.push_stackpanel = function(panel)
-    ugui.push_panel('stackpanel', panel)
-end
-
----Executes a function within the context of a StackPanel panel.
----@param panel StackPanel The StackPanel.
----@param fn fun() The function to execute.
-ugui.with_stackpanel = function(panel, fn)
-    ugui.push_stackpanel(panel)
-    fn()
-    ugui.pop_panel()
-end
-
 --- Ends the current frame.
 ugui.end_frame = function()
     if not ugui.internal.frame_in_progress then
@@ -3366,6 +3314,68 @@ ugui.control = function(control, type)
     revert_styler_mixin()
 
     return return_value
+end
+
+---Pushes a panel of the specified type onto the panel stack.
+---Controls and panels placed will be parented to this panel until it is popped.
+---@param type ControlType The panel type.
+---@param panel any
+ugui.push_panel = function(type, panel)
+    local entry = ugui.registry[type]
+    if not entry.measure or not entry.arrange then
+        error(string.format("Panel type '%s' is not a valid panel type.", type))
+    end
+
+    ugui.internal.append_panel_to_scene(type, panel)
+end
+
+---Pops the current panel from the panel stack.
+ugui.pop_panel = function()
+    if #ugui.internal.parent_stack <= 1 then
+        error('Tried to call pop_panel() when there are no panels to pop.')
+    end
+
+    table.remove(ugui.internal.parent_stack, #ugui.internal.parent_stack)
+end
+
+--- Executes a function within the context of a panel of the specified type.
+---@param type ControlType The panel type.
+---@param panel Panel The panel.
+---@param fn fun() The function to execute.
+ugui.with_panel = function (type, panel, fn)
+    ugui.push_panel(type, panel)
+    fn()
+    ugui.pop_panel()
+end
+
+---Pushes a Canvas onto the panel stack.
+---@param panel Canvas The Canvas.
+ugui.push_canvas = function(panel)
+    ugui.push_panel('canvas', panel)
+end
+
+--- Executes a function within the context of a Canvas panel.
+---@param panel Canvas The Canvas.
+---@param fn fun() The function to execute.
+ugui.with_canvas = function(panel, fn)
+    ugui.push_canvas(panel)
+    fn()
+    ugui.pop_panel()
+end
+
+---Pushes a StackPanel onto the panel stack.
+---@param panel StackPanel The StackPanel.
+ugui.push_stackpanel = function(panel)
+    ugui.push_panel('stackpanel', panel)
+end
+
+---Executes a function within the context of a StackPanel panel.
+---@param panel StackPanel The StackPanel.
+---@param fn fun() The function to execute.
+ugui.with_stackpanel = function(panel, fn)
+    ugui.push_stackpanel(panel)
+    fn()
+    ugui.pop_panel()
 end
 
 ---Places a Button.
