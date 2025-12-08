@@ -3199,9 +3199,14 @@ end
 
 ---Pushes a panel of the specified type onto the panel stack.
 ---Controls and panels placed will be parented to this panel until it is popped.
----@param type PanelType The panel type.
+---@param type ControlType The panel type.
 ---@param panel any
 ugui.push_panel = function(type, panel)
+    local entry = ugui.registry[type]
+    if not entry.measure or not entry.arrange then
+        error(string.format("Panel type '%s' is not a valid panel type.", type))
+    end
+    
     ugui.internal.append_panel_to_scene(type, panel)
 end
 
