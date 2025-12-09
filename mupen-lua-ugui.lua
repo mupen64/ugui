@@ -177,7 +177,7 @@ end
 ---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
 ---@field public measure fun(node: SceneNode): Vector2 Measures the desired size of the control based on its children.
----@field public arrange fun(node: SceneNode): Rectangle[] Computes the allowed bounds for each child control. Note that these bounds are relative to the parent control.
+---@field public arrange fun(node: SceneNode): Rectangle[] Computes the allowed bounds for each child control. The computed bounds must consider the control margins specified by the `rectangle` field. Note that these bounds are relative to the parent control.
 ---Represents an entry in the control registry.
 
 --#endregion
@@ -3135,7 +3135,7 @@ ugui.registry.stack = {
                     width = ugui.internal.desired_sizes[child.control.uid].x,
                     height = ugui.internal.desired_sizes[child.control.uid].y,
                 }
-                sum = sum + ugui.internal.desired_sizes[child.control.uid].x + spacing
+                sum = sum + ugui.internal.desired_sizes[child.control.uid].x + child.control.rectangle.x + spacing
             end
         else
             for _, child in pairs(node.children) do
@@ -3145,7 +3145,7 @@ ugui.registry.stack = {
                     width = ugui.internal.desired_sizes[child.control.uid].x,
                     height = ugui.internal.desired_sizes[child.control.uid].y,
                 }
-                sum = sum + ugui.internal.desired_sizes[child.control.uid].y + spacing
+                sum = sum + ugui.internal.desired_sizes[child.control.uid].y + child.control.rectangle.y + spacing
             end
         end
 
