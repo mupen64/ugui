@@ -55,6 +55,8 @@ end
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
+---@field public x_align LayoutAlignment? The control's horizontal alignment within its parent. If nil, `start` is assumed.
+---@field public y_align LayoutAlignment? The control's vertical alignment within its parent. If nil, `start` is assumed.
 ---The base class for all controls.
 
 ---@class Button : Control
@@ -948,7 +950,7 @@ ugui.internal = {
             -- Set node render bounds inside parent. We only do start-start (top-left) alignment for now.
             local parent_render_bounds = node.parent and ugui.internal.render_bounds[node.parent.control.uid] or window_bounds
             local base_bounds = {x = 0, y = 0, width = ugui.internal.desired_sizes[node.control.uid].x, height = ugui.internal.desired_sizes[node.control.uid].y}
-            ugui.internal.render_bounds[node.control.uid] = ugui.internal.align_rect(base_bounds, parent_render_bounds, ugui.alignments.start, ugui.alignments.start)
+            ugui.internal.render_bounds[node.control.uid] = ugui.internal.align_rect(base_bounds, parent_render_bounds, node.control.x_align, node.control.y_align)
         end)
 
         ugui.internal.foreach_node(ugui.internal.root, function(node)
@@ -960,6 +962,8 @@ ugui.internal = {
             -- Results from arrange are control-relative, so we need to apply the offsets
             for i = 1, #child_bounds, 1 do
                 local rect = child_bounds[i]
+                BreitbandGraphics.draw_rectangle(rect, '#3333FF', 2)
+
                 rect.x = rect.x + ugui.internal.render_bounds[node.control.uid].x
                 rect.y = rect.y + ugui.internal.render_bounds[node.control.uid].y
 
@@ -967,6 +971,7 @@ ugui.internal = {
                 rect.y = rect.y + node.children[i].control.rectangle.y
 
                 child_bounds[i] = rect
+
             end
 
             for i, child in pairs(node.children) do
@@ -975,10 +980,36 @@ ugui.internal = {
                 local bounds = ugui.internal.align_rect(
                     {x = 0, y = 0, width = desired_size.x, height = desired_size.y},
                     child_bounds[i],
-                    ugui.alignments.start,
-                    ugui.alignments.start)
+                    child.control.x_align,
+                    child.control.y_align)
 
                 ugui.internal.render_bounds[child.control.uid] = bounds
+            end
+        end)
+    end,
+
+    render = function()
+        if ugui.DEBUG then
+            --return
+        end
+
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
+            local control = node.control
+            local entry = ugui.registry[node.type]
+
+            local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
+
+            entry.draw(control)
+
+            revert_styler_mixin()
+
+            if ugui.DEBUG then
+                if ugui.internal.keyboard_captured_control == control.uid then
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(ugui.internal.render_bounds[control.uid], 4), '#000000', 2)
+                end
+                if ugui.internal.mouse_captured_control == control.uid then
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(ugui.internal.render_bounds[control.uid], 8), '#FF0000', 2)
+                end
             end
         end)
     end,
@@ -2227,19 +2258,17 @@ ugui.measure_identity = function(node)
     }
 end
 
----Arranges the control's children by honoring their absolute positions.
+---Arranges the control's children by honoring their absolute positions and allowing them to fill the parent.
 ---@param node SceneNode The scene node.
 ---@return Rectangle[] The arranged rectangles.
 ugui.arrange_identity = function(node)
     local rects = {}
     for i = 1, #node.children, 1 do
-        local child = node.children[i]
-        local desired_size = ugui.measure_identity(child)
         rects[i] = {
             x = 0,
             y = 0,
-            width = desired_size.x,
-            height = desired_size.y,
+            width = node.control.rectangle.width,
+            height = node.control.rectangle.height,
         }
     end
     return rects
@@ -3621,25 +3650,7 @@ ugui.end_frame = function()
     ugui.internal.dispatch_events()
 
     -- 5. Rendering pass
-    ugui.internal.foreach_node(ugui.internal.root, function(node)
-        local control = node.control
-        local entry = ugui.registry[node.type]
-
-        local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
-
-        entry.draw(control)
-
-        revert_styler_mixin()
-
-        if ugui.DEBUG then
-            if ugui.internal.keyboard_captured_control == control.uid then
-                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(ugui.internal.render_bounds[control.uid], 4), '#000000', 2)
-            end
-            if ugui.internal.mouse_captured_control == control.uid then
-                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(ugui.internal.render_bounds[control.uid], 8), '#FF0000', 2)
-            end
-        end
-    end)
+    ugui.internal.render()
 
     ugui.internal.tooltip()
 
@@ -3675,6 +3686,13 @@ end
 ugui.control = function(control, type, parent, leave)
     if leave == nil then
         leave = true
+    end
+
+    if control.x_align == nil then
+        control.x_align = ugui.alignments.start
+    end
+    if control.y_align == nil then
+        control.y_align = ugui.alignments.start
     end
 
     local function init_control_data(uid)
