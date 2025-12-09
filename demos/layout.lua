@@ -10,6 +10,7 @@ end
 emu.atdrawd2d(function()
     begin_frame()
 
+    uid = 0
     ugui.DEBUG = true
 
     ugui.control({
