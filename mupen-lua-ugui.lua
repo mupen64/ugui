@@ -3575,8 +3575,8 @@ ugui.registry.stack = {
                 rects[#rects + 1] = {
                     x = sum,
                     y = 0,
-                    width = ugui.internal.desired_sizes[child.control.uid].x,
-                    height = ugui.internal.desired_sizes[child.control.uid].y,
+                    width = node.control.rectangle.width,
+                    height = node.control.rectangle.height,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].x + child.control.rectangle.x + spacing
             end
@@ -3585,8 +3585,8 @@ ugui.registry.stack = {
                 rects[#rects + 1] = {
                     x = 0,
                     y = sum,
-                    width = ugui.internal.desired_sizes[child.control.uid].x,
-                    height = ugui.internal.desired_sizes[child.control.uid].y,
+                    width = node.control.rectangle.width,
+                    height = node.control.rectangle.height,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].y + child.control.rectangle.y + spacing
             end

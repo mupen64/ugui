@@ -9,24 +9,31 @@ emu.atdrawd2d(function()
 
     ugui.control({
         uid = 70,
-        rectangle = {x = 300, y = 50, width = 300, height = 300},
+        rectangle = {x = 0, y = 0, width = 300, height = 300},
         text = 'Hello World!',
+        x_align = ugui.alignments.center,
+        y_align = ugui.alignments.center,
     }, 'button', nil, false)
 
     ugui.enter_stack({
         uid = 80,
         rectangle = {x = 0, y = 0, width = 0, height = 0},
-        spacing = 10,
-        x_align = ugui.alignments.stretch,
-        y_align = ugui.alignments.stretch
+        x_align = ugui.alignments.center,
+        y_align = ugui.alignments.center,
     })
     ugui.button({
         uid = 90,
         rectangle = {x = 0, y = 0, width = 150, height = 50},
         text = 'Click Me',
-        z_index = 10,
         x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center
+        y_align = ugui.alignments.center,
+    })
+    ugui.button({
+        uid = 100,
+        rectangle = {x = 0, y = 0, width = 150, height = 50},
+        text = 'Click Me',
+        x_align = ugui.alignments.center,
+        y_align = ugui.alignments.center,
     })
     ugui.leave_control()
     ugui.leave_control()
