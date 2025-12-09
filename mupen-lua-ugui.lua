@@ -3552,20 +3552,29 @@ ugui.registry.stack = {
         ---@cast stack Stack
 
         local sum = 0
+        local max = 0
         local spacing = stack.spacing or 0
 
         if stack.horizontal then
             for _, child in pairs(node.children) do
-                sum = sum + ugui.measure(child).x + child.control.rectangle.x
+                local ds = ugui.measure(child)
+                sum = sum + ds.x
+                max = math.max(max, ds.y)
             end
+
             sum = sum + spacing * (#node.children - 1)
-            return {x = sum, y = 0}
+
+            return {x = sum, y = max}
         else
             for _, child in pairs(node.children) do
-                sum = sum + ugui.measure(child).y + child.control.rectangle.y
+                local ds = ugui.measure(child)
+                sum = sum + ds.y
+                max = math.max(max, ds.x)
             end
+
             sum = sum + spacing * (#node.children - 1)
-            return {x = 0, y = sum}
+
+            return {x = max, y = sum}
         end
     end,
     ---@param node SceneNode
@@ -3581,7 +3590,7 @@ ugui.registry.stack = {
                 rects[#rects + 1] = {
                     x = sum,
                     y = 0,
-                    width = ugui.internal.render_bounds[child.control.uid].width,
+                    width = ugui.internal.desired_sizes[child.control.uid].x,
                     height = ugui.internal.desired_sizes[node.control.uid].y,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].x + child.control.rectangle.x + spacing
@@ -3593,7 +3602,7 @@ ugui.registry.stack = {
                     x = 0,
                     y = sum,
                     width = ugui.internal.desired_sizes[node.control.uid].x,
-                    height = ugui.internal.render_bounds[child.control.uid].height,
+                    height = ugui.internal.desired_sizes[child.control.uid].y,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].y + child.control.rectangle.y + spacing
             end
