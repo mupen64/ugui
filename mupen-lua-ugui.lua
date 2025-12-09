@@ -3913,6 +3913,18 @@ ugui.numberbox = function(control)
     return result.primary, result.meta
 end
 
+---Enters a Canvas.
+---@param control Canvas The control table.
+ugui.enter_canvas = function(control)
+    ugui.enter_control('canvas', control)
+end
+
+---Enters a Stack.
+---@param control Stack The control table.
+ugui.enter_stack = function(control)
+    ugui.enter_control('stack', control)
+end
+
 --#endregion
 
 return ugui
