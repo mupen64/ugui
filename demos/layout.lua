@@ -50,5 +50,19 @@ emu.atdrawd2d(function()
     ugui.leave_control()
     ugui.leave_control()
 
+    ugui.control({
+        uid = 70,
+        rectangle = {x = 300, y = 50, width = 300, height = 300},
+        text = 'Hello World!',
+    }, 'button', nil, false)
+
+    ugui.button({
+        uid = 80,
+        rectangle = {x = 0, y = 0, width = 150, height = 50},
+        text = 'Click Me',
+        z_index = 10,
+    })
+    ugui.leave_control()
+
     end_frame()
 end)

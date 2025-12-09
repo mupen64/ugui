@@ -272,41 +272,22 @@ ugui.internal = {
         end
     end,
 
-    ---Walks the scene tree breadth-first, calling the specified predicate for each node.
-    ---@param node SceneNode
-    ---@param predicate fun(node: SceneNode)
-    foreach_node_breadth_first = function(node, predicate)
-        local queue = {node}
-        local head = 1
-
-        while head <= #queue do
-            local node = queue[head]
-            head = head + 1
-
-            predicate(node)
-
-            for _, child in pairs(node.children) do
-                table.insert(queue, child)
-            end
-        end
-    end,
-
     ---Walks the scene tree depth-first, calling the specified predicate for each node.
     ---@param node SceneNode
     ---@param predicate fun(node: SceneNode)
     ---@param reverse boolean? Whether to traverse children in reverse order.
-    foreach_node_depth_first = function(node, predicate, reverse)
+    foreach_node = function(node, predicate, reverse)
         predicate(node)
 
         if reverse then
             for i = #node.children, 1, -1 do
-                ugui.internal.foreach_node_depth_first(node.children[i], predicate, reverse)
+                ugui.internal.foreach_node(node.children[i], predicate, reverse)
             end
             return
         end
 
         for _, child in pairs(node.children) do
-            ugui.internal.foreach_node_depth_first(child, predicate)
+            ugui.internal.foreach_node(child, predicate)
         end
     end,
 
@@ -315,7 +296,7 @@ ugui.internal = {
     ---@return SceneNode?
     find_node = function(predicate)
         local result = nil
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             if predicate(node) and result == nil then
                 result = node
             end
@@ -386,7 +367,7 @@ ugui.internal = {
 
     ---Dispatches events related to controls in the scene.
     dispatch_events = function()
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             local existed_in_previous_frame = false
             for uid, _ in pairs(ugui.internal.previous_uids) do
                 if node.control.uid == uid then
@@ -790,7 +771,7 @@ ugui.internal = {
         end
 
         -- Find hovered control
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             if node.control.uid == ugui.internal.hovered_control then
                 ugui.standard_styler.draw_tooltip(node.control, {
                     x = ugui.internal.environment.mouse_position.x,
@@ -854,7 +835,7 @@ ugui.internal = {
 
         ---@type SceneNode?
         local mouse_captured_node = nil
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             if node.control.uid == ugui.internal.mouse_captured_control then
                 mouse_captured_node = node
             end
@@ -862,7 +843,7 @@ ugui.internal = {
 
         ---@type SceneNode?
         local keyboard_captured_node = nil
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             if node.control.uid == ugui.internal.keyboard_captured_control then
                 keyboard_captured_node = node
             end
@@ -871,7 +852,7 @@ ugui.internal = {
         local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
 
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             local entry = ugui.registry[node.type]
             local control = node.control
 
@@ -925,7 +906,7 @@ ugui.internal = {
         end
 
         -- Clear hovered control if it's disabled
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             local control = node.control
             if control.uid == ugui.internal.hovered_control
                 and control.is_enabled == false then
@@ -951,7 +932,7 @@ ugui.internal = {
     ---Performs layouting of the scene tree.
     do_layout = function()
         -- 1. Measure
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             -- Measure and assign desired size
             ugui.internal.desired_sizes[node.control.uid] = ugui.measure(node)
         end)
@@ -963,14 +944,14 @@ ugui.internal = {
             width = ugui.internal.environment.window_size.x,
             height = ugui.internal.environment.window_size.y,
         }
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             -- Set node render bounds inside parent. We only do start-start (top-left) alignment for now.
             local parent_render_bounds = node.parent and ugui.internal.render_bounds[node.parent.control.uid] or window_bounds
             local base_bounds = {x = 0, y = 0, width = ugui.internal.desired_sizes[node.control.uid].x, height = ugui.internal.desired_sizes[node.control.uid].y}
             ugui.internal.render_bounds[node.control.uid] = ugui.internal.align_rect(base_bounds, parent_render_bounds, ugui.alignments.start, ugui.alignments.start)
         end)
 
-        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+        ugui.internal.foreach_node(ugui.internal.root, function(node)
             -- Call the arrange function for this node type
             local registry_entry = ugui.registry[node.type]
             local child_bounds = registry_entry.arrange(node)
@@ -3655,7 +3636,7 @@ ugui.end_frame = function()
     ugui.internal.dispatch_events()
 
     -- 5. Rendering pass
-    ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+    ugui.internal.foreach_node(ugui.internal.root, function(node)
         local control = node.control
         local entry = ugui.registry[node.type]
 
@@ -3682,7 +3663,7 @@ ugui.end_frame = function()
 
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
-    ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+    ugui.internal.foreach_node(ugui.internal.root, function(node)
         ugui.internal.previous_uids[node.control.uid] = true
     end)
 
