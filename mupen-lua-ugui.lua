@@ -3463,6 +3463,7 @@ ugui.registry.numberbox = {
     end,
     ---@param control NumberBox
     logic = function(control, data)
+        local rect = ugui.internal.render_bounds[control.uid]
         local prev_value_negative = control.value < 0
         data.value = math.abs(control.value)
 
@@ -3482,7 +3483,7 @@ ugui.registry.numberbox = {
                     font_size,
                     font_name).width
 
-                local left = control.rectangle.width / 2 - full_width / 2
+                local left = rect.width / 2 - full_width / 2
                 positions[#positions + 1] = width + left
             end
 
@@ -3500,7 +3501,7 @@ ugui.registry.numberbox = {
         end
 
         if ugui.internal.clicked_control == control.uid then
-            data.caret_index = get_caret_index_at_relative_x(ugui.internal.environment.mouse_position.x - control.rectangle.x)
+            data.caret_index = get_caret_index_at_relative_x(ugui.internal.environment.mouse_position.x - rect.x)
         end
 
         if ugui.internal.keyboard_captured_control == control.uid then
@@ -3550,21 +3551,21 @@ ugui.registry.numberbox = {
         }
     end,
     ---@param control NumberBox
-    draw = function(control, data)
+    draw = function(control)
         local data = ugui.internal.control_data[control.uid]
         local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
         local font_name = ugui.standard_styler.params.monospace_font_name
         local text = string.format('%0' .. tostring(control.places) .. 'd', math.abs(control.value))
-
+        local rect = ugui.internal.render_bounds[control.uid]
         local visual_state = ugui.get_visual_state(control)
         if ugui.internal.keyboard_captured_control == control.uid then
             visual_state = ugui.visual_states.active
         end
-        ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
+        ugui.standard_styler.draw_edit_frame(control, rect, visual_state)
 
         BreitbandGraphics.draw_text2({
             text = text,
-            rectangle = control.rectangle,
+            rectangle = rect,
             color = ugui.standard_styler.params.textbox.text[visual_state],
             font_name = font_name,
             font_size = font_size,
@@ -3580,13 +3581,13 @@ ugui.registry.numberbox = {
             font_size,
             font_name).width
 
-        local left = control.rectangle.width / 2 - full_width / 2
+        local left = rect.width / 2 - full_width / 2
 
         local selected_char_rect = {
-            x = control.rectangle.x + left + text_width_up_to_caret,
-            y = control.rectangle.y,
+            x = rect.x + left + text_width_up_to_caret,
+            y = rect.y,
             width = font_size / 2,
-            height = control.rectangle.height,
+            height = rect.height,
         }
 
         if ugui.internal.keyboard_captured_control == control.uid then
@@ -3594,7 +3595,7 @@ ugui.registry.numberbox = {
             BreitbandGraphics.push_clip(selected_char_rect)
             BreitbandGraphics.draw_text2({
                 text = text,
-                rectangle = control.rectangle,
+                rectangle = rect,
                 color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
                 font_name = font_name,
                 font_size = font_size,
