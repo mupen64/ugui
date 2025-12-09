@@ -189,7 +189,7 @@ ugui.internal = {
     root = {},
 
     ---@type SceneNode[]
-    parent_stack = nil,
+    parent_stack = {},
 
     ---@type table<UID, ControlType>
     control_types = {},
@@ -981,7 +981,7 @@ ugui.internal = {
 
                 rect.x = rect.x + node.children[i].control.rectangle.x
                 rect.y = rect.y + node.children[i].control.rectangle.y
-                
+
                 child_bounds[i] = rect
             end
 
@@ -1002,16 +1002,10 @@ ugui.internal = {
     ---Resets the scene to its initial state.
     ---By default, the scene contains a single canvas that allows absolute positioning.
     reset_scene = function()
-        ugui.internal.root = {
-            control = {
-                uid = -1,
-                rectangle = {x = 0, y = 0, width = 0, height = 0},
-            },
-            type = 'canvas',
-            parent = nil,
-            children = {},
-        }
-        ugui.internal.parent_stack = {ugui.internal.root}
+        ugui.enter_control('canvas', {
+            uid = -1,
+            rectangle = {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y},
+        })
     end,
 }
 
@@ -3235,6 +3229,9 @@ ugui.end_frame = function()
 
     ugui.internal.tooltip()
 
+    -- Leave root canvas
+    ugui.leave_control()
+
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
     ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
@@ -3322,8 +3319,8 @@ ugui.control = function(control, type, parent)
 
     ugui.internal.control_types[control.uid] = type
 
-    ugui.push_control(type, control, parent)
-    ugui.pop_control()
+    ugui.enter_control(type, control, parent)
+    ugui.leave_control()
 
     revert_styler_mixin()
 
@@ -3331,12 +3328,12 @@ ugui.control = function(control, type, parent)
 end
 
 ---Places a control in the scene and makes it the parent of subsequently placed controls.
----Pop the control with `ugui.pop_control()`, and the parent will revert to the previous one.
----If the parent is overriden via the `parent` parameter, the control will be placed as a child of that control instead of the current parent.
+---Leave the control with `ugui.leave_control()`, and the parent will revert to the previous one.
+---The parent can be overridden with the `parent` argument.
 ---@param type ControlType The control type.
 ---@param control Control The control.
----@param parent SceneNode? The parent node, or `nil` to use the current parent.
-ugui.push_control = function(type, control, parent)
+---@param parent SceneNode? The parent node, or `nil` to use the parent set by any previous `enter_control` call.
+ugui.enter_control = function(type, control, parent)
     local parent_node = parent or ugui.internal.parent_stack[#ugui.internal.parent_stack]
     local new_node = {
         control = control,
@@ -3344,14 +3341,21 @@ ugui.push_control = function(type, control, parent)
         parent = parent_node,
         children = {},
     }
-    parent_node.children[#parent_node.children + 1] = new_node
+
+    -- If parent_node is still nil, that means no enter_control calls have been made yet, so we are placing the root.
+    if parent_node == nil then
+        ugui.internal.root = new_node
+    else
+        parent_node.children[#parent_node.children + 1] = new_node
+    end
+
     ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = new_node
 end
 
----Reverts the current parent control to the previous one.
-ugui.pop_control = function()
-    if #ugui.internal.parent_stack <= 1 then
-        error('Tried to call pop_control() when there are no controls to pop.')
+---Leaves the current parent context.
+ugui.leave_control = function()
+    if #ugui.internal.parent_stack < 1 then
+        error('Tried to call leave_control() when there are no controls to leave.')
     end
 
     table.remove(ugui.internal.parent_stack, #ugui.internal.parent_stack)
