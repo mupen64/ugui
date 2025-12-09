@@ -28,10 +28,11 @@ emu.atdrawd2d(function()
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
-    ugui.button({
+    ugui.numberbox({
         uid = next_uid(),
         rectangle = {x = 0, y = 0, width = 150, height = 50},
-        text = 'Click Me',
+        value = 0,
+        places = 5,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
@@ -43,34 +44,38 @@ emu.atdrawd2d(function()
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
-    ugui.button({
+    ugui.numberbox({
         uid = next_uid(),
         rectangle = {x = 0, y = 0, width = 150, height = 50},
-        text = 'Click Me',
+        value = 0,
+        places = 5,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
-    ugui.button({
+    ugui.numberbox({
         uid = next_uid(),
         rectangle = {x = 0, y = 0, width = 150, height = 50},
-        text = 'Click Me',
+        value = 0,
+        places = 5,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
-    ugui.button({
+    ugui.numberbox({
         uid = next_uid(),
         rectangle = {x = 0, y = 0, width = 150, height = 50},
-        text = 'Click Me',
+        value = 0,
+        places = 5,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
     ugui.leave_control()
 
 
-    ugui.button({
+    ugui.numberbox({
         uid = next_uid(),
         rectangle = {x = 0, y = 0, width = 150, height = 50},
-        text = 'Click Me',
+        value = 0,
+        places = 5,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
