@@ -2236,8 +2236,8 @@ ugui.arrange_identity = function(node)
         local child = node.children[i]
         local desired_size = ugui.measure_identity(child)
         rects[i] = {
-            x = child.control.rectangle.x,
-            y = child.control.rectangle.y,
+            x = 0,
+            y = 0,
             width = desired_size.x,
             height = desired_size.y,
         }
@@ -3489,23 +3489,8 @@ ugui.registry.canvas = {
     draw = function()
 
     end,
-    ---@param node SceneNode
-    measure = function(node)
-        return ugui.internal.environment.window_size
-    end,
-    ---@param node SceneNode
-    arrange = function(node)
-        local rects = {}
-        for _, child in pairs(node.children) do
-            rects[#rects + 1] = {
-                x = 0,
-                y = 0,
-                width = ugui.internal.desired_sizes[child.control.uid].x,
-                height = ugui.internal.desired_sizes[child.control.uid].y,
-            }
-        end
-        return rects
-    end,
+    measure = ugui.measure_identity,
+    arrange = ugui.arrange_identity,
 }
 
 ---@type ControlRegistryEntry
