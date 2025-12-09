@@ -164,7 +164,6 @@ end
 ---@field public type ControlType The type of control contained in this node.
 ---@field public parent SceneNode? The parent node of this node. Nil if this is the root node.
 ---@field public children SceneNode[] The child nodes of this node.
----@field public desired_size Vector2 The desired size of this node, as computed during the measure phase.
 
 ---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox" | "canvas" | "stack"
 
@@ -178,7 +177,7 @@ end
 ---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
 ---@field public measure fun(node: SceneNode): Vector2 Measures the desired size of the control based on its children.
----@field public arrange fun(node: SceneNode): Rectangle[] Arranges the control's children, assigning them their final rectangles.
+---@field public arrange fun(node: SceneNode): Rectangle[] Computes the allowed bounds for each child control. Note that these bounds are relative to the parent control.
 ---Represents an entry in the control registry.
 
 --#endregion
@@ -197,6 +196,9 @@ ugui.internal = {
 
     ---@type table<UID, Rectangle>
     render_bounds = {},
+
+    ---@type table<UID, Vector2>
+    desired_sizes = {},
 
     ---@type table<UID, any>
     ---Map of control UIDs to their data.
@@ -305,23 +307,17 @@ ugui.internal = {
         end
     end,
 
-    ---Finds a node in the scene tree starting from the specified node.
-    ---@param from_node SceneNode
-    ---@param node SceneNode
+    ---Finds the first node in the scene tree matching the specified predicate. Searches depth-first.
+    ---@param predicate fun(node: SceneNode): boolean
     ---@return SceneNode?
-    find_node = function(from_node, node)
-        if from_node == node then
-            return from_node
-        end
-
-        for _, child in pairs(from_node.children) do
-            local result = ugui.internal.find_node(child, node)
-            if result then
-                return result
+    find_node = function(predicate)
+        local result = nil
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+            if predicate(node) and result == nil then
+                result = node
             end
-        end
-
-        return nil
+        end)
+        return result
     end,
 
     ---Prints the scene tree for debugging purposes.
@@ -952,6 +948,12 @@ ugui.internal = {
     ---Performs layouting of the scene tree.
     do_layout = function()
         -- 1. Measure
+        ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
+            -- Measure and assign desired size
+            ugui.internal.desired_sizes[node.control.uid] = ugui.measure(node)
+        end)
+
+        -- 2. Arrange
         local window_bounds = {
             x = 0,
             y = 0,
@@ -959,13 +961,12 @@ ugui.internal = {
             height = ugui.internal.environment.window_size.y,
         }
         ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
-            node.desired_size = ugui.measure(node)
+            -- Set node render bounds inside parent. We only do start-start (top-left) alignment for now.
             local parent_render_bounds = node.parent and ugui.internal.render_bounds[node.parent.control.uid] or window_bounds
-            local base_bounds = {x = 0, y = 0, width = node.desired_size.x, height = node.desired_size.y}
-            ugui.internal.render_bounds[node.control.uid] = ugui.internal.align_rect(base_bounds, parent_render_bounds, ugui.alignments.stretch, ugui.alignments.stretch)
+            local base_bounds = {x = 0, y = 0, width = ugui.internal.desired_sizes[node.control.uid].x, height = ugui.internal.desired_sizes[node.control.uid].y}
+            ugui.internal.render_bounds[node.control.uid] = ugui.internal.align_rect(base_bounds, parent_render_bounds, ugui.alignments.start, ugui.alignments.start)
         end)
 
-        -- 2. Arrange
         ugui.internal.foreach_node_depth_first(ugui.internal.root, function(node)
             -- Call the arrange function for this node type
             local registry_entry = ugui.registry[node.type]
@@ -973,20 +974,25 @@ ugui.internal = {
             assert(#child_bounds == #node.children)
 
             -- Results from arrange are control-relative, so we need to apply the offsets
-            for _, rect in pairs(child_bounds) do
+            for i = 1, #child_bounds, 1 do
+                local rect = child_bounds[i]
                 rect.x = rect.x + ugui.internal.render_bounds[node.control.uid].x
                 rect.y = rect.y + ugui.internal.render_bounds[node.control.uid].y
+
+                rect.x = rect.x + node.children[i].control.rectangle.x
+                rect.y = rect.y + node.children[i].control.rectangle.y
+                
+                child_bounds[i] = rect
             end
 
             for i, child in pairs(node.children) do
-                local bounds = ugui.internal.align_rect(
-                    {x = 0, y = 0, width = child.desired_size.x, height = child.desired_size.y},
-                    child_bounds[i],
-                    ugui.alignments.stretch,
-                    ugui.alignments.stretch)
+                local desired_size = ugui.internal.desired_sizes[child.control.uid]
 
-                bounds.x = bounds.x + child.control.rectangle.x
-                bounds.y = bounds.y + child.control.rectangle.y
+                local bounds = ugui.internal.align_rect(
+                    {x = 0, y = 0, width = desired_size.x, height = desired_size.y},
+                    child_bounds[i],
+                    ugui.alignments.start,
+                    ugui.alignments.start)
 
                 ugui.internal.render_bounds[child.control.uid] = bounds
             end
@@ -1004,7 +1010,6 @@ ugui.internal = {
             type = 'canvas',
             parent = nil,
             children = {},
-            desired_size = {x = 0, y = 0},
         }
         ugui.internal.parent_stack = {ugui.internal.root}
     end,
@@ -3072,10 +3077,10 @@ ugui.registry.canvas = {
         local rects = {}
         for _, child in pairs(node.children) do
             rects[#rects + 1] = {
-                x = child.control.rectangle.x,
-                y = child.control.rectangle.y,
-                width = child.desired_size.x,
-                height = child.desired_size.y,
+                x = 0,
+                y = 0,
+                width = ugui.internal.desired_sizes[child.control.uid].x,
+                height = ugui.internal.desired_sizes[child.control.uid].y,
             }
         end
         return rects
@@ -3133,20 +3138,20 @@ ugui.registry.stack = {
                 rects[#rects + 1] = {
                     x = sum,
                     y = 0,
-                    width = child.desired_size.x,
-                    height = child.desired_size.y,
+                    width = ugui.internal.desired_sizes[child.control.uid].x,
+                    height = ugui.internal.desired_sizes[child.control.uid].y,
                 }
-                sum = sum + child.desired_size.x + child.control.rectangle.x + spacing
+                sum = sum + ugui.internal.desired_sizes[child.control.uid].x + spacing
             end
         else
             for _, child in pairs(node.children) do
                 rects[#rects + 1] = {
                     x = 0,
                     y = sum,
-                    width = child.desired_size.x,
-                    height = child.desired_size.y,
+                    width = ugui.internal.desired_sizes[child.control.uid].x,
+                    height = ugui.internal.desired_sizes[child.control.uid].y,
                 }
-                sum = sum + child.desired_size.y + child.control.rectangle.y + spacing
+                sum = sum + ugui.internal.desired_sizes[child.control.uid].y + spacing
             end
         end
 
@@ -3201,7 +3206,6 @@ ugui.end_frame = function()
     -- 2. Z-Sorting pass
     ugui.internal.sort_scene(ugui.internal.root)
 
-    ugui.internal.print_tree(ugui.internal.root)
     -- 3. Input processing pass
     ugui.internal.do_input_processing()
 
@@ -3225,9 +3229,6 @@ ugui.end_frame = function()
             end
             if ugui.internal.mouse_captured_control == control.uid then
                 BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(ugui.internal.render_bounds[control.uid], 8), '#FF0000', 2)
-            end
-            if not entry.hittest_passthrough then
-                BreitbandGraphics.fill_rectangle(ugui.internal.render_bounds[control.uid], '#FF000033')
             end
         end
     end)
