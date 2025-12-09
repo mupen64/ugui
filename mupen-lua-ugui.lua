@@ -4051,14 +4051,24 @@ end
 
 ---Enters a Canvas.
 ---@param control Canvas The control table.
-ugui.enter_canvas = function(control)
+---@param fn fun()? A function to execute within the canvas context. If nil, the canvas will be entered but not left automatically and the function will not be called.
+ugui.enter_canvas = function(control, fn)
     ugui.registry.canvas.place(control)
+    if fn then
+        fn()
+        ugui.leave_control()
+    end
 end
 
 ---Enters a Stack.
 ---@param control Stack The control table.
-ugui.enter_stack = function(control)
+---@param fn fun()? A function to execute within the canvas context. If nil, the canvas will be entered but not left automatically and the function will not be called.
+ugui.enter_stack = function(control, fn)
     ugui.registry.stack.place(control)
+    if fn then
+        fn()
+        ugui.leave_control()
+    end
 end
 
 --#endregion
