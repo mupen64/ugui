@@ -34,9 +34,10 @@ emu.atdrawd2d(function()
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
+
     ugui.enter_stack({
         uid = next_uid(),
-        rectangle = {x = 0, y = 20, width = 0, height = 0},
+        rectangle = {x = 0, y = 0, width = 0, height = 0},
         horizontal = true,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
@@ -67,12 +68,13 @@ emu.atdrawd2d(function()
 
     ugui.button({
         uid = next_uid(),
-        rectangle = {x = 0, y = 20, width = 150, height = 50},
+        rectangle = {x = 0, y = 0, width = 150, height = 50},
         text = 'Click Me',
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })
     ugui.leave_control()
+
     ugui.leave_control()
 
     end_frame()

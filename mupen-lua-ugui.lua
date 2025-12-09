@@ -3593,7 +3593,7 @@ ugui.registry.stack = {
                     width = ugui.internal.desired_sizes[child.control.uid].x,
                     height = ugui.internal.desired_sizes[node.control.uid].y,
                 }
-                sum = sum + ugui.internal.desired_sizes[child.control.uid].x + child.control.rectangle.x + spacing
+                sum = sum + ugui.internal.desired_sizes[child.control.uid].x + spacing
             end
             sum = sum + spacing * (#node.children - 1)
         else
@@ -3604,7 +3604,7 @@ ugui.registry.stack = {
                     width = ugui.internal.desired_sizes[node.control.uid].x,
                     height = ugui.internal.desired_sizes[child.control.uid].y,
                 }
-                sum = sum + ugui.internal.desired_sizes[child.control.uid].y + child.control.rectangle.y + spacing
+                sum = sum + ugui.internal.desired_sizes[child.control.uid].y + spacing
             end
         end
 
