@@ -7,7 +7,10 @@ emu.atdrawd2d(function()
 
     ugui.DEBUG = true
 
-    ugui.enter_control('stack', {uid = 0, rectangle = {x = 0, y = 0, width = 0, height = 0}, spacing = 10})
+    ugui.enter_stack({
+        uid = 0,
+        rectangle = {x = 0, y = 0, width = 100, height = 30},
+    })
 
     ugui.combobox({
         uid = 10,
@@ -22,7 +25,7 @@ emu.atdrawd2d(function()
         selected_index = 2,
     })
 
-    ugui.enter_control('stack', {uid = 30, rectangle = {x = 0, y = 0, width = 0, height = 0}, horizontal = true, spacing = -30})
+    ugui.enter_stack({uid = 30, rectangle = {x = 0, y = 0, width = 0, height = 0}, horizontal = true, spacing = -30})
 
     ugui.combobox({
         uid = 40,

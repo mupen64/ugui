@@ -1005,7 +1005,7 @@ ugui.internal = {
     ---Resets the scene to its initial state.
     ---By default, the scene contains a single canvas that allows absolute positioning.
     reset_scene = function()
-        ugui.enter_control('canvas', {
+        ugui.enter_canvas({
             uid = -1,
             rectangle = {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y},
         })
@@ -2246,7 +2246,7 @@ ugui.measure_identity = function(node)
     }
 end
 
----Arranges the control by returning the user-specified rectangles.
+---Arranges the control's children by honoring their absolute positions. 
 ---@param node SceneNode The scene node.
 ---@return Rectangle[] The arranged rectangles.
 ugui.arrange_identity = function(node)
@@ -2874,7 +2874,7 @@ ugui.registry.combobox = {
                 plaintext = control.plaintext,
                 z_index = math.maxinteger,
             }
-            ugui.internal.parent_stack[#ugui.internal.parent_stack+1] = ugui.internal.root
+            ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = ugui.internal.root
             data.selected_index = ugui.listbox(listbox)
             table.remove(ugui.internal.parent_stack, #ugui.internal.parent_stack)
         end
@@ -3493,12 +3493,11 @@ ugui.registry.numberbox = {
 ---@type ControlRegistryEntry
 ugui.registry.canvas = {
     hittest_passthrough = true,
-
     ---@param control Canvas
     validate = function(control)
     end,
     place = function(control)
-
+        ugui.control(control, 'canvas', nil, false)
     end,
     logic = function(control, data)
         return {
@@ -3531,11 +3530,13 @@ ugui.registry.canvas = {
 ---@type ControlRegistryEntry
 ugui.registry.stack = {
     hittest_passthrough = true,
-
     ---@param control Stack
     validate = function(control)
         ugui.internal.assert(type(control.horizontal) == 'boolean' or control.horizontal == nil, 'expected horizontal to be boolean or nil')
         ugui.internal.assert(type(control.spacing) == 'number' or control.spacing == nil, 'expected spacing to be number or nil')
+    end,
+    place = function(control)
+        ugui.control(control, 'stack', nil, false)
     end,
     logic = function(control, data)
         return {
@@ -3703,8 +3704,13 @@ end
 ---@param control Control The control.
 ---@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
 ---@param parent SceneNode? The parent node, or `nil` to use the current parent.
+---@param leave boolean? Whether to leave the control after placing it. Defaults to `true`.
 ---@return ControlReturnValue # The control's return value, or `nil` if the type is `""`.
-ugui.control = function(control, type, parent)
+ugui.control = function(control, type, parent, leave)
+    if leave == nil then
+        leave = true
+    end
+
     local function init_control_data(uid)
         ugui.internal.control_data[uid] = {
             signal_change = ugui.signal_change_states.none,
@@ -3767,21 +3773,6 @@ ugui.control = function(control, type, parent)
 
     ugui.internal.control_types[control.uid] = type
 
-    ugui.enter_control(type, control, parent)
-    ugui.leave_control()
-
-    revert_styler_mixin()
-
-    return return_value
-end
-
----Places a control in the scene and makes it the parent of subsequently placed controls.
----Leave the control with `ugui.leave_control()`, and the parent will revert to the previous one.
----The parent can be overridden with the `parent` argument.
----@param type ControlType The control type.
----@param control Control The control.
----@param parent SceneNode? The parent node, or `nil` to use the parent set by any previous `enter_control` call.
-ugui.enter_control = function(type, control, parent)
     local parent_node = parent or ugui.internal.parent_stack[#ugui.internal.parent_stack]
     local new_node = {
         control = control,
@@ -3790,7 +3781,7 @@ ugui.enter_control = function(type, control, parent)
         children = {},
     }
 
-    -- If parent_node is still nil, that means no enter_control calls have been made yet, so we are placing the root.
+    -- If parent_node is still nil, that means no control calls have been made yet, so we are placing the root.
     if parent_node == nil then
         ugui.internal.root = new_node
     else
@@ -3798,6 +3789,14 @@ ugui.enter_control = function(type, control, parent)
     end
 
     ugui.internal.parent_stack[#ugui.internal.parent_stack + 1] = new_node
+
+    if leave then
+        ugui.leave_control()
+    end
+
+    revert_styler_mixin()
+
+    return return_value
 end
 
 ---Leaves the current parent context.
@@ -3916,13 +3915,13 @@ end
 ---Enters a Canvas.
 ---@param control Canvas The control table.
 ugui.enter_canvas = function(control)
-    ugui.enter_control('canvas', control)
+    ugui.registry.canvas.place(control)
 end
 
 ---Enters a Stack.
 ---@param control Stack The control table.
 ugui.enter_stack = function(control)
-    ugui.enter_control('stack', control)
+    ugui.registry.stack.place(control)
 end
 
 --#endregion
