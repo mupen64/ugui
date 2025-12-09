@@ -277,15 +277,15 @@ ugui.internal = {
     ---@param predicate fun(node: SceneNode)
     ---@param reverse boolean? Whether to traverse children in reverse order.
     foreach_node = function(node, predicate, reverse)
-        predicate(node)
-
         if reverse then
             for i = #node.children, 1, -1 do
                 ugui.internal.foreach_node(node.children[i], predicate, reverse)
             end
+            predicate(node)
             return
         end
 
+        predicate(node)
         for _, child in pairs(node.children) do
             ugui.internal.foreach_node(child, predicate)
         end
@@ -2227,7 +2227,7 @@ ugui.measure_identity = function(node)
     }
 end
 
----Arranges the control's children by honoring their absolute positions. 
+---Arranges the control's children by honoring their absolute positions.
 ---@param node SceneNode The scene node.
 ---@return Rectangle[] The arranged rectangles.
 ugui.arrange_identity = function(node)
