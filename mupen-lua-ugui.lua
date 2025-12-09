@@ -184,6 +184,8 @@ end
 
 --#region ugui.internal
 
+--TODO: Rewrite controls to be based on just "shapes" and generic input handling.
+
 ugui.internal = {
     ---@type SceneNode
     root = {},
@@ -3445,7 +3447,7 @@ ugui.combobox = function(control)
             plaintext = control.plaintext,
             z_index = math.maxinteger,
         }
-        data.selected_index = ugui.control(listbox, 'listbox', ugui.internal.root)
+        data.selected_index = ugui.control(listbox, 'listbox', ugui.internal.root).primary
     end
 
     return data.selected_index, result.meta
