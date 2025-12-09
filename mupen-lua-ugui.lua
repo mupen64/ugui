@@ -2874,7 +2874,9 @@ ugui.registry.combobox = {
                 plaintext = control.plaintext,
                 z_index = math.maxinteger,
             }
-            data.selected_index = ugui.control(listbox, 'listbox', ugui.internal.root).primary
+            ugui.internal.parent_stack[#ugui.internal.parent_stack+1] = ugui.internal.root
+            data.selected_index = ugui.listbox(listbox)
+            table.remove(ugui.internal.parent_stack, #ugui.internal.parent_stack)
         end
 
         return {primary = data.selected_index, meta = result.meta}
@@ -2958,7 +2960,7 @@ ugui.registry.menu = {
             ugui.internal.render_bounds[control.uid].y = ugui.internal.render_bounds[control.uid].y - (ugui.internal.render_bounds[control.uid].y + ugui.internal.render_bounds[control.uid].height - ugui.internal.environment.window_size.y)
         end
 
-        local result = ugui.control(control, 'menu')
+        local result = ugui.menu(control)
         local data = ugui.internal.control_data[control.uid]
 
         -- Show child menu if there's any hovered one
@@ -3696,6 +3698,7 @@ ugui.measure = function(node)
 end
 
 ---Places a Control of the specified type.
+---Don't call this function for placing controls directly if you're not implementing a custom control, as it won't call the control's `place` function. Use one of the control-specific placement functions like `ugui.button()` instead.
 ---This operation is equivalent to pushing a control to the control stack then popping it again.
 ---@param control Control The control.
 ---@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
