@@ -18,6 +18,7 @@ emu.atdrawd2d(function()
     ugui.enter_stack({
         uid = 80,
         rectangle = {x = 0, y = 0, width = 0, height = 0},
+        spacing = 100,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
     })

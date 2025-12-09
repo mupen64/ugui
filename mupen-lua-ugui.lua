@@ -931,11 +931,12 @@ ugui.internal = {
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 
+    late_render_callbacks = {},
+
     ---Performs layouting of the scene tree.
     do_layout = function()
         -- 1. Measure
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            -- Measure and assign desired size
             ugui.internal.desired_sizes[node.control.uid] = ugui.measure(node)
         end)
 
@@ -962,7 +963,6 @@ ugui.internal = {
             -- Results from arrange are control-relative, so we need to apply the offsets
             for i = 1, #child_bounds, 1 do
                 local rect = child_bounds[i]
-                BreitbandGraphics.draw_rectangle(rect, '#3333FF', 2)
 
                 rect.x = rect.x + ugui.internal.render_bounds[node.control.uid].x
                 rect.y = rect.y + ugui.internal.render_bounds[node.control.uid].y
@@ -971,7 +971,6 @@ ugui.internal = {
                 rect.y = rect.y + node.children[i].control.rectangle.y
 
                 child_bounds[i] = rect
-
             end
 
             for i, child in pairs(node.children) do
@@ -1012,6 +1011,11 @@ ugui.internal = {
                 end
             end
         end)
+
+        for _, callback in ipairs(ugui.internal.late_render_callbacks) do
+            callback()
+        end
+        ugui.internal.late_render_callbacks = {}
     end,
 
     ---Resets the scene to its initial state.
@@ -3552,13 +3556,15 @@ ugui.registry.stack = {
 
         if stack.horizontal then
             for _, child in pairs(node.children) do
-                sum = sum + ugui.measure(child).x + child.control.rectangle.x + spacing
+                sum = sum + ugui.measure(child).x + child.control.rectangle.x
             end
+            sum = sum + spacing * (#node.children - 1)
             return {x = sum, y = 0}
         else
             for _, child in pairs(node.children) do
-                sum = sum + ugui.measure(child).y + child.control.rectangle.y + spacing
+                sum = sum + ugui.measure(child).y + child.control.rectangle.y
             end
+            sum = sum + spacing * (#node.children - 1)
             return {x = 0, y = sum}
         end
     end,
@@ -3571,22 +3577,23 @@ ugui.registry.stack = {
         local sum = 0
         local spacing = stack.spacing or 0
         if stack.horizontal then
-            for _, child in pairs(node.children) do
+            for i, child in pairs(node.children) do
                 rects[#rects + 1] = {
                     x = sum,
                     y = 0,
-                    width = node.control.rectangle.width,
-                    height = node.control.rectangle.height,
+                    width = ugui.internal.render_bounds[child.control.uid].width,
+                    height = ugui.internal.desired_sizes[node.control.uid].y,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].x + child.control.rectangle.x + spacing
             end
+            sum = sum + spacing * (#node.children - 1)
         else
-            for _, child in pairs(node.children) do
+            for i, child in pairs(node.children) do
                 rects[#rects + 1] = {
                     x = 0,
                     y = sum,
-                    width = node.control.rectangle.width,
-                    height = node.control.rectangle.height,
+                    width = ugui.internal.desired_sizes[node.control.uid].x,
+                    height = ugui.internal.render_bounds[child.control.uid].height,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].y + child.control.rectangle.y + spacing
             end
