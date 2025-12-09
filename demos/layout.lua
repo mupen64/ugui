@@ -56,12 +56,26 @@ emu.atdrawd2d(function()
         text = 'Hello World!',
     }, 'button', nil, false)
 
+    ugui.enter_stack({uid = 80, rectangle = {x = 0, y = 0, width = 0, height = 0}, spacing = 10})
     ugui.button({
-        uid = 80,
+        uid = 90,
         rectangle = {x = 0, y = 0, width = 150, height = 50},
         text = 'Click Me',
         z_index = 10,
     })
+    ugui.button({
+        uid = 100,
+        rectangle = {x = 0, y = 0, width = 150, height = 50},
+        text = 'Click Me',
+        z_index = 10,
+    })
+    ugui.button({
+        uid = 110,
+        rectangle = {x = 0, y = 0, width = 150, height = 50},
+        text = 'Click Me',
+        z_index = 10,
+    })
+    ugui.leave_control()
     ugui.leave_control()
 
     end_frame()
