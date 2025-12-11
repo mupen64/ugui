@@ -2308,7 +2308,29 @@ ugui.registry.button = {
     draw = function(control)
         ugui.standard_styler.draw_button(control)
     end,
-    measure = ugui.measure_identity,
+    measure = function(node)
+        local control = node.control
+        ---@cast control Button
+
+        local desired_size = ugui.measure_identity(node)
+
+        if node.control.rectangle.width == 0 or node.control.rectangle.height == 0 then
+            ugui.internal.assert(#node.children == 0, 'Buttons sized by their text cannot have children. Either remove the children or specify an explicit width and height.')
+
+            local text_size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
+
+            if node.control.rectangle.width == 0 then
+                desired_size.x = text_size.width
+            end
+            if node.control.rectangle.height == 0 then
+                desired_size.y = text_size.height
+            end
+            
+            return desired_size
+        end
+
+        return desired_size
+    end,
     arrange = ugui.arrange_identity,
 }
 
@@ -3117,7 +3139,7 @@ ugui.registry.spinner = {
 
         ugui.enter_stack({
             uid = control.uid + 1,
-            rectangle = { x = 0, y = 0, width = 0, height = 0 },
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
             horizontal = true,
         })
 
@@ -3138,7 +3160,7 @@ ugui.registry.spinner = {
 
         ugui.enter_stack({
             uid = control.uid + 3,
-            rectangle = { x = 0, y = 0, width = 0, height = 0 },
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
             horizontal = control.is_horizontal == true,
         })
 
