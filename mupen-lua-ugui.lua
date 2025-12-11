@@ -167,7 +167,7 @@ end
 ---@field public parent SceneNode? The parent node of this node. Nil if this is the root node.
 ---@field public children SceneNode[] The child nodes of this node.
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox" | "canvas" | "stack"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "spinner" | "numberbox" | "canvas" | "stack"
 
 ---@alias ControlReturnValue { primary: any, meta: Meta }
 
@@ -3080,15 +3080,18 @@ ugui.registry.spinner = {
     ---@param control Spinner
     validate = function(control)
         ugui.internal.assert(type(control.value) == 'number', 'expected value to be number')
-        ugui.internal.assert(type(control.places) == 'number', 'expected places to be number')
-        ugui.internal.assert(type(control.show_negative) == 'boolean' or type(control.show_negative) == 'nil', 'expected show_negative to be boolean or nil')
+        ugui.internal.assert(type(control.increment) == 'number' or control.increment == nil, 'expected increment to be number or nil')
+        ugui.internal.assert(type(control.minimum_value) == 'number' or control.minimum_value == nil, 'expected minimum_value to be number or nil')
+        ugui.internal.assert(type(control.maximum_value) == 'number' or control.maximum_value == nil, 'expected maximum_value to be number or nil')
+        ugui.internal.assert(type(control.is_horizontal) == 'boolean' or control.is_horizontal == nil, 'expected is_horizontal to be boolean or nil')
     end,
     ---@param control Spinner
     setup = function(control, data)
         data.caret_index = 1
     end,
+    ---@param control Spinner
     place = function(control)
-        local _ = ugui.control(control, '')
+        local result = ugui.control(control, 'spinner', nil, false)
         local data = ugui.internal.control_data[control.uid]
 
         local increment = control.increment or 1
@@ -3110,16 +3113,22 @@ ugui.registry.spinner = {
             return value
         end
 
-        local textbox_rect = {
-            x = ugui.internal.render_bounds[control.uid].x,
-            y = ugui.internal.render_bounds[control.uid].y,
-            width = ugui.internal.render_bounds[control.uid].width - ugui.standard_styler.params.spinner.button_size * 2,
-            height = ugui.internal.render_bounds[control.uid].height,
-        }
+        local textbox_uid = control.uid + 1
+
+        ugui.enter_stack({
+            uid = control.uid + 1,
+            rectangle = { x = 0, y = 0, width = 0, height = 0 },
+            horizontal = true,
+        })
 
         local new_text = ugui.textbox({
-            uid = control.uid + 1,
-            rectangle = textbox_rect,
+            uid = control.uid + 2,
+            rectangle = {
+                x = 0,
+                y = 0,
+                width = ugui.internal.render_bounds[control.uid].width - ugui.standard_styler.params.spinner.button_size * 2,
+                height = ugui.internal.render_bounds[control.uid].height,
+            },
             text = tostring(value),
         })
 
@@ -3127,79 +3136,51 @@ ugui.registry.spinner = {
             value = clamp_value(tonumber(new_text))
         end
 
-        if control.is_enabled ~= false
-            and (BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, textbox_rect) or ugui.internal.mouse_captured_control == control.uid)
+        ugui.enter_stack({
+            uid = control.uid + 3,
+            rectangle = { x = 0, y = 0, width = 0, height = 0 },
+            horizontal = control.is_horizontal == true,
+        })
+
+        if (ugui.button({
+                uid = control.uid + 4,
+                is_enabled = not (value == control.minimum_value),
+                rectangle = {
+                    x = 0,
+                    y = 0,
+                    width = ugui.standard_styler.params.spinner.button_size,
+                    height = ugui.internal.render_bounds[control.uid].height / 2,
+                },
+                text = '-',
+            }))
         then
+            value = clamp_value(value - increment)
+        end
+
+        if (ugui.button({
+                uid = control.uid + 5,
+                is_enabled = not (value == control.maximum_value),
+                rectangle = {
+                    x = 0,
+                    y = 0,
+                    width = ugui.standard_styler.params.spinner.button_size,
+                    height = ugui.internal.render_bounds[control.uid].height / 2,
+                },
+                text = '+',
+            }))
+        then
+            value = clamp_value(value + increment)
+        end
+
+        ugui.leave_control()
+        ugui.leave_control()
+        ugui.leave_control()
+
+        if control.is_enabled ~= false and ugui.internal.mouse_captured_control == textbox_uid then
             if ugui.internal.is_mouse_wheel_up() then
                 value = clamp_value(value + increment)
             end
             if ugui.internal.is_mouse_wheel_down() then
-                value = clamp_value(value - increment)
-            end
-        end
-
-        if control.is_horizontal then
-            if (ugui.button({
-                    uid = control.uid + 2,
-                    is_enabled = not (value == control.minimum_value),
-                    rectangle = {
-                        x = ugui.internal.render_bounds[control.uid].x + ugui.internal.render_bounds[control.uid].width -
-                            ugui.standard_styler.params.spinner.button_size * 2,
-                        y = ugui.internal.render_bounds[control.uid].y,
-                        width = ugui.standard_styler.params.spinner.button_size,
-                        height = ugui.internal.render_bounds[control.uid].height,
-                    },
-                    text = '-',
-                }))
-            then
-                value = clamp_value(value - increment)
-            end
-
-            if (ugui.button({
-                    uid = control.uid + 3,
-                    is_enabled = not (value == control.maximum_value),
-                    rectangle = {
-                        x = ugui.internal.render_bounds[control.uid].x + ugui.internal.render_bounds[control.uid].width -
-                            ugui.standard_styler.params.spinner.button_size,
-                        y = ugui.internal.render_bounds[control.uid].y,
-                        width = ugui.standard_styler.params.spinner.button_size,
-                        height = ugui.internal.render_bounds[control.uid].height,
-                    },
-                    text = '+',
-                }))
-            then
-                value = clamp_value(value + increment)
-            end
-        else
-            if (ugui.button({
-                    uid = control.uid + 2,
-                    is_enabled = not (value == control.maximum_value),
-                    rectangle = {
-                        x = ugui.internal.render_bounds[control.uid].x + ugui.internal.render_bounds[control.uid].width -
-                            ugui.standard_styler.params.spinner.button_size * 2,
-                        y = ugui.internal.render_bounds[control.uid].y,
-                        width = ugui.standard_styler.params.spinner.button_size * 2,
-                        height = ugui.internal.render_bounds[control.uid].height / 2,
-                    },
-                    text = '+',
-                }))
-            then
-                value = clamp_value(value + increment)
-            end
-
-            if (ugui.button({
-                    uid = control.uid + 3,
-                    is_enabled = not (value == control.minimum_value),
-                    rectangle = {
-                        x = ugui.internal.render_bounds[control.uid].x + ugui.internal.render_bounds[control.uid].width -
-                            ugui.standard_styler.params.spinner.button_size * 2,
-                        y = ugui.internal.render_bounds[control.uid].y + ugui.internal.render_bounds[control.uid].height / 2,
-                        width = ugui.standard_styler.params.spinner.button_size * 2,
-                        height = ugui.internal.render_bounds[control.uid].height / 2,
-                    },
-                    text = '-',
-                }))
-            then
                 value = clamp_value(value - increment)
             end
         end
@@ -3214,86 +3195,6 @@ ugui.registry.spinner = {
     ---@param control Spinner
     ---@return ControlReturnValue
     logic = function(control, data)
-        local prev_value_negative = control.value < 0
-        data.value = math.abs(control.value)
-
-        local function get_caret_index_at_relative_x(x)
-            local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
-            local font_name = ugui.standard_styler.params.monospace_font_name
-            local text = string.format('%0' .. tostring(control.places) .. 'd', data.value)
-
-            -- award for most painful basic geometry
-            local full_width = BreitbandGraphics.get_text_size(text,
-                font_size,
-                font_name).width
-
-            local positions = {}
-            for i = 1, #text, 1 do
-                local width = BreitbandGraphics.get_text_size(text:sub(1, i),
-                    font_size,
-                    font_name).width
-
-                local left = ugui.internal.render_bounds[control.uid].width / 2 - full_width / 2
-                positions[#positions + 1] = width + left
-            end
-
-            for i = #positions, 1, -1 do
-                if x > positions[i] then
-                    return ugui.internal.clamp(i + 1, 1, #positions)
-                end
-            end
-            return 1
-        end
-
-        local function increment_digit(index, value)
-            data.value = ugui.internal.set_digit(data.value, control.places,
-                ugui.internal.get_digit(data.value, control.places, index) + value, index)
-        end
-
-        if ugui.internal.clicked_control == control.uid then
-            data.caret_index = get_caret_index_at_relative_x(ugui.internal.environment.mouse_position.x - ugui.internal.render_bounds[control.uid].x)
-        end
-
-        if ugui.internal.keyboard_captured_control == control.uid then
-            -- handle number key press
-            for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-                local num_1 = tonumber(key)
-                local num_2 = tonumber(key:sub(7))
-                local digit = num_1 and num_1 or num_2
-
-                if digit then
-                    data.value = ugui.internal.set_digit(data.value, control.places, digit, data.caret_index)
-                    data.caret_index = data.caret_index + 1
-                end
-
-                if key == 'left' then
-                    data.caret_index = data.caret_index - 1
-                end
-                if key == 'right' then
-                    data.caret_index = data.caret_index + 1
-                end
-                if key == 'up' then
-                    increment_digit(data.caret_index, 1)
-                end
-                if key == 'down' then
-                    increment_digit(data.caret_index, -1)
-                end
-            end
-
-            if ugui.internal.is_mouse_wheel_up() then
-                increment_digit(data.caret_index, 1)
-            end
-            if ugui.internal.is_mouse_wheel_down() then
-                increment_digit(data.caret_index, -1)
-            end
-        end
-
-        data.caret_index = ugui.internal.clamp(data.caret_index, 1, control.places)
-
-        if prev_value_negative then
-            data.value = -math.abs(data.value)
-        end
-
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= data.value)
         return {
             value = data.value,
@@ -3302,57 +3203,6 @@ ugui.registry.spinner = {
     end,
     ---@param control Spinner
     draw = function(control)
-        local data = ugui.internal.control_data[control.uid]
-        local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
-        local font_name = ugui.standard_styler.params.monospace_font_name
-        local text = string.format('%0' .. tostring(control.places) .. 'd', math.abs(control.value))
-
-        local visual_state = ugui.get_visual_state(control)
-        if ugui.internal.keyboard_captured_control == control.uid then
-            visual_state = ugui.visual_states.active
-        end
-        ugui.standard_styler.draw_edit_frame(control, ugui.internal.render_bounds[control.uid], visual_state)
-
-        BreitbandGraphics.draw_text2({
-            text = text,
-            rectangle = ugui.internal.render_bounds[control.uid],
-            color = ugui.standard_styler.params.textbox.text[visual_state],
-            font_name = font_name,
-            font_size = font_size,
-            aliased = not ugui.standard_styler.params.cleartype,
-        })
-
-        local text_width_up_to_caret = BreitbandGraphics.get_text_size(
-            text:sub(1, data.caret_index - 1),
-            font_size,
-            font_name).width
-
-        local full_width = BreitbandGraphics.get_text_size(text,
-            font_size,
-            font_name).width
-
-        local left = ugui.internal.render_bounds[control.uid].width / 2 - full_width / 2
-
-        local selected_char_rect = {
-            x = ugui.internal.render_bounds[control.uid].x + left + text_width_up_to_caret,
-            y = ugui.internal.render_bounds[control.uid].y,
-            width = font_size / 2,
-            height = ugui.internal.render_bounds[control.uid].height,
-        }
-
-        if ugui.internal.keyboard_captured_control == control.uid then
-            BreitbandGraphics.fill_rectangle(selected_char_rect, ugui.standard_styler.params.numberbox.selection)
-            BreitbandGraphics.push_clip(selected_char_rect)
-            BreitbandGraphics.draw_text2({
-                text = text,
-                rectangle = ugui.internal.render_bounds[control.uid],
-                color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
-                font_name = font_name,
-                font_size = font_size,
-                aliased = not ugui.standard_styler.params.cleartype,
-            })
-            BreitbandGraphics.pop_clip()
-        end
     end,
     measure = ugui.measure_identity,
     arrange = ugui.arrange_identity,

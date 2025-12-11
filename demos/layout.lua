@@ -27,59 +27,59 @@ emu.atdrawd2d(function()
         spacing = 50,
         x_align = ugui.alignments.center,
         y_align = ugui.alignments.center,
-    })
-    ugui.numberbox({
-        uid = next_uid(),
-        rectangle = {x = 0, y = 0, width = 150, height = 50},
-        value = 0,
-        places = 5,
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
-    })
+    }, function()
+        ugui.spinner({
+            uid = next_uid(),
+            rectangle = {x = 0, y = 0, width = 150, height = 50},
+            value = 0,
+            x_align = ugui.alignments.center,
+            y_align = ugui.alignments.center,
+            is_horizontal = false
+        })
 
-    ugui.enter_stack({
-        uid = next_uid(),
-        rectangle = {x = 0, y = 0, width = 0, height = 0},
-        horizontal = true,
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
-    })
-    ugui.numberbox({
-        uid = next_uid(),
-        rectangle = {x = 0, y = 0, width = 150, height = 50},
-        value = 0,
-        places = 5,
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
-    })
-    ugui.numberbox({
-        uid = next_uid(),
-        rectangle = {x = 0, y = 0, width = 150, height = 50},
-        value = 0,
-        places = 5,
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
-    })
-    ugui.numberbox({
-        uid = next_uid(),
-        rectangle = {x = 0, y = 0, width = 150, height = 50},
-        value = 0,
-        places = 5,
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
-    })
-    ugui.leave_control()
+        ugui.enter_stack({
+            uid = next_uid(),
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
+            horizontal = true,
+            x_align = ugui.alignments.center,
+            y_align = ugui.alignments.center,
+        }, function()
+            ugui.numberbox({
+                uid = next_uid(),
+                rectangle = {x = 0, y = 0, width = 150, height = 50},
+                value = 0,
+                places = 5,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            ugui.numberbox({
+                uid = next_uid(),
+                rectangle = {x = 0, y = 0, width = 150, height = 50},
+                value = 0,
+                places = 5,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            ugui.numberbox({
+                uid = next_uid(),
+                rectangle = {x = 0, y = 0, width = 150, height = 50},
+                value = 0,
+                places = 5,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+        end)
 
+        ugui.numberbox({
+            uid = next_uid(),
+            rectangle = {x = 0, y = 0, width = 150, height = 50},
+            value = 0,
+            places = 5,
+            x_align = ugui.alignments.center,
+            y_align = ugui.alignments.center,
+        })
+    end)
 
-    ugui.numberbox({
-        uid = next_uid(),
-        rectangle = {x = 0, y = 0, width = 150, height = 50},
-        value = 0,
-        places = 5,
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
-    })
-    ugui.leave_control()
 
     ugui.leave_control()
 
