@@ -960,13 +960,14 @@ ugui.internal = {
             local child_bounds = registry_entry.arrange(node)
             assert(#child_bounds == #node.children)
 
-            -- Results from arrange are control-relative, so we need to apply the offsets
             for i = 1, #child_bounds, 1 do
                 local rect = child_bounds[i]
 
+                -- Results from arrange are control-relative, so we need to apply the offsets
                 rect.x = rect.x + ugui.internal.render_bounds[node.control.uid].x
                 rect.y = rect.y + ugui.internal.render_bounds[node.control.uid].y
 
+                -- And also apply the control's own offset
                 rect.x = rect.x + node.children[i].control.rectangle.x
                 rect.y = rect.y + node.children[i].control.rectangle.y
 
