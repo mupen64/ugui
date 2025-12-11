@@ -2264,21 +2264,16 @@ ugui.standard_styler = {
     end,
 }
 
----Measures the control by returning the user-specified size.
----@param node SceneNode The scene node.
----@return Vector2 The desired size.
-ugui.measure_identity = function(node)
-    return {
-        x = node.control.rectangle.width,
-        y = node.control.rectangle.height,
-    }
+-- TODO: REMOVE BEFORE MERGE. Implement proper measure functions for all controls.
+ugui.measure_stub = function(node)
+    ugui.internal.assert(false, 'Measure function not implemented for ' .. node.type)
 end
 
----Arranges the control's children by honoring their absolute positions and allowing them to fill the parent.
+---Arranges the control's children by honoring their positions and allowing them to fill the parent.
 ---@param node SceneNode The scene node.
 ---@param constraint Rectangle The constraint rectangle.
 ---@return Rectangle[] The arranged rectangles.
-ugui.arrange_identity = function(node, constraint)
+ugui.default_arrange = function(node, constraint)
     local rects = {}
     for i = 1, #node.children, 1 do
         rects[i] = {
@@ -2334,7 +2329,7 @@ ugui.registry.button = {
             y = text_size.height,
         }
     end,
-    arrange = ugui.arrange_identity,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2371,8 +2366,8 @@ ugui.registry.toggle_button = {
     draw = function(control)
         ugui.standard_styler.draw_togglebutton(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2420,8 +2415,8 @@ ugui.registry.carrousel_button = {
     draw = function(control)
         ugui.standard_styler.draw_carrousel_button(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2528,8 +2523,8 @@ ugui.registry.textbox = {
     draw = function(control)
         ugui.standard_styler.draw_textbox(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2582,8 +2577,8 @@ ugui.registry.joystick = {
     draw = function(control)
         ugui.standard_styler.draw_joystick(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2621,8 +2616,8 @@ ugui.registry.trackbar = {
     draw = function(control)
         ugui.standard_styler.draw_trackbar(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2781,8 +2776,8 @@ ugui.registry.listbox = {
     draw = function(control)
         ugui.standard_styler.draw_listbox(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2860,8 +2855,8 @@ ugui.registry.scrollbar = {
 
         ugui.standard_styler.draw_scrollbar(control, thumb_rectangle)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2956,8 +2951,8 @@ ugui.registry.combobox = {
     draw = function(control)
         ugui.standard_styler.draw_combobox(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -3096,8 +3091,8 @@ ugui.registry.menu = {
     draw = function(control)
         ugui.standard_styler.draw_menu(control, ugui.internal.render_bounds[control.uid])
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -3229,8 +3224,8 @@ ugui.registry.spinner = {
     ---@param control Spinner
     draw = function(control)
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -3319,8 +3314,8 @@ ugui.registry.tabcontrol = {
             meta = {signal_change = data.signal_change},
         }
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -3512,8 +3507,8 @@ ugui.registry.numberbox = {
             meta = data.meta,
         }
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -3534,8 +3529,8 @@ ugui.registry.canvas = {
     draw = function()
 
     end,
-    measure = ugui.measure_identity,
-    arrange = ugui.arrange_identity,
+    measure = ugui.measure_stub,
+    arrange = ugui.default_arrange,
 }
 
 ---@type ControlRegistryEntry

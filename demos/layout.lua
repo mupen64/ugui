@@ -13,75 +13,29 @@ emu.atdrawd2d(function()
     uid = 0
     ugui.DEBUG = true
 
-    ugui.control({
-        uid = next_uid(),
-        rectangle = {x = 0, y = 0, width = 300, height = 300},
-        text = 'Hello World!',
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
-    }, 'button', nil, false)
-
     ugui.enter_stack({
         uid = next_uid(),
         rectangle = {x = 0, y = 0, width = 0, height = 0},
         spacing = 50,
-        x_align = ugui.alignments.center,
-        y_align = ugui.alignments.center,
+        x_align = ugui.alignments.stretch,
+        y_align = ugui.alignments.stretch,
     }, function()
-        ugui.spinner({
-            uid = next_uid(),
-            rectangle = {x = 0, y = 0, width = 150, height = 50},
-            value = 0,
-            x_align = ugui.alignments.center,
-            y_align = ugui.alignments.center,
-            is_horizontal = false
-        })
-
         ugui.enter_stack({
             uid = next_uid(),
             rectangle = {x = 0, y = 0, width = 0, height = 0},
-            horizontal = true,
+            spacing = 50,
             x_align = ugui.alignments.center,
-            y_align = ugui.alignments.center,
+            y_align = ugui.alignments.stretch,
         }, function()
-            ugui.numberbox({
+            ugui.button({
                 uid = next_uid(),
-                rectangle = {x = 0, y = 0, width = 150, height = 50},
-                value = 0,
-                places = 5,
-                x_align = ugui.alignments.center,
-                y_align = ugui.alignments.center,
-            })
-            ugui.numberbox({
-                uid = next_uid(),
-                rectangle = {x = 0, y = 0, width = 150, height = 50},
-                value = 0,
-                places = 5,
-                x_align = ugui.alignments.center,
-                y_align = ugui.alignments.center,
-            })
-            ugui.numberbox({
-                uid = next_uid(),
-                rectangle = {x = 0, y = 0, width = 150, height = 50},
-                value = 0,
-                places = 5,
-                x_align = ugui.alignments.center,
-                y_align = ugui.alignments.center,
+                rectangle = {x = 0, y = 0, width = 1000, height = 0},
+                text = 'Button 1',
+                x_align = ugui.alignments.stretch,
+                y_align = ugui.alignments.stretch,
             })
         end)
-
-        ugui.numberbox({
-            uid = next_uid(),
-            rectangle = {x = 0, y = 0, width = 150, height = 50},
-            value = 0,
-            places = 5,
-            x_align = ugui.alignments.center,
-            y_align = ugui.alignments.center,
-        })
     end)
-
-
-    ugui.leave_control()
 
     end_frame()
 end)
