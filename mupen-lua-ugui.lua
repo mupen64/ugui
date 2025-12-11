@@ -179,7 +179,7 @@ end
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
 ---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
----@field public measure fun(node: SceneNode): Vector2 Measures the desired size of the control based on its children.
+---@field public measure fun(node: SceneNode): Vector2 Measures the desired size of the control based on its children. This function shouldn't be called directly in control prototypes; use `ugui.measure` instead.
 ---@field public arrange fun(node: SceneNode, constraint: Rectangle): Rectangle[] Computes the allowed bounds for each child control. The computed bounds must consider the control margins specified by the `rectangle` field. Note that these bounds are relative to the parent control.
 ---Represents an entry in the control registry.
 
@@ -937,22 +937,7 @@ ugui.internal = {
     do_layout = function()
         -- 1. Measure step
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            local desired_size = {x = 0, y = 0}
-
-            -- We skip the expensive measure if we have fixed size.
-            if node.control.rectangle.width == 0 or node.control.rectangle.height == 0 then
-                desired_size = ugui.measure(node)
-            end
-
-            -- Manual size override case.
-            if node.control.rectangle.width ~= 0 then
-                desired_size.x = node.control.rectangle.width
-            end
-            if node.control.rectangle.height ~= 0 then
-                desired_size.y = node.control.rectangle.height
-            end
-
-            ugui.internal.desired_sizes[node.control.uid] = desired_size
+            ugui.internal.desired_sizes[node.control.uid] = ugui.measure_core(node)
         end)
 
         -- 2. Arrange step
@@ -2264,6 +2249,29 @@ ugui.standard_styler = {
     end,
 }
 
+---Measures the control's desired size, taking into account size overrides.
+---@param node SceneNode The scene node.
+---@return Vector2 The desired size.
+ugui.measure_core = function(node)
+    local desired_size = {x = 0, y = 0}
+
+    -- We skip the expensive measure if we have fixed size.
+    if node.control.rectangle.width == 0 or node.control.rectangle.height == 0 then
+        local entry = ugui.registry[node.type]
+        desired_size = entry.measure(node)
+    end
+
+    -- Manual size override case.
+    if node.control.rectangle.width ~= 0 then
+        desired_size.x = node.control.rectangle.width
+    end
+    if node.control.rectangle.height ~= 0 then
+        desired_size.y = node.control.rectangle.height
+    end
+
+    return desired_size
+end
+
 -- TODO: REMOVE BEFORE MERGE. Implement proper measure functions for all controls.
 ugui.measure_stub = function(node)
     ugui.internal.assert(false, 'Measure function not implemented for ' .. node.type)
@@ -3564,7 +3572,7 @@ ugui.registry.stack = {
 
         if stack.horizontal then
             for _, child in pairs(node.children) do
-                local ds = ugui.measure(child)
+                local ds = ugui.measure_core(child)
                 sum = sum + ds.x
                 max = math.max(max, ds.y)
             end
@@ -3574,7 +3582,7 @@ ugui.registry.stack = {
             return {x = sum, y = max}
         else
             for _, child in pairs(node.children) do
-                local ds = ugui.measure(child)
+                local ds = ugui.measure_core(child)
                 sum = sum + ds.y
                 max = math.max(max, ds.x)
             end
@@ -3689,14 +3697,6 @@ ugui.end_frame = function()
 
     ugui.internal.last_control_rectangle = nil
     ugui.internal.frame_in_progress = false
-end
-
----Measures a scene node.
----@param node SceneNode The node.
----@return Vector2 # The desired size.
-ugui.measure = function(node)
-    local entry = ugui.registry[node.type]
-    return entry.measure(node)
 end
 
 ---Places a Control of the specified type.
