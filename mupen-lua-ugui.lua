@@ -180,7 +180,7 @@ end
 ---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
 ---@field public measure fun(node: SceneNode): Vector2 Measures the desired size of the control based on its children.
----@field public arrange fun(node: SceneNode): Rectangle[] Computes the allowed bounds for each child control. The computed bounds must consider the control margins specified by the `rectangle` field. Note that these bounds are relative to the parent control.
+---@field public arrange fun(node: SceneNode, constraint: Rectangle): Rectangle[] Computes the allowed bounds for each child control. The computed bounds must consider the control margins specified by the `rectangle` field. Note that these bounds are relative to the parent control.
 ---Represents an entry in the control registry.
 
 --#endregion
@@ -935,55 +935,66 @@ ugui.internal = {
 
     ---Performs layouting of the scene tree.
     do_layout = function()
-        -- 1. Measure
+        -- 1. Measure step
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            ugui.internal.desired_sizes[node.control.uid] = ugui.measure(node)
+            local desired_size = {x = 0, y = 0}
+
+            -- We skip the expensive measure if we have fixed size.
+            if node.control.rectangle.width == 0 or node.control.rectangle.height == 0 then
+                desired_size = ugui.measure(node)
+            end
+
+            -- Manual size override case.
+            if node.control.rectangle.width ~= 0 then
+                desired_size.x = node.control.rectangle.width
+            end
+            if node.control.rectangle.height ~= 0 then
+                desired_size.y = node.control.rectangle.height
+            end
+
+            ugui.internal.desired_sizes[node.control.uid] = desired_size
         end)
 
-        -- 2. Arrange
+        -- 2. Arrange step
+
+        -- As a special case, the root control gets the full window size applied since it doesn't have a parent.
         local window_bounds = {
             x = 0,
             y = 0,
             width = ugui.internal.environment.window_size.x,
             height = ugui.internal.environment.window_size.y,
         }
-        ugui.internal.foreach_node(ugui.internal.root, function(node)
-            -- Set node render bounds inside parent. We only do start-start (top-left) alignment for now.
-            local parent_render_bounds = node.parent and ugui.internal.render_bounds[node.parent.control.uid] or window_bounds
-            local base_bounds = {x = 0, y = 0, width = ugui.internal.desired_sizes[node.control.uid].x, height = ugui.internal.desired_sizes[node.control.uid].y}
-            ugui.internal.render_bounds[node.control.uid] = ugui.internal.align_rect(base_bounds, parent_render_bounds, node.control.x_align, node.control.y_align)
-        end)
+        ugui.internal.render_bounds[ugui.internal.root.control.uid] = window_bounds
 
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            -- Call the arrange function for this node type
             local registry_entry = ugui.registry[node.type]
-            local child_bounds = registry_entry.arrange(node)
-            assert(#child_bounds == #node.children)
 
-            for i = 1, #child_bounds, 1 do
-                local rect = child_bounds[i]
+            -- Compute child slots
+            local constraint = ugui.internal.render_bounds[node.control.uid] or window_bounds
+            local child_slots = registry_entry.arrange(node, constraint)
+            assert(#child_slots == #node.children)
 
-                -- Results from arrange are control-relative, so we need to apply the offsets
-                rect.x = rect.x + ugui.internal.render_bounds[node.control.uid].x
-                rect.y = rect.y + ugui.internal.render_bounds[node.control.uid].y
+            for i, child in ipairs(node.children) do
+                local slot = child_slots[i]
+
+                -- Slots are parent-relative, so we make them absolute
+                slot.x = slot.x + ugui.internal.render_bounds[node.control.uid].x
+                slot.y = slot.y + ugui.internal.render_bounds[node.control.uid].y
 
                 -- And also apply the control's own offset
-                rect.x = rect.x + node.children[i].control.rectangle.x
-                rect.y = rect.y + node.children[i].control.rectangle.y
+                slot.x = slot.x + child.control.rectangle.x
+                slot.y = slot.y + child.control.rectangle.y
 
-                child_bounds[i] = rect
-            end
-
-            for i, child in pairs(node.children) do
+                -- Align child with desired size within slot
                 local desired_size = ugui.internal.desired_sizes[child.control.uid]
-
-                local bounds = ugui.internal.align_rect(
+                local aligned = ugui.internal.align_rect(
                     {x = 0, y = 0, width = desired_size.x, height = desired_size.y},
-                    child_bounds[i],
+                    slot,
                     child.control.x_align,
-                    child.control.y_align)
+                    child.control.y_align
+                )
 
-                ugui.internal.render_bounds[child.control.uid] = bounds
+                ugui.internal.render_bounds[child.control.uid] = aligned
             end
         end)
     end,
@@ -2265,8 +2276,9 @@ end
 
 ---Arranges the control's children by honoring their absolute positions and allowing them to fill the parent.
 ---@param node SceneNode The scene node.
+---@param constraint Rectangle The constraint rectangle.
 ---@return Rectangle[] The arranged rectangles.
-ugui.arrange_identity = function(node)
+ugui.arrange_identity = function(node, constraint)
     local rects = {}
     for i = 1, #node.children, 1 do
         rects[i] = {
@@ -2313,24 +2325,14 @@ ugui.registry.button = {
         local control = node.control
         ---@cast control Button
 
-        local desired_size = ugui.measure_identity(node)
+        ugui.internal.assert(#node.children == 0, 'Buttons sized by their text cannot have children, as this would mix legacy and modern layout models. Either remove the children or specify an explicit width and height.')
 
-        if node.control.rectangle.width == 0 or node.control.rectangle.height == 0 then
-            ugui.internal.assert(#node.children == 0, 'Buttons sized by their text cannot have children. Either remove the children or specify an explicit width and height.')
+        local text_size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
 
-            local text_size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
-
-            if node.control.rectangle.width == 0 then
-                desired_size.x = text_size.width
-            end
-            if node.control.rectangle.height == 0 then
-                desired_size.y = text_size.height
-            end
-            
-            return desired_size
-        end
-
-        return desired_size
+        return {
+            x = text_size.width,
+            y = text_size.height,
+        }
     end,
     arrange = ugui.arrange_identity,
 }
@@ -3588,7 +3590,8 @@ ugui.registry.stack = {
         end
     end,
     ---@param node SceneNode
-    arrange = function(node)
+    ---@param constraint Rectangle
+    arrange = function(node, constraint)
         local stack = node.control
         ---@cast stack Stack
 
@@ -3601,7 +3604,7 @@ ugui.registry.stack = {
                     x = sum,
                     y = 0,
                     width = ugui.internal.desired_sizes[child.control.uid].x,
-                    height = ugui.internal.desired_sizes[node.control.uid].y,
+                    height = constraint.height,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].x + spacing
             end
@@ -3611,7 +3614,7 @@ ugui.registry.stack = {
                 rects[#rects + 1] = {
                     x = 0,
                     y = sum,
-                    width = ugui.internal.desired_sizes[node.control.uid].x,
+                    width = constraint.width,
                     height = ugui.internal.desired_sizes[child.control.uid].y,
                 }
                 sum = sum + ugui.internal.desired_sizes[child.control.uid].y + spacing
