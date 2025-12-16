@@ -2833,7 +2833,26 @@ ugui.registry.listbox = {
     draw = function(control)
         ugui.standard_styler.draw_listbox(control)
     end,
-    measure = ugui.measure_stub,
+    measure = function (node)
+        local control = node.control
+        ---@cast control ListBox
+
+        -- Compute widest item
+        local max_width = 0
+        for _, value in pairs(control.items) do
+            local width = BreitbandGraphics.get_text_size(value, ugui.standard_styler.params.font_size,
+                ugui.standard_styler.params.font_name).width
+
+            if width > max_width then
+                max_width = width
+            end
+        end
+
+        return {
+            x = max_width,
+            y = #control.items * ugui.standard_styler.params.listbox_item.height
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
