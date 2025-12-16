@@ -3617,7 +3617,21 @@ ugui.registry.numberbox = {
             meta = data.meta,
         }
     end,
-    measure = ugui.measure_stub,
+    measure = function (node)
+        local control = node.control
+        ---@cast control NumberBox
+
+        local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
+        local font_name = ugui.standard_styler.params.monospace_font_name
+        local text = string.format('%0' .. tostring(control.places) .. 'd', math.abs(control.value))
+
+        local text_size = BreitbandGraphics.get_text_size(text, font_size, font_name)
+
+        return {
+            x = text_size.width + 1,
+            y = text_size.height,
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
