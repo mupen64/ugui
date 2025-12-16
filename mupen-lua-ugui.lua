@@ -3331,7 +3331,10 @@ ugui.registry.spinner = {
     ---@param control Spinner
     draw = function(control)
     end,
-    measure = ugui.measure_stub,
+    measure = function ()
+        -- FIXME: How do we handle this? Ideally we'd delegate to the child stack but what's the cleanest way to do that?
+        return { x = 0, y = 0 }
+    end,
     arrange = ugui.default_arrange,
 }
 
