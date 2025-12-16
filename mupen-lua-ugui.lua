@@ -2544,7 +2544,19 @@ ugui.registry.textbox = {
     draw = function(control)
         ugui.standard_styler.draw_textbox(control)
     end,
-    measure = ugui.measure_stub,
+    measure = function(node)
+        local control = node.control
+        ---@cast control TextBox
+
+        ugui.internal.assert(#node.children == 0, 'Textboxes sized by their text cannot have children, as this would mix legacy and modern layout models. Either remove the children or specify an explicit width and height.')
+
+        local text_size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
+
+        return {
+            x = text_size.width + ugui.standard_styler.params.textbox.padding.x * 2,
+            y = text_size.height,
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
