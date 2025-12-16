@@ -2374,8 +2374,8 @@ ugui.registry.toggle_button = {
     draw = function(control)
         ugui.standard_styler.draw_togglebutton(control)
     end,
-    measure = ugui.measure_stub,
-    arrange = ugui.default_arrange,
+    measure = ugui.registry.button.measure,
+    arrange =  ugui.registry.button.arrange,
 }
 
 ---@type ControlRegistryEntry
