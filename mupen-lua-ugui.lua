@@ -86,6 +86,7 @@ end
 
 ---@class Trackbar : Control
 ---@field public value number The current value in the range 0-1.
+---@field public vertical boolean? Whether the trackbar is vertical. Defaults to `false`.
 ---A trackbar which can have its value adjusted.
 
 ---@class ComboBox : Control
@@ -2621,6 +2622,7 @@ ugui.registry.trackbar = {
     ---@param control Trackbar
     validate = function(control)
         ugui.internal.assert(type(control.value) == 'number', 'expected position to be number')
+        ugui.internal.assert(type(control.vertical) == 'boolean' or control.vertical == nil, 'expected vertical to be boolean or nil')
     end,
     place = function(control)
         return ugui.control(control, 'trackbar')
@@ -2630,11 +2632,13 @@ ugui.registry.trackbar = {
     logic = function(control, data)
         data.value = control.value
 
+        local vertical = control.vertical == true
+
         if ugui.internal.mouse_captured_control == control.uid then
-            if ugui.internal.render_bounds[control.uid].width > ugui.internal.render_bounds[control.uid].height then
-                data.value = (ugui.internal.environment.mouse_position.x - ugui.internal.render_bounds[control.uid].x) / ugui.internal.render_bounds[control.uid].width
-            else
+            if vertical then
                 data.value = (ugui.internal.environment.mouse_position.y - ugui.internal.render_bounds[control.uid].y) / ugui.internal.render_bounds[control.uid].height
+            else
+                data.value = (ugui.internal.environment.mouse_position.x - ugui.internal.render_bounds[control.uid].x) / ugui.internal.render_bounds[control.uid].width
             end
         end
 
@@ -2655,18 +2659,18 @@ ugui.registry.trackbar = {
         local control = node.control
         ---@cast control Trackbar
 
-        local horizontal = ugui.internal.render_bounds[control.uid].width > ugui.internal.render_bounds[control.uid].height
+        local vertical = control.vertical == true
 
-        if horizontal then
+        if vertical then
             return {
-                x = 100,
-                y = 20,
+                x = 20,
+                y = 100,
             }
         end
 
         return {
-            x = 20,
-            y = 100,
+            x = 100,
+            y = 20,
         }
     end,
     arrange = ugui.default_arrange,
