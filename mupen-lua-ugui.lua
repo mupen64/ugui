@@ -3045,7 +3045,20 @@ ugui.registry.combobox = {
     draw = function(control)
         ugui.standard_styler.draw_combobox(control)
     end,
-    measure = ugui.measure_stub,
+    measure = function(node)
+        local control = node.control
+        ---@cast control ComboBox
+
+        ugui.internal.assert(#node.children == 0, 'Comboboxes sized by their text cannot have children, as this would mix legacy and modern layout models. Either remove the children or specify an explicit width and height.')
+
+        local text = control.items[control.selected_index]
+        local text_size = BreitbandGraphics.get_text_size(text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
+
+        return {
+            x = text_size.width + ugui.standard_styler.params.icon_size * 2 + ugui.standard_styler.params.textbox.padding.x * 2,
+            y = text_size.height,
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
