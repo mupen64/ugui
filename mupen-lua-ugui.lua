@@ -2610,7 +2610,9 @@ ugui.registry.joystick = {
     draw = function(control)
         ugui.standard_styler.draw_joystick(control)
     end,
-    measure = ugui.measure_stub,
+    measure = function (node)
+        return { x = 100, y = 100 }
+    end,
     arrange = ugui.default_arrange,
 }
 
