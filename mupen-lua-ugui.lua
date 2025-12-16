@@ -2375,7 +2375,7 @@ ugui.registry.toggle_button = {
         ugui.standard_styler.draw_togglebutton(control)
     end,
     measure = ugui.registry.button.measure,
-    arrange =  ugui.registry.button.arrange,
+    arrange = ugui.registry.button.arrange,
 }
 
 ---@type ControlRegistryEntry
@@ -2423,7 +2423,20 @@ ugui.registry.carrousel_button = {
     draw = function(control)
         ugui.standard_styler.draw_carrousel_button(control)
     end,
-    measure = ugui.measure_stub,
+    measure = function(node)
+        local control = node.control
+        ---@cast control CarrouselButton
+
+        ugui.internal.assert(#node.children == 0, 'Buttons sized by their text cannot have children, as this would mix legacy and modern layout models. Either remove the children or specify an explicit width and height.')
+
+        local text = control.items[control.selected_index]
+        local text_size = BreitbandGraphics.get_text_size(text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
+
+        return {
+            x = text_size.width + ugui.standard_styler.params.icon_size * 2 + ugui.standard_styler.params.textbox.padding.x * 2,
+            y = text_size.height,
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
