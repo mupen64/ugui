@@ -106,6 +106,7 @@ end
 ---@class ScrollBar : Control
 ---@field public value number The scroll proportion in the range 0-1.
 ---@field public ratio number The overflow ratio, which is calculated by dividing the desired content dimensions by the relevant attached control's (e.g.: a listbox's) dimensions.
+---@field public vertical boolean? Whether the scrollbar is vertical. Defaults to `false`.
 ---A scrollbar which allows scrolling horizontally or vertically, depending on the control's dimensions.
 
 ---@class MenuItem
@@ -2842,6 +2843,7 @@ ugui.registry.scrollbar = {
     validate = function(control)
         ugui.internal.assert(type(control.value) == 'number', 'expected value to be number')
         ugui.internal.assert(type(control.ratio) == 'number', 'expected ratio to be number')
+        ugui.internal.assert(type(control.vertical) == 'boolean' or control.vertical == nil, 'expected vertical to be boolean or nil')
     end,
     place = function(control)
         return ugui.control(control, 'scrollbar')
@@ -2851,7 +2853,7 @@ ugui.registry.scrollbar = {
     logic = function(control, data)
         data.value = control.value
 
-        local is_horizontal = ugui.internal.render_bounds[control.uid].width > ugui.internal.render_bounds[control.uid].height
+        local vertical = control.vertical == true
 
         if ugui.internal.mouse_captured_control == control.uid then
             local relative_mouse = {
@@ -2864,12 +2866,12 @@ ugui.registry.scrollbar = {
             }
             local current
             local start
-            if is_horizontal then
-                current = relative_mouse.x / ugui.internal.render_bounds[control.uid].width
-                start = relative_mouse_down.x / ugui.internal.render_bounds[control.uid].width
-            else
+            if vertical then
                 current = relative_mouse.y / ugui.internal.render_bounds[control.uid].height
                 start = relative_mouse_down.y / ugui.internal.render_bounds[control.uid].height
+            else
+                current = relative_mouse.x / ugui.internal.render_bounds[control.uid].width
+                start = relative_mouse_down.x / ugui.internal.render_bounds[control.uid].width
             end
             data.value = ugui.internal.clamp(start + (current - start), 0, 1)
         end
@@ -2884,21 +2886,12 @@ ugui.registry.scrollbar = {
     ---@param control ScrollBar
     draw = function(control)
         local data = ugui.internal.control_data[control.uid]
-        local is_horizontal = ugui.internal.render_bounds[control.uid].width > ugui.internal.render_bounds[control.uid].height
+        local vertical = control.vertical == true
 
         ---@type Rectangle
         local thumb_rectangle
 
-        if is_horizontal then
-            local scrollbar_width = ugui.internal.render_bounds[control.uid].width * control.ratio
-            local scrollbar_x = ugui.internal.remap(data.value, 0, 1, 0, ugui.internal.render_bounds[control.uid].width - scrollbar_width)
-            thumb_rectangle = {
-                x = ugui.internal.render_bounds[control.uid].x + scrollbar_x,
-                y = ugui.internal.render_bounds[control.uid].y,
-                width = scrollbar_width,
-                height = ugui.internal.render_bounds[control.uid].height,
-            }
-        else
+        if vertical then
             local scrollbar_height = ugui.internal.render_bounds[control.uid].height * control.ratio
             local scrollbar_y = ugui.internal.remap(data.value, 0, 1, 0, ugui.internal.render_bounds[control.uid].height - scrollbar_height)
             thumb_rectangle = {
@@ -2907,11 +2900,37 @@ ugui.registry.scrollbar = {
                 width = ugui.internal.render_bounds[control.uid].width,
                 height = scrollbar_height,
             }
+        else
+            local scrollbar_width = ugui.internal.render_bounds[control.uid].width * control.ratio
+            local scrollbar_x = ugui.internal.remap(data.value, 0, 1, 0, ugui.internal.render_bounds[control.uid].width - scrollbar_width)
+            thumb_rectangle = {
+                x = ugui.internal.render_bounds[control.uid].x + scrollbar_x,
+                y = ugui.internal.render_bounds[control.uid].y,
+                width = scrollbar_width,
+                height = ugui.internal.render_bounds[control.uid].height,
+            }
         end
 
         ugui.standard_styler.draw_scrollbar(control, thumb_rectangle)
     end,
-    measure = ugui.measure_stub,
+    measure = function (node)
+        local control = node.control
+        ---@cast control ScrollBar
+
+        local vertical = control.vertical == true
+
+        if vertical then
+            return {
+                x = ugui.standard_styler.params.scrollbar.thickness,
+                y = 100,
+            }
+        end
+
+        return {
+            x = 100,
+            y = ugui.standard_styler.params.scrollbar.thickness,
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
