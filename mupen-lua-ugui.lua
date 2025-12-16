@@ -2651,7 +2651,24 @@ ugui.registry.trackbar = {
     draw = function(control)
         ugui.standard_styler.draw_trackbar(control)
     end,
-    measure = ugui.measure_stub,
+    measure = function (node)
+        local control = node.control
+        ---@cast control Trackbar
+
+        local horizontal = ugui.internal.render_bounds[control.uid].width > ugui.internal.render_bounds[control.uid].height
+
+        if horizontal then
+            return {
+                x = 100,
+                y = 20,
+            }
+        end
+
+        return {
+            x = 20,
+            y = 100,
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
