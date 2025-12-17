@@ -1,12 +1,16 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
 dofile(path_root .. 'base.lua')
 
-local items = { 'Test A', 'Test B', 'Test C', 'Test D', 'Test E', 'Test F', 'Test G', 'Test H', 'Test I', 'Test J', 'Test K', 'Test L', 'Test M', 'Test N', 'Test O', 'Test P', 'Test Q', 'Test R', 'Test S', 'Test T', 'Test U', 'Test V', 'Test W', 'Test X', 'Test Y', 'Test Z' }
+local items = {}
 local selected_index = 1
 local is_checked = true
 local text = "Hello World"
 local value = 0.5
 local value2 = 50
+
+for i = 1, 50, 1 do
+    items[#items+1] = 'Test ' .. i .. ' qwertyuiopasdfghjklzxcvbnm'
+end
 
 local uid = 0
 local function next_uid()
@@ -87,6 +91,9 @@ emu.atdrawd2d(function()
             selected_index = selected_index,
             x_align = ugui.alignments.center,
             y_align = ugui.alignments.center,
+            horizontal_scroll = true,
+            min_size = { y = 50 },
+            max_size = { x = 50, y = 50 }
         })
         value = ugui.scrollbar({
             uid = next_uid(),

@@ -1715,33 +1715,32 @@ ugui.standard_styler = {
     draw_list = function(control, rectangle)
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.private_control_data[control.uid].custom_data
+        local desired_size = ugui.internal.private_control_data[control.uid].desired_size
+        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
 
         ugui.standard_styler.draw_list_frame(rectangle, visual_state)
-
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
-        local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         local scroll_x = data.scroll_x and data.scroll_x or 0
         local scroll_y = data.scroll_y and data.scroll_y or 0
 
         local index_begin = (scroll_y *
-                (actual_size.y - rectangle.height)) /
+                (desired_size.y - rectangle.height)) /
             ugui.standard_styler.params.listbox_item.height
 
         local index_end = (rectangle.height + (scroll_y *
-                (actual_size.y - rectangle.height))) /
+                (desired_size.y - rectangle.height))) /
             ugui.standard_styler.params.listbox_item.height
 
         index_begin = ugui.internal.clamp(math.floor(index_begin), 1, #control.items)
         index_end = ugui.internal.clamp(math.ceil(index_end), 1, #control.items)
 
-        local x_offset = math.max((actual_size.x - render_bounds.width) * scroll_x, 0)
+        local x_offset = math.max((desired_size.x - actual_size.x) * scroll_x, 0)
 
-        BreitbandGraphics.push_clip(BreitbandGraphics.inflate_rectangle(render_bounds, -1))
+        BreitbandGraphics.push_clip(BreitbandGraphics.inflate_rectangle(rectangle, -1))
 
         for i = index_begin, index_end, 1 do
             local y_offset = (ugui.standard_styler.params.listbox_item.height * (i - 1)) -
-                (scroll_y * (actual_size.y - render_bounds.height))
+                (scroll_y * (desired_size.y - actual_size.y))
 
             local item_visual_state = ugui.visual_states.normal
             if control.is_enabled == false then
@@ -1755,7 +1754,7 @@ ugui.standard_styler = {
             ugui.standard_styler.draw_list_item(control, control.items[i], {
                 x = rectangle.x - x_offset,
                 y = rectangle.y + y_offset,
-                width = math.max(actual_size.x, render_bounds.width),
+                width = math.max(desired_size.x, actual_size.x),
                 height = ugui.standard_styler.params.listbox_item.height,
             }, item_visual_state)
         end
@@ -2691,56 +2690,50 @@ ugui.registry.listbox = {
            return ugui.control(control, 'listbox')
         end
 
+        local data = ugui.internal.private_control_data[control.uid].custom_data
+        local desired_size = ugui.internal.private_control_data[control.uid].desired_size
         local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
-        local x_overflow = actual_size.x > render_bounds.width
-        local y_overflow = actual_size.y > render_bounds.height
+        local x_overflow = desired_size.x > render_bounds.width
+        local y_overflow = desired_size.y > render_bounds.height
 
-        -- If we need scrollbars, we shrink the control rectangle to accomodate them.
-        if x_overflow then
-            control.rectangle.height = control.rectangle.height - ugui.standard_styler.params.scrollbar.thickness
-        end
-        if y_overflow then
-            control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
-        end
+        local result
 
-        local result = ugui.control(control, 'listbox', nil, false)
-        local data = ugui.internal.private_control_data[control.uid].custom_data
-
-        if x_overflow then
-            data.scroll_x = ugui.scrollbar({
-                uid = control.uid + 1,
-                is_enabled = control.is_enabled,
-                rectangle = {
-                    x = 0,
-                    y = render_bounds.height,
-                    width = render_bounds.width,
-                    height = ugui.standard_styler.params.scrollbar.thickness,
-                },
-                value = data.scroll_x,
-                ratio = 1 / (actual_size.x / render_bounds.width),
-                z_index = (control.z_index or 0) + 1,
-            })
-        end
-
-        if y_overflow then
-            data.scroll_y = ugui.scrollbar({
+        ugui.enter_stack({
+            uid = control.uid + 1,
+            rectangle = control.rectangle,
+            min_size = control.min_size,
+            max_size = control.max_size,
+        }, function ()
+            ugui.enter_stack({
                 uid = control.uid + 2,
-                is_enabled = control.is_enabled,
-                rectangle = {
-                    x = render_bounds.width,
-                    y = 0,
-                    width = ugui.standard_styler.params.scrollbar.thickness,
-                    height = render_bounds.height,
-                },
-                value = data.scroll_y,
-                ratio = 1 / (actual_size.y / render_bounds.height),
-                z_index = (control.z_index or 0) + 1,
-            })
-        end
+                rectangle = { x = 0, y = 0, width = 0, height = 0},
+                horizontal = true
+            }, function ()
+                result = ugui.control(control, 'listbox')
 
-        ugui.leave_control()
+                if y_overflow then
+                    data.scroll_y = ugui.scrollbar({
+                        uid = control.uid + 3,
+                        rectangle = {x = 0, y = 0, width = ugui.standard_styler.params.scrollbar.thickness, height = 1},
+                        y_align = ugui.alignments.stretch,
+                        value = data.scroll_y,
+                        ratio = actual_size.y / desired_size.y,
+                        vertical = true,
+                    })
+                end
+            end)
+            if x_overflow then
+                data.scroll_x = ugui.scrollbar({
+                    uid = control.uid + 4,
+                    rectangle = {x = 0, y = 0, width = 0, height = ugui.standard_styler.params.scrollbar.thickness},
+                    x_align = ugui.alignments.stretch,
+                    value = data.scroll_x,
+                    ratio = actual_size.x / desired_size.x,
+                })
+            end
+        end)
 
         return result
     end,
