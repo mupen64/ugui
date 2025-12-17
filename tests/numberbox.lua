@@ -60,7 +60,7 @@ group.tests[#group.tests + 1] = {
         })
 
         ugui.standard_styler.params.font_name = ctx.data.font_name
-        ugui.internal.control_data[1] = {
+        ugui.internal.custom_control_data[1] = {
             caret_index = ctx.data.selected_index,
         }
         ugui.internal.keyboard_captured_control = 1
@@ -230,7 +230,7 @@ group.tests[#group.tests + 1] = {
 
         ugui.end_frame()
 
-        ctx.assert_eq(ctx.data.expected_caret_index, ugui.internal.control_data[1].caret_index)
+        ctx.assert_eq(ctx.data.expected_caret_index, ugui.internal.custom_control_data[1].caret_index)
     end,
 }
 

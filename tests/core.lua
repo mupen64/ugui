@@ -247,7 +247,7 @@ group.tests[#group.tests + 1] = {
                     items = {'A'},
                     selected_index = 1,
                 })
-                return ugui.internal.control_data[5].open == true
+                return ugui.internal.custom_control_data[5].open == true
             end,
         },
         {
