@@ -51,6 +51,8 @@ end
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
 ---@field public rectangle Rectangle The control's rectangle. The X/Y components are relative to the control's parent.
+---@field public min_size { x: number?, y: number? } The minimum size of the control. If an axis is nil, the control's size is not constrained along that axis. If nil, both axes are unconstrained.
+---@field public max_size { x: number?, y: number? } The maximum size of the control. If an axis is nil, the control's size is not constrained along that axis. If nil, both axes are unconstrained. The maximum size takes priority over the minimum size.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
@@ -2232,9 +2234,9 @@ ugui.standard_styler = {
 
 ---Measures the control's desired size, taking into account size overrides.
 ---@param node SceneNode The scene node.
----@param ignore_override boolean? Whether the manual size override is ignored. If `true`, the "real" desired size is returned.
+---@param pure boolean? Whether a pure content measurement with no overrides should be performed.
 ---@return Vector2 The desired size.
-ugui.measure_core = function(node, ignore_override)
+ugui.measure_core = function(node, pure)
     local desired_size = {x = 0, y = 0}
 
     -- We skip the expensive measure if we have fixed size.
@@ -2243,8 +2245,19 @@ ugui.measure_core = function(node, ignore_override)
         desired_size = entry.measure(node)
     end
 
-    -- Manual size override case.
-    if ignore_override then
+    if not pure then
+        local min_width = node.control.min_size and (node.control.min_size.x or 0) or 0
+        local min_height = node.control.min_size and (node.control.min_size.y or 0) or 0
+        local max_width = node.control.max_size and (node.control.max_size.x or math.huge) or math.huge
+        local max_height = node.control.max_size and (node.control.max_size.y or math.huge) or math.huge
+
+        -- Apply min/max size constraints, giving priority to max.
+        desired_size.x = math.max(desired_size.x, min_width)
+        desired_size.y = math.max(desired_size.y, min_height)
+        desired_size.x = math.min(desired_size.x, max_width)
+        desired_size.y = math.min(desired_size.y, max_height)
+
+        -- Apply manual size overrides.
         if node.control.rectangle.width ~= 0 then
             desired_size.x = node.control.rectangle.width
         end
