@@ -2267,6 +2267,19 @@ ugui.measure_stub = function(node)
     ugui.internal.assert(false, 'Measure function not implemented for ' .. node.type)
 end
 
+---Measures the node based on the size of its biggest child.
+---@param node SceneNode
+---@return Vector2
+ugui.measure_fit_biggest_child = function (node)
+    local max_child_size = { x = 0, y = 0 }
+    for _, child in ipairs(node.children) do
+        local desired_size = ugui.measure_core(child)
+        max_child_size.x = math.max(max_child_size.x, desired_size.x)
+        max_child_size.y = math.max(max_child_size.y, desired_size.y)
+    end
+    return max_child_size
+end
+
 ---Arranges the control's children by honoring their positions and allowing them to fill the parent.
 ---@param node SceneNode The scene node.
 ---@param constraint Rectangle The constraint rectangle.
@@ -3085,9 +3098,11 @@ ugui.registry.spinner = {
             rectangle = {
                 x = 0,
                 y = 0,
-                width = render_bounds.width - ugui.standard_styler.params.spinner.button_size * 2,
-                height = render_bounds.height,
+                width = 0,
+                height = 0,
             },
+            y_align = ugui.alignments.stretch,
+            min_size = { x = 50 },
             text = tostring(value),
         })
 
@@ -3163,10 +3178,7 @@ ugui.registry.spinner = {
     ---@param control Spinner
     draw = function(control)
     end,
-    measure = function ()
-        -- FIXME: How do we handle this? Ideally we'd delegate to the child stack but what's the cleanest way to do that?
-        return { x = 0, y = 0 }
-    end,
+    measure = ugui.measure_fit_biggest_child,
     arrange = ugui.default_arrange,
 }
 
