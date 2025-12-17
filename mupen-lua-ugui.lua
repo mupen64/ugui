@@ -2549,7 +2549,7 @@ ugui.registry.textbox = {
         local text_size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
 
         return {
-            x = text_size.width + ugui.standard_styler.params.textbox.padding.x * 2,
+            x = text_size.width + ugui.standard_styler.params.textbox.padding.x * 2 + 1, -- +1 to compensate off-by-one in BreitbandGraphics wrapping...
             y = text_size.height,
         }
     end,
