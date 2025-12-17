@@ -207,10 +207,10 @@ ugui.internal = {
     render_bounds = {},
 
     ---@type table<UID, Vector2>
-    desired_sizes = {},
+    actual_sizes = {},
 
     ---@type table<UID, Vector2>
-    real_desired_sizes = {},
+    desired_sizes = {},
 
     ---@type table<UID, any>
     ---Map of control UIDs to their data.
@@ -944,8 +944,8 @@ ugui.internal = {
     do_layout = function()
         -- 1. Measure step
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            ugui.internal.desired_sizes[node.control.uid] = ugui.measure_core(node)
-            ugui.internal.real_desired_sizes[node.control.uid] = ugui.measure_core(node, true)
+            ugui.internal.actual_sizes[node.control.uid] = ugui.measure_core(node)
+            ugui.internal.desired_sizes[node.control.uid] = ugui.measure_core(node, true)
         end)
 
         -- 2. Arrange step
@@ -979,7 +979,7 @@ ugui.internal = {
                 slot.y = slot.y + child.control.rectangle.y
 
                 -- Align child with desired size within slot
-                local desired_size = ugui.internal.desired_sizes[child.control.uid]
+                local desired_size = ugui.internal.actual_sizes[child.control.uid]
                 local aligned = ugui.internal.align_rect(
                     {x = 0, y = 0, width = desired_size.x, height = desired_size.y},
                     slot,
@@ -1713,7 +1713,7 @@ ugui.standard_styler = {
 
         ugui.standard_styler.draw_list_frame(rectangle, visual_state)
 
-        local desired_size = ugui.internal.desired_sizes[control.uid]
+        local desired_size = ugui.internal.actual_sizes[control.uid]
 
         local scroll_x = data.scroll_x and data.scroll_x or 0
         local scroll_y = data.scroll_y and data.scroll_y or 0
@@ -2690,7 +2690,7 @@ ugui.registry.listbox = {
         end
     end,
     place = function(control)
-        local desired_size = ugui.internal.desired_sizes[control.uid]
+        local desired_size = ugui.internal.actual_sizes[control.uid]
         local render_bounds = ugui.internal.render_bounds[control.uid]
 
         if not desired_size then
@@ -3674,10 +3674,10 @@ ugui.registry.stack = {
                 rects[#rects + 1] = {
                     x = sum,
                     y = 0,
-                    width = ugui.internal.desired_sizes[child.control.uid].x,
+                    width = ugui.internal.actual_sizes[child.control.uid].x,
                     height = constraint.height,
                 }
-                sum = sum + ugui.internal.desired_sizes[child.control.uid].x + spacing
+                sum = sum + ugui.internal.actual_sizes[child.control.uid].x + spacing
             end
             sum = sum + spacing * (#node.children - 1)
         else
@@ -3686,9 +3686,9 @@ ugui.registry.stack = {
                     x = 0,
                     y = sum,
                     width = constraint.width,
-                    height = ugui.internal.desired_sizes[child.control.uid].y,
+                    height = ugui.internal.actual_sizes[child.control.uid].y,
                 }
-                sum = sum + ugui.internal.desired_sizes[child.control.uid].y + spacing
+                sum = sum + ugui.internal.actual_sizes[child.control.uid].y + spacing
             end
         end
 
