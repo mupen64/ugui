@@ -207,6 +207,9 @@ ugui.internal = {
     ---@type table<UID, Vector2>
     desired_sizes = {},
 
+    ---@type table<UID, Vector2>
+    real_desired_sizes = {},
+
     ---@type table<UID, any>
     ---Map of control UIDs to their data.
     control_data = {},
@@ -940,6 +943,7 @@ ugui.internal = {
         -- 1. Measure step
         ugui.internal.foreach_node(ugui.internal.root, function(node)
             ugui.internal.desired_sizes[node.control.uid] = ugui.measure_core(node)
+            ugui.internal.real_desired_sizes[node.control.uid] = ugui.measure_core(node, true)
         end)
 
         -- 2. Arrange step
@@ -1700,36 +1704,36 @@ ugui.standard_styler = {
 
     ---Draws a list with the specified parameters.
     ---@param control ListBox The control table.
-    ---@param rectangle Rectangle The list item's bounds.
+    ---@param rectangle Rectangle The list's bounds.
     draw_list = function(control, rectangle)
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
 
         ugui.standard_styler.draw_list_frame(rectangle, visual_state)
 
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+        local desired_size = ugui.internal.desired_sizes[control.uid]
 
         local scroll_x = data.scroll_x and data.scroll_x or 0
         local scroll_y = data.scroll_y and data.scroll_y or 0
 
         local index_begin = (scroll_y *
-                (content_bounds.height - rectangle.height)) /
+                (desired_size.y - rectangle.height)) /
             ugui.standard_styler.params.listbox_item.height
 
         local index_end = (rectangle.height + (scroll_y *
-                (content_bounds.height - rectangle.height))) /
+                (desired_size.y - rectangle.height))) /
             ugui.standard_styler.params.listbox_item.height
 
         index_begin = ugui.internal.clamp(math.floor(index_begin), 1, #control.items)
         index_end = ugui.internal.clamp(math.ceil(index_end), 1, #control.items)
 
-        local x_offset = math.max((content_bounds.width - ugui.internal.render_bounds[control.uid].width) * scroll_x, 0)
+        local x_offset = math.max((desired_size.x - ugui.internal.render_bounds[control.uid].width) * scroll_x, 0)
 
         BreitbandGraphics.push_clip(BreitbandGraphics.inflate_rectangle(ugui.internal.render_bounds[control.uid], -1))
 
         for i = index_begin, index_end, 1 do
             local y_offset = (ugui.standard_styler.params.listbox_item.height * (i - 1)) -
-                (scroll_y * (content_bounds.height - ugui.internal.render_bounds[control.uid].height))
+                (scroll_y * (desired_size.y - ugui.internal.render_bounds[control.uid].height))
 
             local item_visual_state = ugui.visual_states.normal
             if control.is_enabled == false then
@@ -1743,7 +1747,7 @@ ugui.standard_styler = {
             ugui.standard_styler.draw_list_item(control, control.items[i], {
                 x = rectangle.x - x_offset,
                 y = rectangle.y + y_offset,
-                width = math.max(content_bounds.width, ugui.internal.render_bounds[control.uid].width),
+                width = math.max(desired_size.x, ugui.internal.render_bounds[control.uid].width),
                 height = ugui.standard_styler.params.listbox_item.height,
             }, item_visual_state)
         end
@@ -2224,37 +2228,13 @@ ugui.standard_styler = {
     draw_listbox = function(control)
         ugui.standard_styler.draw_list(control, ugui.internal.render_bounds[control.uid])
     end,
-
-    ---Gets the desired bounds of a listbox's content.
-    ---@param control table A table abiding by the mupen-lua-ugui control contract
-    ---@return _ table A rectangle specifying the desired bounds of the content as `{x = 0, y = 0, width: number, height: number}`.
-    get_desired_listbox_content_bounds = function(control)
-        -- Since horizontal content bounds measuring is expensive, we only do this if explicitly enabled.
-        local max_width = 0
-        if control.horizontal_scroll == true then
-            for _, value in pairs(control.items) do
-                local width = BreitbandGraphics.get_text_size(value, ugui.standard_styler.params.font_size,
-                    ugui.standard_styler.params.font_name).width
-
-                if width > max_width then
-                    max_width = width
-                end
-            end
-        end
-
-        return {
-            x = 0,
-            y = 0,
-            width = max_width,
-            height = ugui.standard_styler.params.listbox_item.height * (control.items and #control.items or 0),
-        }
-    end,
 }
 
 ---Measures the control's desired size, taking into account size overrides.
 ---@param node SceneNode The scene node.
+---@param ignore_override boolean? Whether the manual size override is ignored. If `true`, the "real" desired size is returned.
 ---@return Vector2 The desired size.
-ugui.measure_core = function(node)
+ugui.measure_core = function(node, ignore_override)
     local desired_size = {x = 0, y = 0}
 
     -- We skip the expensive measure if we have fixed size.
@@ -2264,11 +2244,13 @@ ugui.measure_core = function(node)
     end
 
     -- Manual size override case.
-    if node.control.rectangle.width ~= 0 then
-        desired_size.x = node.control.rectangle.width
-    end
-    if node.control.rectangle.height ~= 0 then
-        desired_size.y = node.control.rectangle.height
+    if ignore_override then
+        if node.control.rectangle.width ~= 0 then
+            desired_size.x = node.control.rectangle.width
+        end
+        if node.control.rectangle.height ~= 0 then
+            desired_size.y = node.control.rectangle.height
+        end
     end
 
     return desired_size
@@ -2695,9 +2677,16 @@ ugui.registry.listbox = {
         end
     end,
     place = function(control)
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-        local x_overflow = content_bounds.width > control.rectangle.width
-        local y_overflow = content_bounds.height > control.rectangle.height
+        local desired_size = ugui.internal.desired_sizes[control.uid]
+        local render_bounds = ugui.internal.render_bounds[control.uid]
+
+        if not desired_size then
+           -- First frame of the listbox's existence: it hasn't been measured yet, so we will just wait it out for one frame without scrollbars or size management.
+           return ugui.control(control, 'listbox')
+        end
+
+        local x_overflow = desired_size.x > render_bounds.width
+        local y_overflow = desired_size.y > render_bounds.height
 
         -- If we need scrollbars, we shrink the control rectangle to accomodate them.
         if x_overflow then
@@ -2707,7 +2696,7 @@ ugui.registry.listbox = {
             control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
         end
 
-        local result = ugui.control(control, 'listbox')
+        local result = ugui.control(control, 'listbox', nil, false)
         local data = ugui.internal.control_data[control.uid]
 
         if x_overflow then
@@ -2715,14 +2704,14 @@ ugui.registry.listbox = {
                 uid = control.uid + 1,
                 is_enabled = control.is_enabled,
                 rectangle = {
-                    x = ugui.internal.render_bounds[control.uid].x,
-                    y = ugui.internal.render_bounds[control.uid].y + ugui.internal.render_bounds[control.uid].height,
-                    width = ugui.internal.render_bounds[control.uid].width,
+                    x = 0,
+                    y = render_bounds.height,
+                    width = render_bounds.width,
                     height = ugui.standard_styler.params.scrollbar.thickness,
                 },
                 value = data.scroll_x,
-                ratio = 1 / (content_bounds.width / ugui.internal.render_bounds[control.uid].width),
-                z_index = control.z_index,
+                ratio = 1 / (desired_size.x / render_bounds.width),
+                z_index = (control.z_index or 0) + 1,
             })
         end
 
@@ -2731,16 +2720,18 @@ ugui.registry.listbox = {
                 uid = control.uid + 2,
                 is_enabled = control.is_enabled,
                 rectangle = {
-                    x = ugui.internal.render_bounds[control.uid].x + ugui.internal.render_bounds[control.uid].width,
-                    y = ugui.internal.render_bounds[control.uid].y,
+                    x = render_bounds.width,
+                    y = 0,
                     width = ugui.standard_styler.params.scrollbar.thickness,
-                    height = ugui.internal.render_bounds[control.uid].height,
+                    height = render_bounds.height,
                 },
                 value = data.scroll_y,
-                ratio = 1 / (content_bounds.height / ugui.internal.render_bounds[control.uid].height),
-                z_index = control.z_index,
+                ratio = 1 / (desired_size.y / render_bounds.height),
+                z_index = (control.z_index or 0) + 1,
             })
         end
+
+        ugui.leave_control()
 
         return result
     end,
@@ -2749,20 +2740,7 @@ ugui.registry.listbox = {
     logic = function(control, data)
         data.selected_index = control.selected_index
 
-        local prev_rect = ugui.internal.deep_clone(ugui.internal.render_bounds[control.uid])
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-        local x_overflow = content_bounds.width > ugui.internal.render_bounds[control.uid].width
-        local y_overflow = content_bounds.height > ugui.internal.render_bounds[control.uid].height
-
-        if x_overflow then
-            ugui.internal.render_bounds[control.uid].height = ugui.internal.render_bounds[control.uid].height - ugui.standard_styler.params.scrollbar.thickness
-        end
-        if y_overflow then
-            ugui.internal.render_bounds[control.uid].width = ugui.internal.render_bounds[control.uid].width - ugui.standard_styler.params.scrollbar.thickness
-        end
-
         if ugui.internal.mouse_captured_control == control.uid then
-            -- Mouse-based selection
             local relative_y = ugui.internal.environment.mouse_position.y - ugui.internal.render_bounds[control.uid].y
             local new_index = math.ceil((relative_y + (data.scroll_y *
                     ((ugui.standard_styler.params.listbox_item.height * #control.items) - ugui.internal.render_bounds[control.uid].height))) /
@@ -2772,9 +2750,10 @@ ugui.registry.listbox = {
             end
         end
 
-        -- Keyboard-based selection. FIXME: Why is this based on the mouse being inside it???
-        -- FIXME: We want the separate concept of "keyboard focus" to be introduced
-        if ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
+        if ugui.internal.keyboard_captured_control == control.uid then
+
+            local prev_selected_index = data.selected_index
+
             for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
                 if key == 'up' and data.selected_index ~= nil then
                     data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
@@ -2782,45 +2761,19 @@ ugui.registry.listbox = {
                 if key == 'down' and data.selected_index ~= nil then
                     data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
                 end
-                if not y_overflow then
-                    if key == 'pageup' or key == 'home' then
-                        data.selected_index = 1
-                    end
-                    if key == 'pagedown' or key == 'end' then
-                        data.selected_index = #control.items
-                    end
+                if key == 'pageup' or key == 'home' then
+                    data.selected_index = 1
                 end
+                if key == 'pagedown' or key == 'end' then
+                    data.selected_index = #control.items
+                end
+            end
+
+            if data.selected_index ~= prev_selected_index then
+                -- TODO: Scroll selected item into view
+
             end
         end
-
-        if y_overflow and (ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)) then
-            local inc = 0
-            if ugui.internal.is_mouse_wheel_up() then
-                inc = -1 / #control.items
-            end
-            if ugui.internal.is_mouse_wheel_down() then
-                inc = 1 / #control.items
-            end
-
-            for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-                if key == 'pageup' then
-                    inc = -math.floor(ugui.internal.render_bounds[control.uid].height / ugui.standard_styler.params.listbox_item.height) / #control.items
-                end
-                if key == 'pagedown' then
-                    inc = math.floor(ugui.internal.render_bounds[control.uid].height / ugui.standard_styler.params.listbox_item.height) / #control.items
-                end
-                if key == 'home' then
-                    inc = -1
-                end
-                if key == 'end' then
-                    inc = 1
-                end
-            end
-
-            data.scroll_y = ugui.internal.clamp(data.scroll_y + inc, 0, 1)
-        end
-
-        ugui.internal.render_bounds[control.uid] = prev_rect
 
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.selected_index ~= data.selected_index)
 
@@ -2837,19 +2790,24 @@ ugui.registry.listbox = {
         local control = node.control
         ---@cast control ListBox
 
-        -- Compute widest item
         local max_width = 0
-        for _, value in pairs(control.items) do
-            local width = BreitbandGraphics.get_text_size(value, ugui.standard_styler.params.font_size,
+
+        -- Compute widest item. This can be really slow so we don't do it by default.
+        if control.horizontal_scroll then
+            for _, value in pairs(control.items) do
+                local width = BreitbandGraphics.get_text_size(value, ugui.standard_styler.params.font_size,
                 ugui.standard_styler.params.font_name).width
 
-            if width > max_width then
-                max_width = width
+                if width > max_width then
+                    max_width = width
+                end
             end
+        else
+            max_width = 100
         end
 
         return {
-            x = max_width,
+            x = max_width + 8,
             y = #control.items * ugui.standard_styler.params.listbox_item.height
         }
     end,
@@ -2974,23 +2932,11 @@ ugui.registry.combobox = {
         local data = ugui.internal.control_data[control.uid]
 
         if data.open then
-            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-
-            local width = ugui.internal.render_bounds[control.uid].width
-            if ugui.internal.render_bounds[control.uid].x + width > ugui.internal.environment.window_size.x then
-                width = ugui.internal.environment.window_size.x - ugui.internal.render_bounds[control.uid].x
-            end
-
-            local height = content_bounds.height
-            if ugui.internal.render_bounds[control.uid].y + height > ugui.internal.environment.window_size.y then
-                height = ugui.internal.environment.window_size.y - ugui.internal.render_bounds[control.uid].y - ugui.standard_styler.params.listbox_item.height * 2
-            end
-
             local list_rect = {
                 x = ugui.internal.render_bounds[control.uid].x,
                 y = ugui.internal.render_bounds[control.uid].y + ugui.internal.render_bounds[control.uid].height,
-                width = width,
-                height = height,
+                width = ugui.internal.render_bounds[control.uid].width,
+                height = 0,
             }
 
             ---@type ListBox
@@ -3022,16 +2968,9 @@ ugui.registry.combobox = {
             data.open = not data.open
         end
 
-        if data.open and ugui.internal.is_mouse_just_down() and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
-            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-            if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, {
-                    x = ugui.internal.render_bounds[control.uid].x,
-                    y = ugui.internal.render_bounds[control.uid].y + ugui.internal.render_bounds[control.uid].height,
-                    width = ugui.internal.render_bounds[control.uid].width,
-                    height = content_bounds.height,
-                }) then
-                data.open = false
-            end
+        -- Close the dropdown if keyboard focus is outside the combobox or the dropdown.
+        if ugui.internal.keyboard_captured_control ~= control.uid and ugui.internal.keyboard_captured_control ~= control.uid + 1 then
+            data.open = false
         end
 
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.selected_index ~= data.selected_index)
