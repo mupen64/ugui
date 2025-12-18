@@ -780,6 +780,41 @@ ugui.internal = {
         if ugui.internal.hovered_control == nil then
             return
         end
+
+        if ugui.DEBUG then
+            ugui.internal.foreach_node(ugui.internal.root, function(node)
+                if node.control.uid == ugui.internal.hovered_control then
+                    local data = ugui.internal.private_control_data[node.control.uid]
+                    local debug_str = ''
+                    debug_str = debug_str .. node.type .. '\n'
+                    debug_str = debug_str .. string.format('desired_size: %.0f x %.0f', data.desired_size.x, data.desired_size.y) .. '\n'
+                    debug_str = debug_str .. string.format('actual_size: %.0f x %.0f', data.actual_size.x, data.actual_size.y) .. '\n'
+                    debug_str = debug_str .. string.format('render_bounds: (%.0f, %.0f) %.0f x %.0f', data.render_bounds.x, data.render_bounds.y, data.render_bounds.width, data.render_bounds.height)
+
+                    node.control.tooltip = debug_str
+
+                    BreitbandGraphics.draw_rectangle(data.render_bounds, "#FF000088", 1)
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({
+                        x = data.render_bounds.x,
+                        y = data.render_bounds.y,
+                        width = data.desired_size.x,
+                        height = data.desired_size.y,
+                    }, 2), "#0000FF88", 1)
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({
+                        x = data.render_bounds.x,
+                        y = data.render_bounds.y,
+                        width = data.actual_size.x,
+                        height = data.actual_size.y,
+                    }, 4), "#FF00FF88", 1)
+
+                    ugui.standard_styler.draw_tooltip(node.control, {
+                        x = ugui.internal.environment.mouse_position.x,
+                        y = ugui.internal.environment.mouse_position.y,
+                    })
+                end
+            end)
+        end
+
         if (os.clock() - ugui.internal.hover_start_time) < ugui.standard_styler.params.tooltip.delay then
             return
         end
