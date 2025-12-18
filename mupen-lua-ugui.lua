@@ -2705,6 +2705,8 @@ ugui.registry.listbox = {
             rectangle = control.rectangle,
             min_size = control.min_size,
             max_size = control.max_size,
+            x_align = control.x_align,
+            y_align = control.y_align
         }, function ()
             ugui.enter_stack({
                 uid = control.uid + 2,
