@@ -2753,12 +2753,18 @@ ugui.registry.listbox = {
                 rectangle = { x = 0, y = 0, width = 0, height = 0},
                 horizontal = true
             }, function ()
-                result = ugui.control(control, 'listbox')
+                local control2 = ugui.internal.deep_clone(control)
+                control2.rectangle = { x = 0, y = 0, width = 0, height = 0}
+                control2.min_size = nil
+                control2.max_size = nil
+                control2.x_align = ugui.alignments.stretch
+                control2.y_align = ugui.alignments.stretch
+                result = ugui.control(control2, 'listbox')
 
                 if y_overflow then
                     data.scroll_y = ugui.scrollbar({
                         uid = control.uid + 3,
-                        rectangle = {x = 0, y = 0, width = ugui.standard_styler.params.scrollbar.thickness, height = 1},
+                        rectangle = {x = 0, y = 0, width = ugui.standard_styler.params.scrollbar.thickness, height = 0},
                         y_align = ugui.alignments.stretch,
                         value = data.scroll_y,
                         ratio = actual_size.y / desired_size.y,
