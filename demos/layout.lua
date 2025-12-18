@@ -9,7 +9,7 @@ local value = 0.5
 local value2 = 50
 
 for i = 1, 50, 1 do
-    items[#items+1] = 'Test ' .. i .. ' qwertyuiopasdfghjklzxcvbnm'
+    items[#items + 1] = 'Test ' .. i .. ' qwertyuiopasdfghjklzxcvbnm'
 end
 
 local uid = 0
@@ -89,11 +89,10 @@ emu.atdrawd2d(function()
             rectangle = { x = 0, y = 0, width = 0, height = 0 },
             items = items,
             selected_index = selected_index,
+            horizontal_scroll = true,
+            max_size = { x = 100, y = 50 },
             x_align = ugui.alignments.center,
             y_align = ugui.alignments.center,
-            horizontal_scroll = true,
-            min_size = { y = 50 },
-            max_size = { x = 50, y = 50 }
         })
         value = ugui.scrollbar({
             uid = next_uid(),
