@@ -986,8 +986,9 @@ ugui.internal = {
     do_layout = function()
         -- 1. Measure step
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            ugui.internal.private_control_data[node.control.uid].actual_size = ugui.measure_core(node)
-            ugui.internal.private_control_data[node.control.uid].desired_size = ugui.measure_core(node, true)
+            local desired_size, constrained_size = ugui.measure_core(node)
+            ugui.internal.private_control_data[node.control.uid].desired_size = desired_size
+            ugui.internal.private_control_data[node.control.uid].actual_size = constrained_size
         end)
 
         -- 2. Arrange step
@@ -2264,11 +2265,10 @@ ugui.standard_styler = {
     end,
 }
 
----Measures the control's desired size, taking into account size overrides.
+---Measures the control's size.
 ---@param node SceneNode The scene node.
----@param pure boolean? Whether a pure content measurement with no overrides should be performed.
----@return Vector2 The desired size.
-ugui.measure_core = function(node, pure)
+---@return Vector2, Vector2 # The desired size and the constrained size.
+ugui.measure_core = function(node)
     local desired_size = {x = 0, y = 0}
 
     -- We skip the expensive measure if we have fixed size.
@@ -2277,28 +2277,28 @@ ugui.measure_core = function(node, pure)
         desired_size = entry.measure(node)
     end
 
-    if not pure then
-        local min_width = node.control.min_size and (node.control.min_size.x or 0) or 0
-        local min_height = node.control.min_size and (node.control.min_size.y or 0) or 0
-        local max_width = node.control.max_size and (node.control.max_size.x or math.huge) or math.huge
-        local max_height = node.control.max_size and (node.control.max_size.y or math.huge) or math.huge
+    local constrained_size = { x = desired_size.x, y = desired_size.y }
 
-        -- Apply min/max size constraints, giving priority to max.
-        desired_size.x = math.max(desired_size.x, min_width)
-        desired_size.y = math.max(desired_size.y, min_height)
-        desired_size.x = math.min(desired_size.x, max_width)
-        desired_size.y = math.min(desired_size.y, max_height)
+    local min_width = node.control.min_size and (node.control.min_size.x or 0) or 0
+    local min_height = node.control.min_size and (node.control.min_size.y or 0) or 0
+    local max_width = node.control.max_size and (node.control.max_size.x or math.huge) or math.huge
+    local max_height = node.control.max_size and (node.control.max_size.y or math.huge) or math.huge
 
-        -- Apply manual size overrides.
-        if node.control.rectangle.width ~= 0 then
-            desired_size.x = node.control.rectangle.width
-        end
-        if node.control.rectangle.height ~= 0 then
-            desired_size.y = node.control.rectangle.height
-        end
+    -- Apply min/max size constraints, giving priority to max.
+    constrained_size.x = math.max(constrained_size.x, min_width)
+    constrained_size.y = math.max(constrained_size.y, min_height)
+    constrained_size.x = math.min(constrained_size.x, max_width)
+    constrained_size.y = math.min(constrained_size.y, max_height)
+
+    -- Apply manual size overrides.
+    if node.control.rectangle.width ~= 0 then
+        constrained_size.x = node.control.rectangle.width
+    end
+    if node.control.rectangle.height ~= 0 then
+        constrained_size.y = node.control.rectangle.height
     end
 
-    return desired_size
+    return desired_size, constrained_size
 end
 
 -- TODO: REMOVE BEFORE MERGE. Implement proper measure functions for all controls.
