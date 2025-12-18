@@ -312,7 +312,9 @@ ugui.internal = {
     ---Prints the scene tree for debugging purposes.
     ---@param node SceneNode
     print_tree = function(node)
+        ---@param node SceneNode
         local function print_tree_impl(node, prefix, is_last)
+            local data = ugui.internal.private_control_data[node.control.uid]
             prefix = prefix or ''
             local connector = is_last and '└─ ' or '├─ '
 
@@ -323,6 +325,9 @@ ugui.internal = {
             label = label .. ' ' .. node.type .. ' ' .. tostring(node.control.uid)
 
             print(prefix .. connector .. label)
+            print(prefix .. '      ' .. string.format('desired_size: %.0f x %.0f', data.desired_size.x, data.desired_size.y))
+            print(prefix .. '      ' .. string.format('actual_size: %.0f x %.0f', data.actual_size.x, data.actual_size.y))
+            print(prefix .. '      ' .. string.format('render_bounds: (%.0f, %.0f) %.0f x %.0f', data.render_bounds.x, data.render_bounds.y, data.render_bounds.width, data.render_bounds.height))
 
             local child_prefix = prefix .. (is_last and '   ' or '│  ')
 
