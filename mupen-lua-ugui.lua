@@ -817,19 +817,19 @@ ugui.internal = {
 
                     node.control.tooltip = debug_str
 
-                    BreitbandGraphics.draw_rectangle(data.render_bounds, "#FF000088", 1)
+                    BreitbandGraphics.draw_rectangle(data.render_bounds, '#FF000088', 1)
                     BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({
                         x = data.render_bounds.x,
                         y = data.render_bounds.y,
                         width = data.desired_size.x,
                         height = data.desired_size.y,
-                    }, 2), "#0000FF88", 1)
+                    }, 2), '#0000FF88', 1)
                     BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({
                         x = data.render_bounds.x,
                         y = data.render_bounds.y,
                         width = data.actual_size.x,
                         height = data.actual_size.y,
-                    }, 4), "#FF00FF88", 1)
+                    }, 4), '#FF00FF88', 1)
 
                     ugui.standard_styler.draw_tooltip(node.control, {
                         x = ugui.internal.environment.mouse_position.x,
@@ -1064,7 +1064,7 @@ ugui.internal = {
 
                 ugui.internal.private_control_data[node.control.uid].actual_size = {
                     x = aligned.width,
-                    y = aligned.height
+                    y = aligned.height,
                 }
             end
         end)
@@ -2340,8 +2340,8 @@ end
 ---Measures the node based on the size of its biggest child.
 ---@param node SceneNode
 ---@return Vector2
-ugui.measure_fit_biggest_child = function (node)
-    local max_child_size = { x = 0, y = 0 }
+ugui.measure_fit_biggest_child = function(node)
+    local max_child_size = {x = 0, y = 0}
     for _, child in ipairs(node.children) do
         local desired_size = ugui.measure_core(child)
         max_child_size.x = math.max(max_child_size.x, desired_size.x)
@@ -2674,8 +2674,8 @@ ugui.registry.joystick = {
     draw = function(control)
         ugui.standard_styler.draw_joystick(control)
     end,
-    measure = function (node)
-        return { x = 100, y = 100 }
+    measure = function(node)
+        return {x = 100, y = 100}
     end,
     arrange = ugui.default_arrange,
 }
@@ -2721,7 +2721,7 @@ ugui.registry.trackbar = {
     draw = function(control)
         ugui.standard_styler.draw_trackbar(control)
     end,
-    measure = function (node)
+    measure = function(node)
         local control = node.control
         ---@cast control Trackbar
 
@@ -2757,8 +2757,8 @@ ugui.registry.listbox = {
     end,
     place = function(control)
         if not ugui.internal.private_control_data[control.uid] then
-           -- First frame of the listbox's existence: it hasn't been measured yet, so we will just wait it out for one frame without scrollbars or size management.
-           return ugui.control(control, 'listbox')
+            -- First frame of the listbox's existence: it hasn't been measured yet, so we will just wait it out for one frame without scrollbars or size management.
+            return ugui.control(control, 'listbox')
         end
 
         local data = ugui.internal.private_control_data[control.uid].custom_data
@@ -2777,15 +2777,15 @@ ugui.registry.listbox = {
             min_size = control.min_size,
             max_size = control.max_size,
             x_align = control.x_align,
-            y_align = control.y_align
-        }, function ()
+            y_align = control.y_align,
+        }, function()
             ugui.enter_stack({
                 uid = control.uid + 2,
-                rectangle = { x = 0, y = 0, width = 0, height = 0},
-                horizontal = true
-            }, function ()
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                horizontal = true,
+            }, function()
                 local control2 = ugui.internal.deep_clone(control)
-                control2.rectangle = { x = 0, y = 0, width = 0, height = 0}
+                control2.rectangle = {x = 0, y = 0, width = 0, height = 0}
                 control2.min_size = nil
                 control2.max_size = nil
                 control2.x_align = ugui.alignments.stretch
@@ -2835,7 +2835,6 @@ ugui.registry.listbox = {
         end
 
         if ugui.internal.keyboard_captured_control == control.uid then
-
             local prev_selected_index = data.custom_data.selected_index
 
             for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
@@ -2855,7 +2854,6 @@ ugui.registry.listbox = {
 
             if data.custom_data.selected_index ~= prev_selected_index then
                 -- TODO: Scroll selected item into view
-
             end
         end
 
@@ -2870,7 +2868,7 @@ ugui.registry.listbox = {
     draw = function(control)
         ugui.standard_styler.draw_listbox(control)
     end,
-    measure = function (node)
+    measure = function(node)
         local control = node.control
         ---@cast control ListBox
 
@@ -2880,7 +2878,7 @@ ugui.registry.listbox = {
         if control.horizontal_scroll then
             for _, value in pairs(control.items) do
                 local width = BreitbandGraphics.get_text_size(value, ugui.standard_styler.params.font_size,
-                ugui.standard_styler.params.font_name).width
+                    ugui.standard_styler.params.font_name).width
 
                 if width > max_width then
                     max_width = width
@@ -2892,7 +2890,7 @@ ugui.registry.listbox = {
 
         return {
             x = max_width + 8,
-            y = #control.items * ugui.standard_styler.params.listbox_item.height
+            y = #control.items * ugui.standard_styler.params.listbox_item.height,
         }
     end,
     arrange = ugui.default_arrange,
@@ -2980,7 +2978,7 @@ ugui.registry.scrollbar = {
 
         ugui.standard_styler.draw_scrollbar(control, thumb_rectangle)
     end,
-    measure = function (node)
+    measure = function(node)
         local control = node.control
         ---@cast control ScrollBar
 
@@ -3174,7 +3172,7 @@ ugui.registry.spinner = {
                 height = 0,
             },
             y_align = ugui.alignments.stretch,
-            min_size = { x = 50 },
+            min_size = {x = 50},
             text = tostring(value),
         })
 
@@ -3465,7 +3463,7 @@ ugui.registry.numberbox = {
             meta = data.meta,
         }
     end,
-    measure = function (node)
+    measure = function(node)
         local control = node.control
         ---@cast control NumberBox
 
@@ -3673,7 +3671,7 @@ end
 ---@param leave boolean? Whether to leave the control after placing it. Defaults to `true`.
 ---@return ControlReturnValue # The control's return value, or `nil` if the type is `""`.
 ugui.control = function(control, type, parent, leave)
-    ugui.internal.assert(type ~= "", "Type cannot be empty.")
+    ugui.internal.assert(type ~= '', 'Type cannot be empty.')
 
     if leave == nil then
         leave = true
@@ -3716,7 +3714,7 @@ ugui.control = function(control, type, parent, leave)
                 y = 0,
             },
             signal_change = ugui.signal_change_states.none,
-            custom_data = {}
+            custom_data = {},
         }
 
         if registry_entry.setup then
