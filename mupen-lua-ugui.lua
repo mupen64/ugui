@@ -59,6 +59,7 @@ end
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
 ---@field public x_align LayoutAlignment? The control's horizontal alignment within its parent. If nil, `start` is assumed.
 ---@field public y_align LayoutAlignment? The control's vertical alignment within its parent. If nil, `start` is assumed.
+---@field public clip_to_parent boolean? Whether the control's content is clipped to its parent's bounds. If nil or true, the content is clipped.
 ---The base class for all controls.
 
 ---@class Button : Control
@@ -902,7 +903,7 @@ ugui.internal = {
             local inside_node = BreitbandGraphics.is_point_inside_rectangle(point, render_bounds)
             local inside_parent = true
 
-            if node.parent then
+            if node.parent and node.control.clip_to_parent ~= false then
                 local parent_render_bounds = ugui.internal.private_control_data[node.parent.control.uid].render_bounds
                 inside_parent = BreitbandGraphics.is_point_inside_rectangle(point, parent_render_bounds)
             end
@@ -1080,14 +1081,14 @@ ugui.internal = {
 
             local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
-            if node.parent then
+            if node.parent and node.control.clip_to_parent ~= false then
                 local data = ugui.internal.private_control_data[node.parent.control.uid]
                 BreitbandGraphics.push_clip(data.render_bounds)
             end
 
             entry.draw(control)
 
-            if node.parent then
+            if node.parent and node.control.clip_to_parent ~= false then
                 BreitbandGraphics.pop_clip()
             end
 
