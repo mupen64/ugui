@@ -9,7 +9,6 @@
     "call_arg_parentheses": "keep",
     "continuation_indent": "4",
     "max_line_length": "8000",
-    "end_of_line": "crlf",
     "trailing_table_separator": "smart",
     "detect_end_of_line": "false",
     "insert_final_newline": "true",
