@@ -1046,7 +1046,16 @@ ugui.internal = {
 
             local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
+            if node.parent then
+                local data = ugui.internal.private_control_data[node.parent.control.uid]
+                BreitbandGraphics.push_clip(data.render_bounds)
+            end
+
             entry.draw(control)
+
+            if node.parent then
+                BreitbandGraphics.pop_clip()
+            end
 
             revert_styler_mixin()
 
