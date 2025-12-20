@@ -895,11 +895,19 @@ ugui.internal = {
 
     ---Does core input processing work, such as control capture/hover/click state management.
     do_input_processing = function()
-        local function is_point_inside_rectangle(point, rectangle)
-            return point.x >= rectangle.x and
-                point.y >= rectangle.y and
-                point.x <= rectangle.x + rectangle.width and
-                point.y <= rectangle.y + rectangle.height
+        ---@param node SceneNode
+        local function hittest(point, node)
+            local render_bounds = ugui.internal.private_control_data[node.control.uid].render_bounds
+
+            local inside_node = BreitbandGraphics.is_point_inside_rectangle(point, render_bounds)
+            local inside_parent = true
+
+            if node.parent then
+                local parent_render_bounds = ugui.internal.private_control_data[node.parent.control.uid].render_bounds
+                inside_parent = BreitbandGraphics.is_point_inside_rectangle(point, parent_render_bounds)
+            end
+
+            return inside_node and inside_parent
         end
 
         ---@type Control?
@@ -933,12 +941,10 @@ ugui.internal = {
                 return
             end
 
-            local render_bounds = ugui.internal.private_control_data[node.control.uid].render_bounds
-
             -- Determine the clicked control if we haven't already
             if clicked_control == nil then
                 if ugui.internal.is_mouse_just_down() then
-                    if is_point_inside_rectangle(ugui.internal.mouse_down_position, render_bounds) then
+                    if hittest(ugui.internal.mouse_down_position, node) then
                         clicked_control = control
                         keyboard_captured_node = node
                         mouse_captured_node = node
@@ -948,7 +954,7 @@ ugui.internal = {
 
             -- Determine the hovered control if we haven't already
             if ugui.internal.hovered_control == nil then
-                if is_point_inside_rectangle(ugui.internal.environment.mouse_position, render_bounds) then
+                if hittest(ugui.internal.environment.mouse_position, node) then
                     ugui.internal.hovered_control = control.uid
 
                     if ugui.internal.hovered_control ~= prev_hovered_control then
