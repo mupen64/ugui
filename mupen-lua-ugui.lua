@@ -346,9 +346,32 @@ ugui.internal = {
     ---@param rect2 Rectangle
     ---@param x_align LayoutAlignment
     ---@param y_align LayoutAlignment
+    ---@param min_size { x: number?, y: number? }?
+    ---@param max_size { x: number?, y: number? }?
     ---@return Rectangle
-    align_rect = function(rect1, rect2, x_align, y_align)
+    align_rect = function(rect1, rect2, x_align, y_align, min_size, max_size)
         local out = {x = rect1.x, y = rect1.y, width = rect1.width, height = rect1.height}
+
+        local function clamp_size()
+            if min_size then
+                if min_size.x then
+                    out.width = math.max(min_size.x, out.width)
+                end
+                if min_size.y then
+                    out.height = math.max(min_size.y, out.height)
+                end
+            end
+            if max_size then
+                if max_size.x then
+                    out.width = math.min(max_size.x, out.width)
+                end
+                if max_size.y then
+                    out.height = math.min(max_size.y, out.height)
+                end
+            end
+        end
+
+        clamp_size()
 
         if x_align == ugui.alignments.start then
             out.x = rect2.x
@@ -986,9 +1009,8 @@ ugui.internal = {
     do_layout = function()
         -- 1. Measure step
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            local desired_size, constrained_size = ugui.measure_core(node)
+            local desired_size = ugui.measure_core(node)
             ugui.internal.private_control_data[node.control.uid].desired_size = desired_size
-            ugui.internal.private_control_data[node.control.uid].actual_size = constrained_size
         end)
 
         -- 2. Arrange step
@@ -1022,15 +1044,21 @@ ugui.internal = {
                 slot.y = slot.y + child.control.rectangle.y
 
                 -- Align child with desired size within slot
-                local actual_size = ugui.internal.private_control_data[child.control.uid].actual_size
                 local aligned = ugui.internal.align_rect(
-                    {x = 0, y = 0, width = actual_size.x, height = actual_size.y},
+                    {x = 0, y = 0, width = ugui.internal.private_control_data[child.control.uid].desired_size.x, height = ugui.internal.private_control_data[child.control.uid].desired_size.y},
                     slot,
                     child.control.x_align,
-                    child.control.y_align
+                    child.control.y_align,
+                    child.control.min_size,
+                    child.control.max_size
                 )
 
                 ugui.internal.private_control_data[child.control.uid].render_bounds = aligned
+
+                ugui.internal.private_control_data[node.control.uid].actual_size = {
+                    x = aligned.width,
+                    y = aligned.height
+                }
             end
         end)
     end,
@@ -2276,7 +2304,7 @@ ugui.standard_styler = {
 
 ---Measures the control's size.
 ---@param node SceneNode The scene node.
----@return Vector2, Vector2 # The desired size and the constrained size.
+---@return Vector2 # The desired size.
 ugui.measure_core = function(node)
     local desired_size = {x = 0, y = 0}
 
@@ -2286,28 +2314,15 @@ ugui.measure_core = function(node)
         desired_size = entry.measure(node)
     end
 
-    local constrained_size = { x = desired_size.x, y = desired_size.y }
-
-    local min_width = node.control.min_size and (node.control.min_size.x or 0) or 0
-    local min_height = node.control.min_size and (node.control.min_size.y or 0) or 0
-    local max_width = node.control.max_size and (node.control.max_size.x or math.huge) or math.huge
-    local max_height = node.control.max_size and (node.control.max_size.y or math.huge) or math.huge
-
-    -- Apply min/max size constraints, giving priority to max.
-    constrained_size.x = math.max(constrained_size.x, min_width)
-    constrained_size.y = math.max(constrained_size.y, min_height)
-    constrained_size.x = math.min(constrained_size.x, max_width)
-    constrained_size.y = math.min(constrained_size.y, max_height)
-
     -- Apply manual size overrides.
     if node.control.rectangle.width ~= 0 then
-        constrained_size.x = node.control.rectangle.width
+        desired_size.x = node.control.rectangle.width
     end
     if node.control.rectangle.height ~= 0 then
-        constrained_size.y = node.control.rectangle.height
+        desired_size.y = node.control.rectangle.height
     end
 
-    return desired_size, constrained_size
+    return desired_size
 end
 
 -- TODO: REMOVE BEFORE MERGE. Implement proper measure functions for all controls.
@@ -3545,24 +3560,25 @@ ugui.registry.stack = {
         local spacing = stack.spacing or 0
         if stack.horizontal then
             for i, child in pairs(node.children) do
+                local data = ugui.internal.private_control_data[child.control.uid]
                 rects[#rects + 1] = {
                     x = sum,
                     y = 0,
-                    width = ugui.internal.private_control_data[child.control.uid].actual_size.x,
+                    width = data.desired_size.x,
                     height = constraint.height,
                 }
-                sum = sum + ugui.internal.private_control_data[child.control.uid].actual_size.x + spacing
+                sum = sum + data.desired_size.x + spacing
             end
-            sum = sum + spacing * (#node.children - 1)
         else
             for i, child in pairs(node.children) do
+                local data = ugui.internal.private_control_data[child.control.uid]
                 rects[#rects + 1] = {
                     x = 0,
                     y = sum,
                     width = constraint.width,
-                    height = ugui.internal.private_control_data[child.control.uid].actual_size.y,
+                    height = data.desired_size.y,
                 }
-                sum = sum + ugui.internal.private_control_data[child.control.uid].actual_size.y + spacing
+                sum = sum + data.desired_size.y + spacing
             end
         end
 
