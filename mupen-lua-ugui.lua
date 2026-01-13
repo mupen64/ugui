@@ -1021,7 +1021,6 @@ ugui.internal = {
                 aligned.x = aligned.x + ugui.internal.private_control_data[node.control.uid].render_bounds.x + child.control.rectangle.x
                 aligned.y = aligned.y + ugui.internal.private_control_data[node.control.uid].render_bounds.y + child.control.rectangle.y
 
-                print(child_data.type, child_data.desired_size)
                 child_data.render_bounds = aligned
             end
         end)
