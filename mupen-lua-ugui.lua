@@ -3610,6 +3610,10 @@ ugui.end_frame = function()
     -- Leave root canvas
     ugui.leave_control()
 
+    if ugui.DEBUG and ugui.internal.get_just_pressed_keys()['F1'] then
+        ugui.internal.print_tree(ugui.internal.root)
+    end
+
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
     ugui.internal.foreach_node(ugui.internal.root, function(node)
