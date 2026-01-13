@@ -50,7 +50,7 @@ end
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
----@field public rectangle Rectangle The control's rectangle. The X/Y components are relative to the control's parent.
+---@field public rectangle Rectangle The control's rectangle. The X/Y components are relative to the control's parent. `width`/`height` can be `0` to indicate that the control should be sized automatically, or specified explicitly to indicate a fixed size. Note that the fixed size is subject to sizing constraints.
 ---@field public min_size { x: number?, y: number? }? The minimum size of the control. If an axis is nil, the control's size is not constrained along that axis. If nil, both axes are unconstrained.
 ---@field public max_size { x: number?, y: number? }? The maximum size of the control. If an axis is nil, the control's size is not constrained along that axis. If nil, both axes are unconstrained. The maximum size takes priority over the minimum size.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
