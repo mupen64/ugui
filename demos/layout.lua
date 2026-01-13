@@ -52,19 +52,46 @@ demos[#demos + 1] = {
     end,
 }
 
-
 demos[#demos + 1] = {
-    name = 'max size listbox',
+    name = 'blowing out stack vertical',
     func = function()
-        selected_index = ugui.listbox({
-            uid = 30,
-            rectangle = {x = 0, y = 0, width = 0, height = 50},
-            items = items,
-            selected_index = selected_index,
-            horizontal_scroll = true,
+        ugui.enter_stack({
+            uid = 40,
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
             x_align = ugui.alignments.center,
             y_align = ugui.alignments.center,
-        })
+            max_size = {y = 50},
+        }, function()
+            ugui.button({
+                uid = 45,
+                rectangle = {x = 0, y = 0, width = 200, height = 200},
+                text = 'Hello World',
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+        end)
+    end,
+}
+
+demos[#demos + 1] = {
+    name = 'blowing out stack horizontal',
+    func = function()
+        ugui.enter_stack({
+            uid = 50,
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
+            x_align = ugui.alignments.center,
+            y_align = ugui.alignments.center,
+            max_size = {y = 50},
+            horizontal = true,
+        }, function()
+            ugui.button({
+                uid = 55,
+                rectangle = {x = 0, y = 0, width = 200, height = 200},
+                text = 'Hello World',
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+        end)
     end,
 }
 
