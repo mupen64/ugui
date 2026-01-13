@@ -863,6 +863,36 @@ ugui.internal = {
         return segments
     end,
 
+    ---Computes the clip rectangle for a given node.
+    ---@param node SceneNode
+    ---@return Rectangle
+    get_clip_rect = function(node)
+        if node.parent and node.control.clip_to_parent ~= false then
+            local data = ugui.internal.private_control_data[node.parent.control.uid]
+
+            -- Compute cumulative clip by intersecting all parents' render bounds.
+            local clip = data.render_bounds
+            local ancestor = node.parent.parent
+            while ancestor do
+                if ancestor.control.clip_to_parent ~= false then
+                    local data2 = ugui.internal.private_control_data[ancestor.control.uid]
+                    clip = BreitbandGraphics.intersect_rectangle(clip, data2.render_bounds)
+                end
+                ancestor = ancestor.parent
+            end
+
+            return clip
+        end
+
+        -- No clip is a full-screen clip.
+        return {
+            x = 0,
+            y = 0,
+            width = ugui.internal.environment.window_size.x,
+            height = ugui.internal.environment.window_size.y,
+        }
+    end,
+
     ---Does core input processing work, such as control capture/hover/click state management.
     do_input_processing = function()
         ---@param node SceneNode
@@ -870,14 +900,11 @@ ugui.internal = {
             local render_bounds = ugui.internal.private_control_data[node.control.uid].render_bounds
 
             local inside_node = BreitbandGraphics.is_point_inside_rectangle(point, render_bounds)
-            local inside_parent = true
 
-            if node.parent and node.control.clip_to_parent ~= false then
-                local parent_render_bounds = ugui.internal.private_control_data[node.parent.control.uid].render_bounds
-                inside_parent = BreitbandGraphics.is_point_inside_rectangle(point, parent_render_bounds)
-            end
+            local clip = ugui.internal.get_clip_rect(node)
+            local inside_clip = BreitbandGraphics.is_point_inside_rectangle(point, clip)
 
-            return inside_node and inside_parent
+            return inside_node and inside_clip
         end
 
         ---@type Control?
@@ -1037,16 +1064,12 @@ ugui.internal = {
 
             local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
-            if node.parent and node.control.clip_to_parent ~= false then
-                local data = ugui.internal.private_control_data[node.parent.control.uid]
-                BreitbandGraphics.push_clip(data.render_bounds)
-            end
+            local clip = ugui.internal.get_clip_rect(node)
+            BreitbandGraphics.push_clip(clip)
 
             entry.draw(control)
 
-            if node.parent and node.control.clip_to_parent ~= false then
-                BreitbandGraphics.pop_clip()
-            end
+            BreitbandGraphics.pop_clip()
 
             revert_styler_mixin()
 
