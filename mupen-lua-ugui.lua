@@ -2369,8 +2369,8 @@ ugui.registry.button = {
         local text_size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
 
         return {
-            x = text_size.width + 100,
-            y = text_size.height + 100,
+            x = text_size.width,
+            y = text_size.height,
         }
     end,
     arrange = ugui.default_arrange,
