@@ -101,7 +101,7 @@ demos[#demos + 1] = {
         ugui.enter_stack({
             uid = 60,
             rectangle = {x = 0, y = 0, width = 0, height = 0},
-            spacing = 10,
+            spacing = 4,
             x_align = ugui.alignments.center,
             y_align = ugui.alignments.center,
         }, function()
@@ -211,6 +211,67 @@ demos[#demos + 1] = {
             --     x_align = ugui.alignments.center,
             --     y_align = ugui.alignments.center,
             -- })
+        end)
+    end,
+}
+
+
+demos[#demos + 1] = {
+    name = 'weird overflows',
+    func = function()
+        ugui.enter_stack({
+            uid = 130,
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
+            x_align = ugui.alignments.center,
+            y_align = ugui.alignments.center,
+        }, function()
+            ugui.button({
+                uid = 135,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = 'Hello World',
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            ugui.enter_stack({
+                uid = 140,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+                max_size = {y = 20},
+            }, function()
+                ugui.enter_stack({
+                    uid = 145,
+                    rectangle = {x = 0, y = 0, width = 0, height = 0},
+                    x_align = ugui.alignments.center,
+                    y_align = ugui.alignments.center,
+                    horizontal = true,
+                }, function()
+                    ugui.button({
+                        uid = 150,
+                        rectangle = {x = 0, y = 0, width = 100, height = 100},
+                        text = 'Button 1',
+                    })
+                    ugui.button({
+                        uid = 155,
+                        rectangle = {x = 0, y = 0, width = 0, height = 0},
+                        text = 'Button 2',
+                        y_align = ugui.alignments.stretch,
+                    })
+                end)
+                ugui.button({
+                    uid = 160,
+                    rectangle = {x = 0, y = 0, width = 0, height = 0},
+                    text = 'Button 3',
+                    x_align = ugui.alignments.stretch,
+                })
+            end)
+            ugui.button({
+                uid = 165,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = 'Hello World',
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
         end)
     end,
 }
