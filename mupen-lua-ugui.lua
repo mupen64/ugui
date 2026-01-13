@@ -175,7 +175,6 @@ end
 ---@class PersistentControlData
 ---@field type ControlType
 ---@field render_bounds Rectangle
----@field actual_size Vector2
 ---@field desired_size Vector2
 ---@field signal_change SignalChangeState
 ---@field custom_data any
@@ -327,7 +326,6 @@ ugui.internal = {
 
             print(prefix .. connector .. label)
             print(prefix .. '      ' .. string.format('desired_size: %.0f x %.0f', data.desired_size.x, data.desired_size.y))
-            print(prefix .. '      ' .. string.format('actual_size: %.0f x %.0f', data.actual_size.x, data.actual_size.y))
             print(prefix .. '      ' .. string.format('render_bounds: (%.0f, %.0f) %.0f x %.0f', data.render_bounds.x, data.render_bounds.y, data.render_bounds.width, data.render_bounds.height))
 
             local child_prefix = prefix .. (is_last and '   ' or '│  ')
@@ -812,7 +810,6 @@ ugui.internal = {
                     local debug_str = ''
                     debug_str = debug_str .. node.type .. '\n'
                     debug_str = debug_str .. string.format('desired_size: %.0f x %.0f', data.desired_size.x, data.desired_size.y) .. '\n'
-                    debug_str = debug_str .. string.format('actual_size: %.0f x %.0f', data.actual_size.x, data.actual_size.y) .. '\n'
                     debug_str = debug_str .. string.format('render_bounds: (%.0f, %.0f) %.0f x %.0f', data.render_bounds.x, data.render_bounds.y, data.render_bounds.width, data.render_bounds.height)
 
                     node.control.tooltip = debug_str
@@ -824,12 +821,7 @@ ugui.internal = {
                         width = data.desired_size.x,
                         height = data.desired_size.y,
                     }, 2), '#0000FF88', 1)
-                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({
-                        x = data.render_bounds.x,
-                        y = data.render_bounds.y,
-                        width = data.actual_size.x,
-                        height = data.actual_size.y,
-                    }, 4), '#FF00FF88', 1)
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(data.render_bounds, 4), '#FF00FF88', 1)
 
                     ugui.standard_styler.draw_tooltip(node.control, {
                         x = ugui.internal.environment.mouse_position.x,
@@ -1061,11 +1053,6 @@ ugui.internal = {
                 )
 
                 ugui.internal.private_control_data[child.control.uid].render_bounds = aligned
-
-                ugui.internal.private_control_data[node.control.uid].actual_size = {
-                    x = aligned.width,
-                    y = aligned.height,
-                }
             end
         end)
     end,
@@ -1801,7 +1788,6 @@ ugui.standard_styler = {
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.private_control_data[control.uid].custom_data
         local desired_size = ugui.internal.private_control_data[control.uid].desired_size
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
 
         ugui.standard_styler.draw_list_frame(rectangle, visual_state)
 
@@ -1819,13 +1805,13 @@ ugui.standard_styler = {
         index_begin = ugui.internal.clamp(math.floor(index_begin), 1, #control.items)
         index_end = ugui.internal.clamp(math.ceil(index_end), 1, #control.items)
 
-        local x_offset = math.max((desired_size.x - actual_size.x) * scroll_x, 0)
+        local x_offset = math.max((desired_size.x - rectangle.width) * scroll_x, 0)
 
         BreitbandGraphics.push_clip(BreitbandGraphics.inflate_rectangle(rectangle, -1))
 
         for i = index_begin, index_end, 1 do
             local y_offset = (ugui.standard_styler.params.listbox_item.height * (i - 1)) -
-                (scroll_y * (desired_size.y - actual_size.y))
+                (scroll_y * (desired_size.y - rectangle.height))
 
             local item_visual_state = ugui.visual_states.normal
             if control.is_enabled == false then
@@ -1839,7 +1825,7 @@ ugui.standard_styler = {
             ugui.standard_styler.draw_list_item(control, control.items[i], {
                 x = rectangle.x - x_offset,
                 y = rectangle.y + y_offset,
-                width = math.max(desired_size.x, actual_size.x),
+                width = math.max(desired_size.x, rectangle.width),
                 height = ugui.standard_styler.params.listbox_item.height,
             }, item_visual_state)
         end
@@ -2464,7 +2450,6 @@ ugui.registry.carrousel_button = {
     ---@param control CarrouselButton
     ---@return ControlReturnValue
     logic = function(control, data)
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         data.custom_data.selected_index = control.selected_index
@@ -2643,7 +2628,6 @@ ugui.registry.joystick = {
     ---@param control Joystick
     ---@return ControlReturnValue
     logic = function(control, data)
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         data.custom_data.position = ugui.internal.deep_clone(control.position)
@@ -2693,7 +2677,6 @@ ugui.registry.trackbar = {
     ---@param control Trackbar
     ---@return ControlReturnValue
     logic = function(control, data)
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         data.custom_data.value = control.value
@@ -2763,7 +2746,6 @@ ugui.registry.listbox = {
 
         local data = ugui.internal.private_control_data[control.uid].custom_data
         local desired_size = ugui.internal.private_control_data[control.uid].desired_size
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         local x_overflow = desired_size.x > render_bounds.width
@@ -2798,7 +2780,7 @@ ugui.registry.listbox = {
                         rectangle = {x = 0, y = 0, width = ugui.standard_styler.params.scrollbar.thickness, height = 0},
                         y_align = ugui.alignments.stretch,
                         value = data.scroll_y,
-                        ratio = actual_size.y / desired_size.y,
+                        ratio = render_bounds.height / desired_size.y,
                         vertical = true,
                     })
                 end
@@ -2809,7 +2791,7 @@ ugui.registry.listbox = {
                     rectangle = {x = 0, y = 0, width = 0, height = ugui.standard_styler.params.scrollbar.thickness},
                     x_align = ugui.alignments.stretch,
                     value = data.scroll_x,
-                    ratio = actual_size.x / desired_size.x,
+                    ratio = render_bounds.width / desired_size.x,
                 })
             end
         end)
@@ -2819,7 +2801,6 @@ ugui.registry.listbox = {
     ---@param control ListBox
     ---@return ControlReturnValue
     logic = function(control, data)
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         data.custom_data.selected_index = control.selected_index
@@ -2910,7 +2891,6 @@ ugui.registry.scrollbar = {
     ---@param control ScrollBar
     ---@return ControlReturnValue
     logic = function(control, data)
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         data.custom_data.value = control.value
@@ -2947,7 +2927,6 @@ ugui.registry.scrollbar = {
     end,
     ---@param control ScrollBar
     draw = function(control)
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         local data = ugui.internal.private_control_data[control.uid].custom_data
@@ -3014,8 +2993,6 @@ ugui.registry.combobox = {
     place = function(control)
         local result = ugui.control(control, 'combobox')
         local data = ugui.internal.private_control_data[control.uid].custom_data
-
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
 
         if data.open then
@@ -3133,7 +3110,6 @@ ugui.registry.spinner = {
     place = function(control)
         local result = ugui.control(control, 'spinner', nil, false)
         local data = ugui.internal.private_control_data[control.uid]
-        local actual_size = data.actual_size
         local render_bounds = data.render_bounds
 
         local increment = control.increment or 1
@@ -3287,7 +3263,6 @@ ugui.registry.numberbox = {
     end,
     ---@param control NumberBox
     logic = function(control, data)
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
         local prev_value_negative = control.value < 0
         data.custom_data.value = math.abs(control.value)
@@ -3378,7 +3353,6 @@ ugui.registry.numberbox = {
     ---@param control NumberBox
     draw = function(control)
         local data = ugui.internal.private_control_data[control.uid]
-        local actual_size = ugui.internal.private_control_data[control.uid].actual_size
         local render_bounds = ugui.internal.private_control_data[control.uid].render_bounds
         local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
         local font_name = ugui.standard_styler.params.monospace_font_name
@@ -3704,10 +3678,6 @@ ugui.control = function(control, type, parent, leave)
                 y = 0,
                 width = 0,
                 height = 0,
-            },
-            actual_size = {
-                x = 0,
-                y = 0,
             },
             desired_size = {
                 x = 0,
