@@ -95,6 +95,126 @@ demos[#demos + 1] = {
     end,
 }
 
+demos[#demos + 1] = {
+    name = 'all controls',
+    func = function()
+        ugui.enter_stack({
+            uid = 60,
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
+            spacing = 10,
+            x_align = ugui.alignments.center,
+            y_align = ugui.alignments.center,
+        }, function()
+            ugui.button({
+                uid = 65,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = 'Hello World',
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            is_checked = ugui.toggle_button({
+                uid = 70,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = 'Hello World',
+                is_checked = is_checked,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            selected_index = ugui.carrousel_button({
+                uid = 75,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                items = items,
+                selected_index = selected_index,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            text = ugui.textbox({
+                uid = 80,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = text,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            ugui.joystick({
+                uid = 85,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                position = {x = 0, y = 0},
+                mag = 80,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            value = ugui.trackbar({
+                uid = 90,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                value = value,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            value = ugui.trackbar({
+                uid = 95,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                value = value,
+                vertical = true,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            selected_index = ugui.listbox({
+                uid = 100,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                items = items,
+                selected_index = selected_index,
+                horizontal_scroll = true,
+                max_size = {x = 100, y = 50},
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            value = ugui.scrollbar({
+                uid = 105,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                value = value,
+                ratio = 0.5,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            value = ugui.scrollbar({
+                uid = 110,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                value = value,
+                ratio = 0.5,
+                vertical = true,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            selected_index = ugui.combobox({
+                uid = 115,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                items = items,
+                selected_index = selected_index,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            value = ugui.spinner({
+                uid = 120,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                value = value,
+                increment = 0.1,
+                minimum_value = 0,
+                maximum_value = 1,
+                x_align = ugui.alignments.center,
+                y_align = ugui.alignments.center,
+            })
+            -- value2 = ugui.numberbox({
+            --     uid = 125,
+            --     rectangle = {x = 0, y = 0, width = 0, height = 0},
+            --     value = value2,
+            --     places = 4,
+            --     x_align = ugui.alignments.center,
+            --     y_align = ugui.alignments.center,
+            -- })
+        end)
+    end,
+}
+
 emu.atdrawd2d(function()
     begin_frame()
 
