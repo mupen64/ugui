@@ -345,32 +345,9 @@ ugui.internal = {
     ---@param rect2 Rectangle
     ---@param x_align LayoutAlignment
     ---@param y_align LayoutAlignment
-    ---@param min_size { x: number?, y: number? }?
-    ---@param max_size { x: number?, y: number? }?
     ---@return Rectangle
-    align_rect = function(rect1, rect2, x_align, y_align, min_size, max_size)
+    align_rect = function(rect1, rect2, x_align, y_align)
         local out = {x = rect1.x, y = rect1.y, width = rect1.width, height = rect1.height}
-
-        local function clamp_size()
-            if min_size then
-                if min_size.x then
-                    out.width = math.max(min_size.x, out.width)
-                end
-                if min_size.y then
-                    out.height = math.max(min_size.y, out.height)
-                end
-            end
-            if max_size then
-                if max_size.x then
-                    out.width = math.min(max_size.x, out.width)
-                end
-                if max_size.y then
-                    out.height = math.min(max_size.y, out.height)
-                end
-            end
-        end
-
-        clamp_size()
 
         if x_align == ugui.alignments.start then
             out.x = rect2.x
@@ -1024,35 +1001,28 @@ ugui.internal = {
         ugui.internal.private_control_data[ugui.internal.root.control.uid].render_bounds = window_bounds
 
         ugui.internal.foreach_node(ugui.internal.root, function(node)
-            local registry_entry = ugui.registry[node.type]
-
-            -- Compute child slots
+            -- Compute child slots.
             local constraint = ugui.internal.private_control_data[node.control.uid].render_bounds
-            local child_slots = registry_entry.arrange(node, constraint)
+            local child_slots = ugui.registry[node.type].arrange(node, constraint)
+
             assert(#child_slots == #node.children)
 
             for i, child in ipairs(node.children) do
                 local slot = child_slots[i]
+                local child_data = ugui.internal.private_control_data[child.control.uid]
 
-                -- Slots are parent-relative, so we make them absolute
-                slot.x = slot.x + ugui.internal.private_control_data[node.control.uid].render_bounds.x
-                slot.y = slot.y + ugui.internal.private_control_data[node.control.uid].render_bounds.y
-
-                -- And also apply the control's own offset
-                slot.x = slot.x + child.control.rectangle.x
-                slot.y = slot.y + child.control.rectangle.y
-
-                -- Align child with desired size within slot
+                -- Align child with desired size within slot.
                 local aligned = ugui.internal.align_rect(
-                    {x = 0, y = 0, width = ugui.internal.private_control_data[child.control.uid].desired_size.x, height = ugui.internal.private_control_data[child.control.uid].desired_size.y},
+                    {x = 0, y = 0, width = child_data.desired_size.x, height = child_data.desired_size.y},
                     slot,
                     child.control.x_align,
-                    child.control.y_align,
-                    child.control.min_size,
-                    child.control.max_size
+                    child.control.y_align
                 )
+                aligned.x = aligned.x + ugui.internal.private_control_data[node.control.uid].render_bounds.x + child.control.rectangle.x
+                aligned.y = aligned.y + ugui.internal.private_control_data[node.control.uid].render_bounds.y + child.control.rectangle.y
 
-                ugui.internal.private_control_data[child.control.uid].render_bounds = aligned
+                print(child_data.type, child_data.desired_size)
+                child_data.render_bounds = aligned
             end
         end)
     end,
@@ -2301,11 +2271,8 @@ ugui.standard_styler = {
 ugui.measure_core = function(node)
     local desired_size = {x = 0, y = 0}
 
-    -- We skip the expensive measure if we have fixed size.
-    if node.control.rectangle.width == 0 or node.control.rectangle.height == 0 then
-        local entry = ugui.registry[node.type]
-        desired_size = entry.measure(node)
-    end
+    local entry = ugui.registry[node.type]
+    desired_size = entry.measure(node)
 
     -- Apply manual size overrides.
     if node.control.rectangle.width ~= 0 then
@@ -2313,6 +2280,16 @@ ugui.measure_core = function(node)
     end
     if node.control.rectangle.height ~= 0 then
         desired_size.y = node.control.rectangle.height
+    end
+
+    -- Apply size constraints.
+    if node.control.min_size then
+        desired_size.x = math.max(desired_size.x, node.control.min_size.x or 0)
+        desired_size.y = math.max(desired_size.y, node.control.min_size.y or 0)
+    end
+    if node.control.max_size then
+        desired_size.x = math.min(desired_size.x, node.control.max_size.x or math.huge)
+        desired_size.y = math.min(desired_size.y, node.control.max_size.y or math.huge)
     end
 
     return desired_size
@@ -2392,8 +2369,8 @@ ugui.registry.button = {
         local text_size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
 
         return {
-            x = text_size.width,
-            y = text_size.height,
+            x = text_size.width + 100,
+            y = text_size.height + 100,
         }
     end,
     arrange = ugui.default_arrange,
@@ -3473,7 +3450,15 @@ ugui.registry.canvas = {
     draw = function()
 
     end,
-    measure = ugui.measure_stub,
+    ---@param node SceneNode
+    measure = function(node)
+        local canvas = node.control
+        ---@cast canvas Canvas
+        return {
+            x = canvas.rectangle.width,
+            y = canvas.rectangle.height,
+        }
+    end,
     arrange = ugui.default_arrange,
 }
 
