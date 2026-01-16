@@ -1032,7 +1032,7 @@ ugui.internal = {
             local constraint = ugui.internal.private_control_data[node.control.uid].render_bounds
             local child_slots = ugui.registry[node.type].arrange(node, constraint)
 
-            assert(#child_slots == #node.children)
+            ugui.internal.assert(#child_slots == #node.children, 'Mismatch between child slots and children')
 
             for i, child in ipairs(node.children) do
                 local slot = child_slots[i]
