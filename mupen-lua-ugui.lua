@@ -3626,6 +3626,7 @@ ugui.registry.grid = {
         -- TODO: Support % unit
 
         for i = 1, #grid.rows do
+            local row = grid.rows[i]
             local max_h = 0
             for j = 1, #grid.columns do
                 local col = grid.columns[j]
@@ -3633,8 +3634,8 @@ ugui.registry.grid = {
 
                 if child ~= nil then
                     local h
-                    if col.size then
-                        h = col.size
+                    if row.size then
+                        h = row.size
                     else
                         local ds = ugui.measure_core(child)
                         h = ds.y
@@ -3646,15 +3647,16 @@ ugui.registry.grid = {
             row_sizes[i] = max_h
         end
         for i = 1, #grid.columns do
+            local col = grid.columns[i]
             local max_w = 0
             for j = 1, #grid.rows do
                 local row = grid.rows[j]
-                local child = child_at(i, j)
+                local child = child_at(j, i)
 
                 if child ~= nil then
                     local w
-                    if row.size then
-                        w = row.size
+                    if col.size then
+                        w = col.size
                     else
                         local ds = ugui.measure_core(child)
                         w = ds.x
