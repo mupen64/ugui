@@ -166,6 +166,17 @@ end
 ---@field public spacing number? The spacing between child controls. Defaults to `0` if nil.
 ---A control which stacks its children either vertically or horizontally.
 
+---@class GridCellDefinition
+---@field unit "px" | "%" | nil The unit of the cell's size. If `nil`, `size` is assumed to be `nil`.
+---@field size number? The size of the cell. If `nil`, the cell will shrink to the minimum size required by its content.
+---Represents the sizing definition for a grid cell.
+
+---@class Grid : Control
+---@field public columns GridCellDefinition[] The grid's column definitions.
+---@field public rows GridCellDefinition[] The grid's row definitions.
+---@field public spacing number? The spacing between child controls. Defaults to `0` if nil.
+---A control which arranges its children in a grid.
+
 ---@class SceneNode
 ---@field public control Control The control contained in this node.
 ---@field public type ControlType The type of control contained in this node.
@@ -180,7 +191,7 @@ end
 ---@field custom_data any
 ---Data associated with a UID
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "spinner" | "numberbox" | "canvas" | "stack"
+---@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "spinner" | "numberbox" | "canvas" | "stack" | "grid"
 
 ---@alias ControlReturnValue { primary: any, meta: Meta }
 
@@ -272,7 +283,7 @@ ugui.internal = {
         end)
 
         -- Recursively reorder all children
-        for _, child in ipairs(node.children) do
+        for _, child in pairs(node.children) do
             ugui.internal.sort_scene(child)
         end
     end,
@@ -331,7 +342,7 @@ ugui.internal = {
             local child_prefix = prefix .. (is_last and '   ' or '│  ')
 
             local children = node.children or {}
-            for i, child in ipairs(children) do
+            for i, child in pairs(children) do
                 print_tree_impl(child, child_prefix, i == #children)
             end
         end
@@ -1034,7 +1045,7 @@ ugui.internal = {
 
             ugui.internal.assert(#child_slots == #node.children, 'Mismatch between child slots and children')
 
-            for i, child in ipairs(node.children) do
+            for i, child in pairs(node.children) do
                 local slot = child_slots[i]
                 local child_data = ugui.internal.private_control_data[child.control.uid]
 
@@ -1083,7 +1094,7 @@ ugui.internal = {
             end
         end)
 
-        for _, callback in ipairs(ugui.internal.late_render_callbacks) do
+        for _, callback in pairs(ugui.internal.late_render_callbacks) do
             callback()
         end
         ugui.internal.late_render_callbacks = {}
@@ -2327,7 +2338,7 @@ end
 ---@return Vector2
 ugui.measure_fit_biggest_child = function(node)
     local max_child_size = {x = 0, y = 0}
-    for _, child in ipairs(node.children) do
+    for _, child in pairs(node.children) do
         local desired_size = ugui.measure_core(child)
         max_child_size.x = math.max(max_child_size.x, desired_size.x)
         max_child_size.y = math.max(max_child_size.y, desired_size.y)
@@ -3572,6 +3583,141 @@ ugui.registry.stack = {
     end,
 }
 
+---@type ControlRegistryEntry
+ugui.registry.grid = {
+    hittest_passthrough = true,
+    ---@param control Grid
+    validate = function(control)
+    end,
+    place = function(control)
+        ugui.control(control, 'grid', nil, false)
+    end,
+    logic = function(control, data)
+        return {
+            primary = nil,
+            meta = {},
+        }
+    end,
+    setup = function(control, data)
+        data.row_sizes = {}
+        data.col_sizes = {}
+    end,
+    draw = function()
+
+    end,
+    ---@param node SceneNode
+    measure = function(node)
+        local grid = node.control
+        ---@cast grid Grid
+        local data = ugui.internal.private_control_data[node.control.uid]
+
+        local function child_at(row, col)
+            for _, child in pairs(node.children) do
+                if child.control.row == row and child.control.col == col then
+                    return child
+                end
+            end
+            return nil
+        end
+
+        local row_sizes = {}
+        local col_sizes = {}
+
+        -- TODO: Support % unit
+
+        for i = 1, #grid.rows do
+            local max_h = 0
+            for j = 1, #grid.columns do
+                local col = grid.columns[j]
+                local child = child_at(i, j)
+
+                if child ~= nil then
+                    local h
+                    if col.size then
+                        h = col.size
+                    else
+                        local ds = ugui.measure_core(child)
+                        h = ds.y
+                    end
+                    max_h = math.max(max_h, h)
+                end
+            end
+
+            row_sizes[i] = max_h
+        end
+        for i = 1, #grid.columns do
+            local max_w = 0
+            for j = 1, #grid.rows do
+                local row = grid.rows[j]
+                local child = child_at(i, j)
+
+                if child ~= nil then
+                    local w
+                    if row.size then
+                        w = row.size
+                    else
+                        local ds = ugui.measure_core(child)
+                        w = ds.x
+                    end
+                    max_w = math.max(max_w, w)
+                end
+            end
+
+            col_sizes[i] = max_w
+        end
+
+        data.row_sizes = row_sizes
+        data.col_sizes = col_sizes
+
+        local x_sum = 0
+        for i = 1, #grid.columns do
+            x_sum = x_sum + col_sizes[i]
+        end
+
+        local y_sum = 0
+        for i = 1, #grid.rows do
+            y_sum = y_sum + row_sizes[i]
+        end
+
+        return {x = x_sum, y = y_sum}
+    end,
+    ---@param node SceneNode
+    ---@param constraint Rectangle
+    arrange = function(node, constraint)
+        local grid = node.control
+        ---@cast grid Grid
+        local data = ugui.internal.private_control_data[node.control.uid]
+
+        local rects = {}
+
+        for i = 1, #node.children do
+            local child = node.children[i]
+
+            local row = child.control.row
+            local col = child.control.col
+
+            local x = 0
+            for j = 1, col - 1 do
+                x = x + data.col_sizes[j]
+            end
+
+            local y = 0
+            for j = 1, row - 1 do
+                y = y + data.row_sizes[j]
+            end
+
+            rects[#rects + 1] = {
+                x = x,
+                y = y,
+                width = data.col_sizes[col],
+                height = data.row_sizes[row],
+            }
+        end
+
+        return rects
+    end,
+
+}
 --#endregion
 
 --#region Main API
@@ -3880,6 +4026,17 @@ end
 ---@param fn fun()? A function to execute within the canvas context. If nil, the canvas will be entered but not left automatically and the function will not be called.
 ugui.enter_stack = function(control, fn)
     ugui.registry.stack.place(control)
+    if fn then
+        fn()
+        ugui.leave_control()
+    end
+end
+
+---Enters a Grid.
+---@param control Grid The control table.
+---@param fn fun()? A function to execute within the canvas context. If nil, the canvas will be entered but not left automatically and the function will not be called.
+ugui.enter_grid = function(control, fn)
+    ugui.registry.grid.place(control)
     if fn then
         fn()
         ugui.leave_control()

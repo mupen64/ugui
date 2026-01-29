@@ -13,7 +13,7 @@ for i = 1, 50, 1 do
 end
 
 local demos = {}
-local demo_index = 1
+local demo_index = 6
 
 demos[#demos + 1] = {
     name = 'max size blown out in stack',
@@ -275,6 +275,51 @@ demos[#demos + 1] = {
         end)
     end,
 }
+
+demos[#demos + 1] = {
+    name = 'grid',
+    func = function()
+        ugui.enter_grid({
+            uid = 170,
+            rectangle = {x = 0, y = 0, width = 0, height = 0},
+            x_align = ugui.alignments.stretch,
+            y_align = ugui.alignments.stretch,
+            columns = {
+                {},
+                {size = 50, unit = 'px'},
+                {},
+            },
+            rows = {
+                {},
+                {size = 50, unit = 'px'},
+                {},
+            },
+        }, function()
+            ugui.button({
+                uid = 175,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = 'Hello World',
+                row = 1,
+                col = 1,
+            })
+            ugui.button({
+                uid = 180,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = 'Hello World',
+                row = 2,
+                col = 2,
+            })
+            ugui.button({
+                uid = 185,
+                rectangle = {x = 0, y = 0, width = 0, height = 0},
+                text = 'Hello World',
+                row = 3,
+                col = 3,
+            })
+        end)
+    end,
+}
+
 
 emu.atdrawd2d(function()
     begin_frame()
