@@ -286,33 +286,33 @@ demos[#demos + 1] = {
             y_align = ugui.alignments.stretch,
             columns = {
                 {},
-                {size = 50, unit = 'px'},
+                {size = 30, unit = 'px'},
                 {},
             },
             rows = {
                 {},
-                {size = 50, unit = 'px'},
+                {size = 30, unit = 'px'},
                 {},
             },
         }, function()
             ugui.button({
                 uid = 175,
                 rectangle = {x = 0, y = 0, width = 0, height = 0},
-                text = 'Hello World',
+                text = 'Hello World Hello World',
                 row = 1,
                 col = 1,
             })
             ugui.button({
                 uid = 180,
                 rectangle = {x = 0, y = 0, width = 0, height = 0},
-                text = 'Hello World',
+                text = 'Hello World Hello World',
                 row = 2,
                 col = 2,
             })
             ugui.button({
                 uid = 185,
                 rectangle = {x = 0, y = 0, width = 0, height = 0},
-                text = 'Hello World',
+                text = 'Hello World Hello World',
                 row = 3,
                 col = 3,
             })

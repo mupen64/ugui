@@ -203,7 +203,7 @@ end
 ---@field public added fun(control: Control, data: PersistentControlData)? Notifies about a control being added to a scene.
 ---@field public logic fun(control: Control, data: PersistentControlData): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
----@field public measure fun(node: SceneNode): Vector2 Measures the desired size of the control based on its children. This function shouldn't be called directly in control prototypes; use `ugui.measure` instead.
+---@field public measure fun(node: SceneNode, available: Vector2): Vector2 Measures the desired size of the control based on its children. The available size is the maximum size the control can use. This function shouldn't be called directly in control prototypes; use `ugui.measure` instead.
 ---@field public arrange fun(node: SceneNode, constraint: Rectangle): Rectangle[] Computes the allowed bounds for each child control. The computed bounds must consider the control margins specified by the `rectangle` field. Note that these bounds are relative to the parent control.
 ---Represents an entry in the control registry.
 
@@ -1049,9 +1049,11 @@ ugui.internal = {
                 local slot = child_slots[i]
                 local child_data = ugui.internal.private_control_data[child.control.uid]
 
-                -- Align child with desired size within slot.
+                local width = math.min(child_data.desired_size.x, slot.width)
+                local height = math.min(child_data.desired_size.y, slot.height)
+
                 local aligned = ugui.internal.align_rect(
-                    {x = 0, y = 0, width = child_data.desired_size.x, height = child_data.desired_size.y},
+                    {x = 0, y = 0, width = width, height = height},
                     slot,
                     child.control.x_align,
                     child.control.y_align
@@ -2300,12 +2302,14 @@ ugui.standard_styler = {
 
 ---Measures the control's size.
 ---@param node SceneNode The scene node.
+---@param available Vector2? The available space. If `nil`, the control will be measured without any size constraints.
 ---@return Vector2 # The desired size.
-ugui.measure_core = function(node)
+ugui.measure_core = function(node, available)
     local desired_size = {x = 0, y = 0}
 
     local entry = ugui.registry[node.type]
-    desired_size = entry.measure(node)
+    local real_available = available or {x = math.huge, y = math.huge}
+    desired_size = entry.measure(node, real_available)
 
     -- Apply manual size overrides.
     if node.control.rectangle.width ~= 0 then
@@ -2324,6 +2328,9 @@ ugui.measure_core = function(node)
         desired_size.x = math.min(desired_size.x, node.control.max_size.x or math.huge)
         desired_size.y = math.min(desired_size.y, node.control.max_size.y or math.huge)
     end
+
+    desired_size.x = math.min(desired_size.x, real_available.x)
+    desired_size.y = math.min(desired_size.y, real_available.y)
 
     return desired_size
 end
@@ -3627,9 +3634,9 @@ ugui.registry.grid = {
 
         for i = 1, #grid.rows do
             local row = grid.rows[i]
+            local row_size = row.size or math.huge
             local max_h = 0
             for j = 1, #grid.columns do
-                local col = grid.columns[j]
                 local child = child_at(i, j)
 
                 if child ~= nil then
@@ -3637,7 +3644,7 @@ ugui.registry.grid = {
                     if row.size then
                         h = row.size
                     else
-                        local ds = ugui.measure_core(child)
+                        local ds = ugui.measure_core(child, {x = math.huge, y = row_size})
                         h = ds.y
                     end
                     max_h = math.max(max_h, h)
@@ -3648,9 +3655,9 @@ ugui.registry.grid = {
         end
         for i = 1, #grid.columns do
             local col = grid.columns[i]
+            local col_size = col.size or math.huge
             local max_w = 0
             for j = 1, #grid.rows do
-                local row = grid.rows[j]
                 local child = child_at(j, i)
 
                 if child ~= nil then
@@ -3658,7 +3665,7 @@ ugui.registry.grid = {
                     if col.size then
                         w = col.size
                     else
-                        local ds = ugui.measure_core(child)
+                        local ds = ugui.measure_core(child, {x = col_size, y = math.huge})
                         w = ds.x
                     end
                     max_w = math.max(max_w, w)
