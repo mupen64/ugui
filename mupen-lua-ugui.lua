@@ -591,13 +591,12 @@ ugui.internal = {
             return function() end
         end
 
-        -- If there's a styler mixin, we merge it into the control's rendering params
-        local prev_styler_params = ugui.internal.deep_clone(ugui.standard_styler.params)
-        ugui.standard_styler.params = ugui.internal.deep_merge(ugui.standard_styler.params, control.styler_mixin)
+        -- If there's a styler mixin, we merge it into the control's rendering params.
+        local rollback = ugui.internal.deep_merge(control.styler_mixin, ugui.standard_styler.params)
 
-        -- Revert the styler mixin. This is really slow :(
+        -- Revert the styler mixin.
         return function()
-            ugui.standard_styler.params = prev_styler_params
+            rollback()
         end
     end,
 
