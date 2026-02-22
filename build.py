@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 from pathlib import Path
 
@@ -47,6 +48,7 @@ def amalgamate(in_paths, out_path) -> None:
     amalgamated = "\n".join(chunks)
 
     try:
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
         out_path.write_text(amalgamated, encoding=ENCODING)
         print(f"[OK] Written to '{out_path}' ({len(in_paths)} file(s) merged).")
     except OSError as e:
