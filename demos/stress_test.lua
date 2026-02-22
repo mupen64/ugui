@@ -16,6 +16,13 @@ emu.atdrawd2d(function()
                     height = 20,
                 },
                 text = ':)',
+                styler_mixin = {
+                    button = {
+                        back = {
+                            [1] = BreitbandGraphics.hex_to_color('#FF0000')
+                        }
+                    }
+                }
             })
             i = i + 1
         end
