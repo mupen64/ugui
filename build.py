@@ -58,6 +58,11 @@ if __name__ == "__main__":
     amalgamate(
         [
             Path("src/BreitbandGraphics/breitbandgraphics.lua"),
+            Path("src/BreitbandGraphics/types.lua"),
+            Path("src/BreitbandGraphics/core.lua"),
+            Path("src/BreitbandGraphics/internal.lua"),
+            Path("src/BreitbandGraphics/backends/mupen64_d2d.lua"),
+            Path("src/BreitbandGraphics/epilogue.lua"),
         ],
         Path("build/breitbandgraphics-amalgamated.lua"),
     )
