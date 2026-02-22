@@ -155,9 +155,8 @@ end
 ---@param source ColorSource The color source.
 ---@return FloatColor # The converted color.
 local function color_source_to_float_color(source)
-
     -- Match RawColor
-    if math.type(source) == "integer" then
+    if math.type(source) == 'integer' then
         return {
             r = (source >> 24) & 0xFF,
             g = (source >> 16) & 0xFF,
@@ -207,8 +206,8 @@ local function color_source_to_float_color(source)
         return color_to_float(source)
     end
 
-    if type(source) == "table" then
-        return color_to_float({})        
+    if type(source) == 'table' then
+        return color_to_float({})
     end
 
     print('Invalid color source:')
@@ -372,6 +371,23 @@ BreitbandGraphics.inflate_rectangle = function(rectangle, amount)
         y = rectangle.y - amount,
         width = rectangle.width + amount * 2,
         height = rectangle.height + amount * 2,
+    }
+end
+
+--- Computes the intersection of two rectangles.
+--- @param rect1 Rectangle The first rectangle.
+---@param rect2 Rectangle The second rectangle.
+---@return Rectangle # The intersection of the two rectangles.
+BreitbandGraphics.intersect_rectangle = function(rect1, rect2)
+    local x0 = math.max(rect1.x, rect2.x)
+    local y0 = math.max(rect1.y, rect2.y)
+    local x1 = math.min(rect1.x + rect1.width, rect2.x + rect2.width)
+    local y1 = math.min(rect1.y + rect1.height, rect2.y + rect2.height)
+    return {
+        x = x0,
+        y = y0,
+        width = math.max(0, x1 - x0),
+        height = math.max(0, y1 - y0),
     }
 end
 

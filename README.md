@@ -66,10 +66,12 @@ mupen-lua-ugui  —  The base library
 - Menu
   - Unlimited child items and tree depth
   - Checkable items
-- Single-Pass Layout System
-- StackPanel
-  - Horizontal/Vertical stacking
-  - Element gap size
+- Layout System
+  - Stack
+      - Horizontal/Vertical stacking
+      - Element gap size
+  - Canvas
+      - Absolute positioning
 - Spinner
 - NumberBox
 - TabControl

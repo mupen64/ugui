@@ -30,6 +30,7 @@ reset_ugui_state()
 
 local groups = {
     dofile(test_root .. 'core.lua'),
+    dofile(test_root .. 'layout.lua'),
     dofile(test_root .. 'richtext.lua'),
     dofile(test_root .. 'tooltip.lua'),
     dofile(test_root .. 'breitbandgraphics.lua'),

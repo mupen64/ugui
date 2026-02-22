@@ -50,10 +50,10 @@ group.tests[#group.tests + 1] = {
             })
 
             if i == 3 then
-                ctx.assert(ugui.internal.control_data[5].selection_start == ctx.data.expected_start_index, string.format('Expected selection start %d, got %d', ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start))
+                ctx.assert(ugui.internal.custom_control_data[5].selection_start == ctx.data.expected_start_index, string.format('Expected selection start %d, got %d', ctx.data.expected_start_index, ugui.internal.custom_control_data[5].selection_start))
             end
 
-            ctx.log((ugui.internal.control_data[5].selection_start or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
+            ctx.log((ugui.internal.custom_control_data[5].selection_start or 'nil') .. ' ' .. ((i % 2 == 0) and 'true' or 'false') .. ' i = ' .. i)
 
             ugui.end_frame()
         end
@@ -104,11 +104,11 @@ group.tests[#group.tests + 1] = {
 
             ugui.end_frame()
 
-            ctx.log((ugui.internal.control_data[5].selection_start or 'nil') .. ' ' .. (ugui.internal.control_data[5].selection_end or 'nil'))
+            ctx.log((ugui.internal.custom_control_data[5].selection_start or 'nil') .. ' ' .. (ugui.internal.custom_control_data[5].selection_end or 'nil'))
         end
 
-        ctx.assert_eq(ctx.data.expected_start_index, ugui.internal.control_data[5].selection_start)
-        ctx.assert_eq(ctx.data.expected_end_index, ugui.internal.control_data[5].selection_end)
+        ctx.assert_eq(ctx.data.expected_start_index, ugui.internal.custom_control_data[5].selection_start)
+        ctx.assert_eq(ctx.data.expected_end_index, ugui.internal.custom_control_data[5].selection_end)
     end,
 }
 
@@ -174,9 +174,9 @@ group.tests[#group.tests + 1] = {
         })
         ugui.end_frame()
 
-        ugui.internal.control_data[5].caret_index = ctx.data.initial_start_index
-        ugui.internal.control_data[5].selection_start = ctx.data.initial_start_index
-        ugui.internal.control_data[5].selection_end = ctx.data.initial_end_index
+        ugui.internal.custom_control_data[5].caret_index = ctx.data.initial_start_index
+        ugui.internal.custom_control_data[5].selection_start = ctx.data.initial_start_index
+        ugui.internal.custom_control_data[5].selection_end = ctx.data.initial_end_index
 
         ugui.begin_frame({
             mouse_position = {x = 10, y = 10},
@@ -204,7 +204,7 @@ group.tests[#group.tests + 1] = {
         })
         ugui.end_frame()
 
-        ctx.assert(ugui.internal.control_data[5].caret_index == ctx.data.expected_caret_index, string.format('Expected caret index %d, got %d', ctx.data.expected_caret_index, ugui.internal.control_data[5].caret_index))
+        ctx.assert(ugui.internal.custom_control_data[5].caret_index == ctx.data.expected_caret_index, string.format('Expected caret index %d, got %d', ctx.data.expected_caret_index, ugui.internal.custom_control_data[5].caret_index))
     end,
 }
 
@@ -293,9 +293,9 @@ group.tests[#group.tests + 1] = {
         })
         ugui.end_frame()
 
-        ugui.internal.control_data[5].caret_index = ctx.data.caret_index
-        ugui.internal.control_data[5].selection_start = ctx.data.start_index
-        ugui.internal.control_data[5].selection_end = ctx.data.end_index
+        ugui.internal.custom_control_data[5].caret_index = ctx.data.caret_index
+        ugui.internal.custom_control_data[5].selection_start = ctx.data.start_index
+        ugui.internal.custom_control_data[5].selection_end = ctx.data.end_index
 
         ugui.begin_frame({
             mouse_position = {x = 10, y = 10},
