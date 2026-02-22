@@ -1,17 +1,5 @@
-local ugui_ext = {
-    _VERSION = 'v3.0.0',
-    _URL = 'https://github.com/Aurumaker72/mupen-lua-ugui',
-    _DESCRIPTION = 'Extension library for mupen-lua-ugui',
-    _LICENSE = 'GPL-3',
-}
-
-if not ugui then
-    error('ugui must be present in the global scope as \'ugui\' prior to executing ugui-ext', 0)
-    return
-end
-
+local ugui_ext = {}
 ugui_ext.internal = {}
-
 ugui_ext.internal.drawings = {}
 
 ugui_ext.internal.rectangle_to_key = function(rectangle)
@@ -57,7 +45,8 @@ if d2d.draw_to_image then
 end
 
 if not d2d.create_render_target and not d2d.draw_to_image then
-    print('mupen-lua-ugui-ext: No supported cached rendering method found, falling back to uncached drawing. Performance will be affected. Please update to the latest version of mupen64-rr-lua.')
+    print(
+        'mupen-lua-ugui-ext: No supported cached rendering method found, falling back to uncached drawing. Performance will be affected. Please update to the latest version of mupen64-rr-lua.')
     ugui_ext.internal.cached_draw = function(key, rectangle, draw_callback)
         draw_callback(rectangle)
     end
@@ -143,7 +132,7 @@ ugui_ext.apply_nineslice = function(style)
     end
 
     ugui.standard_styler.draw_edit_frame = function(control, rectangle,
-        visual_state)
+                                                    visual_state)
         local key = ugui_ext.internal.params_to_key('edit_frame', rectangle, visual_state)
 
         ugui_ext.internal.cached_draw(key, rectangle, function(eff_rectangle)
@@ -185,7 +174,8 @@ ugui_ext.apply_nineslice = function(style)
             height = rectangle.height,
         }
 
-        ugui.standard_styler.draw_rich_text(text_rect, BreitbandGraphics.alignment.start, nil, item, ugui.standard_styler.params.listbox_item.text[visual_state], control.plaintext)
+        ugui.standard_styler.draw_rich_text(text_rect, BreitbandGraphics.alignment.start, nil, item,
+            ugui.standard_styler.params.listbox_item.text[visual_state], control.plaintext)
     end
 
     ugui.standard_styler.draw_scrollbar = function(control, thumb_rectangle)
@@ -208,5 +198,3 @@ ugui_ext.apply_nineslice = function(style)
             end)
     end
 end
-
-return ugui_ext
