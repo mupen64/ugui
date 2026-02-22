@@ -289,8 +289,9 @@ ugui.internal = {
                     local prev = t2[key]
                     t2[key] = value
                     local t2_ref = t2
+                    local k = key
                     rollback_ops[#rollback_ops + 1] = function()
-                        t2_ref[key] = prev
+                        t2_ref[k] = prev
                     end
                 end
             end
