@@ -10,6 +10,35 @@ ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
 ---@module "mupen-lua-ugui-ext"
 ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
 
+local frame_times = {}
+local last_frame_time = nil
+
+local function new_frametime()
+    local now = os.clock()
+    if last_frame_time ~= nil then
+        local frametime = now - last_frame_time
+        frame_times[#frame_times + 1] = { t = now, dt = frametime }
+    end
+    last_frame_time = now
+
+    local cutoff = now - 1.0
+    local i = 1
+    while i <= #frame_times and frame_times[i].t < cutoff do
+        table.remove(frame_times, i)
+    end
+
+    local avg_ms = 0
+    if #frame_times > 0 then
+        local sum = 0
+        for _, entry in ipairs(frame_times) do
+            sum = sum + entry.dt
+        end
+        avg_ms = (sum / #frame_times) * 1000
+    end
+
+    return string.format('%.2f ms', avg_ms)
+end
+
 function begin_frame()
     local window_size = wgui.info()
 
@@ -43,6 +72,17 @@ end
 
 function end_frame()
     ugui.end_frame()
+
+    local label = new_frametime()
+    BreitbandGraphics.draw_text2({
+        rectangle = { x = 4, y = 4, width = 200, height = 16 },
+        align_x = BreitbandGraphics.alignment.start,
+        align_y = BreitbandGraphics.alignment.center,
+        text = label,
+        color = { r = 0, g = 0, b = 0 },
+        font_name = ugui.standard_styler.params.font_name,
+        font_size = ugui.standard_styler.params.font_size,
+    })
 end
 
 emu.atwindowmessage(function(_, msg_id, wparam, _)

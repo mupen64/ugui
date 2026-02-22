@@ -5,8 +5,17 @@ emu.atdrawd2d(function()
     begin_frame()
     local i = 0
     local size = wgui.info()
+    local count = (size.width / 20) * (size.height / 20)
     for x = 1, size.width / 20, 1 do
         for y = 1, size.height / 20, 1 do
+            local styler_mixin = i < count / 2 and {
+                button = {
+                    back = {
+                        [1] = BreitbandGraphics.hex_to_color('#FF0000')
+                    }
+                }
+            } or nil
+
             ugui.button({
                 uid = i,
                 rectangle = {
@@ -16,6 +25,7 @@ emu.atdrawd2d(function()
                     height = 20,
                 },
                 text = ':)',
+                styler_mixin = styler_mixin
             })
             i = i + 1
         end
