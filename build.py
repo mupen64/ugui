@@ -85,6 +85,7 @@ if __name__ == "__main__":
             Path("src/ugui/controls/tabcontrol.lua"),
             Path("src/ugui/controls/numberbox.lua"),
             Path("src/ugui/controls/spinner.lua"),
+            Path("src/ugui/ugui-ext.lua"),
             Path("src/ugui/epilogue.lua"),
         ],
         Path("build/ugui-amalgamated.lua"),
