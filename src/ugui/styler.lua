@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 --- The standard style implementation, which is responsible for drawing controls.
 ugui.standard_styler = {
 

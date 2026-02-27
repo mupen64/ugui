@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 ---@class Color
 ---@field public r integer The red channel in the range 0 - 255.
 ---@field public g integer The green channel in the range 0 - 255.

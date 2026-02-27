@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 ---@type ControlRegistryEntry
 ugui.registry.textbox = {
     ---@param control TextBox

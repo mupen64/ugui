@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 --- Converts a color to its corresponding hexadecimal representation.
 --- @param color ColorSource The color source to convert.
 --- @returns string # The hexadecimal representation of the color.

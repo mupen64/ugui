@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 ---Places a Spinner.
 ---@param control Spinner The control table.
 ---@return number, Meta # The new value.

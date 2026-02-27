@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 local ugui = {
     _VERSION = 'v3.0.3',
     _URL = 'https://github.com/Aurumaker72/mupen-lua-ugui',

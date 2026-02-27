@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 BreitbandGraphics.internal = {
     ---@type table<string, integer>
     ---Map of color keys to brush handles.

@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 if d2d and d2d.create_render_target then
     error('BreitbandGraphics: mupen64-rr-lua 1.1.7 or newer is required to use BreitbandGraphics.')
 end
