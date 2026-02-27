@@ -9,10 +9,10 @@ local test_root = debug.getinfo(1).short_src:gsub('(\\[^\\]+)\\[^\\]+$', '%1\\')
 ---@module "breitbandgraphics"
 BreitbandGraphics = nil
 
----@module "mupen-lua-ugui"
+---@module "ugui"
 ugui = nil
 
----@module "mupen-lua-ugui-ext"
+---@module "ugui-ext"
 ugui_ext = nil
 
 local load_BreitbandGraphics = loadfile(path_root .. 'build\\breitbandgraphics-amalgamated.lua')

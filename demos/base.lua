@@ -4,7 +4,7 @@ local test_root = debug.getinfo(1).short_src:gsub('(\\[^\\]+)\\[^\\]+$', '%1\\')
 ---@module "breitbandgraphics"
 BreitbandGraphics = dofile(path_root .. 'build\\breitbandgraphics-amalgamated.lua')
 
----@module "mupen-lua-ugui"
+---@module "ugui"
 ugui = dofile(path_root .. 'build\\ugui-amalgamated.lua')
 
 local frame_times = {}
