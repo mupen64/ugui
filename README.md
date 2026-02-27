@@ -13,8 +13,11 @@
 # 🚀 Quickstart
 
 ```lua
----@module "mupen-lua-ugui"
-ugui = dofile('mupen-lua-ugui.lua')
+---@module "breitbandgraphics"
+BreitbandGraphics = dofile('breitbandgraphics-amalgamated.lua')
+
+---@module "ugui"
+ugui = dofile('ugui-amalgamated.lua')
 ```
 
 That's it. Don't forget to pass an absolute path, not a relative one.
