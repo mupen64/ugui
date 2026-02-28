@@ -102,8 +102,9 @@ ugui.registry.numberbox = {
         end
 
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= data.value)
+
         return {
-            value = data.value,
+            primary = data.value,
             meta = { signal_change = data.signal_change },
         }
     end,
