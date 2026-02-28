@@ -54,6 +54,10 @@ ugui.internal = {
     ---Whether a frame is currently in progress.
     frame_in_progress = false,
 
+    ---@type table<string, integer>
+    ---Cache of nineslice drawings. Only used after calling `ugui.apply_nineslice`.
+    nineslice_draw_cache = {},
+
     ---Asserts that the specified condition is true, printing the stacktrace if it's false.
     ---@param condition boolean
     ---@param message string

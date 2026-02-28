@@ -4,26 +4,22 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
-local ugui_ext = {}
-ugui_ext.internal = {}
-ugui_ext.internal.drawings = {}
-
-ugui_ext.internal.rectangle_to_key = function(rectangle)
+ugui.internal.rectangle_to_key = function(rectangle)
     return rectangle.x .. rectangle.y .. rectangle.width .. rectangle.height
 end
 
-ugui_ext.internal.params_to_key = function(type, rectangle, visual_state)
-    return type .. visual_state .. ugui_ext.internal.rectangle_to_key(rectangle)
+ugui.internal.params_to_key = function(type, rectangle, visual_state)
+    return type .. visual_state .. ugui.internal.rectangle_to_key(rectangle)
 end
 
 if d2d.draw_to_image then
     if not UGUI_QUIET then
-        print('mupen-lua-ugui-ext: Using high-performance cached drawing for mupen64-rr-lua 1.1.7+')
+        print('ugui: Using high-performance cached drawing for mupen64-rr-lua 1.1.7+')
     end
 
-    ugui_ext.internal.cached_draw = function(key, rectangle, draw_callback)
-        if not ugui_ext.internal.drawings[key] then
-            ugui_ext.internal.drawings[key] = d2d.draw_to_image(rectangle.width, rectangle.height, function()
+    ugui.internal.cached_draw = function(key, rectangle, draw_callback)
+        if not ugui.internal.nineslice_draw_cache[key] then
+            ugui.internal.nineslice_draw_cache[key] = d2d.draw_to_image(rectangle.width, rectangle.height, function()
                 draw_callback({
                     x = 0,
                     y = 0,
@@ -40,20 +36,20 @@ if d2d.draw_to_image then
             0,
             0,
             math.floor(rectangle.width),
-            math.floor(rectangle.height), 1, 0, ugui_ext.internal.drawings[key])
+            math.floor(rectangle.height), 1, 0, ugui.internal.nineslice_draw_cache[key])
     end
-    ugui_ext.free = function()
-        for key, value in pairs(ugui_ext.internal.drawings) do
+    ugui.free = function()
+        for key, value in pairs(ugui.internal.nineslice_draw_cache) do
             d2d.free_image(value)
         end
-        ugui_ext.internal.drawings = {}
+        ugui.internal.nineslice_draw_cache = {}
     end
 end
 
 if not d2d.create_render_target and not d2d.draw_to_image then
     print(
-        'mupen-lua-ugui-ext: No supported cached rendering method found, falling back to uncached drawing. Performance will be affected. Please update to the latest version of mupen64-rr-lua.')
-    ugui_ext.internal.cached_draw = function(key, rectangle, draw_callback)
+        'ugui: No supported cached rendering method found, falling back to uncached drawing. Performance will be affected. Please update to the latest version of mupen64-rr-lua.')
+    ugui.internal.cached_draw = function(key, rectangle, draw_callback)
         draw_callback(rectangle)
     end
 end
@@ -96,12 +92,12 @@ local function scale_and_center(inner, outer, max_size, adjust_even_odd)
     }
 end
 
-ugui_ext.apply_nineslice = function(style)
+ugui.apply_nineslice = function(style)
     if not d2d then
         print('No D2D available, falling back to unchanged standard styler to avoid performance issues')
         return
     end
-    ugui_ext.free()
+    ugui.free()
 
     local function draw_icon_placeholder(rectangle)
         BreitbandGraphics.fill_rectangle(rectangle, BreitbandGraphics.colors.red)
@@ -127,9 +123,9 @@ ugui_ext.apply_nineslice = function(style)
     end
 
     ugui.standard_styler.draw_raised_frame = function(control, visual_state)
-        local key = ugui_ext.internal.params_to_key('raised_frame', control.rectangle, visual_state)
+        local key = ugui.internal.params_to_key('raised_frame', control.rectangle, visual_state)
 
-        ugui_ext.internal.cached_draw(key, control.rectangle, function(eff_rectangle)
+        ugui.internal.cached_draw(key, control.rectangle, function(eff_rectangle)
             BreitbandGraphics.draw_image_nineslice(eff_rectangle,
                 style.button.states[visual_state].source,
                 style.button.states[visual_state].center,
@@ -139,9 +135,9 @@ ugui_ext.apply_nineslice = function(style)
 
     ugui.standard_styler.draw_edit_frame = function(control, rectangle,
                                                     visual_state)
-        local key = ugui_ext.internal.params_to_key('edit_frame', rectangle, visual_state)
+        local key = ugui.internal.params_to_key('edit_frame', rectangle, visual_state)
 
-        ugui_ext.internal.cached_draw(key, rectangle, function(eff_rectangle)
+        ugui.internal.cached_draw(key, rectangle, function(eff_rectangle)
             BreitbandGraphics.draw_image_nineslice(eff_rectangle,
                 style.textbox.states[visual_state].source,
                 style.textbox.states[visual_state].center,
@@ -150,9 +146,9 @@ ugui_ext.apply_nineslice = function(style)
     end
 
     ugui.standard_styler.draw_list_frame = function(rectangle, visual_state)
-        local key = ugui_ext.internal.params_to_key('list_frame', rectangle, visual_state)
+        local key = ugui.internal.params_to_key('list_frame', rectangle, visual_state)
 
-        ugui_ext.internal.cached_draw(key, rectangle, function(eff_rectangle)
+        ugui.internal.cached_draw(key, rectangle, function(eff_rectangle)
             BreitbandGraphics.draw_image_nineslice(eff_rectangle,
                 style.listbox.states[visual_state].source,
                 style.listbox.states[visual_state].center,
@@ -191,9 +187,9 @@ ugui_ext.apply_nineslice = function(style)
             style.scrollbar_rail,
             style.path, ugui.standard_styler.params.color_filter, 'nearest')
 
-        local key = ugui_ext.internal.params_to_key('scrollbar_thumb', thumb_rectangle, visual_state)
+        local key = ugui.internal.params_to_key('scrollbar_thumb', thumb_rectangle, visual_state)
 
-        ugui_ext.internal.cached_draw(
+        ugui.internal.cached_draw(
             key,
             thumb_rectangle,
             function(eff_rectangle)

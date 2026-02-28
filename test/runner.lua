@@ -6,14 +6,11 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\')
 local test_root = debug.getinfo(1).short_src:gsub('(\\[^\\]+)\\[^\\]+$', '%1\\')
 
----@module "breitbandgraphics"
+---@module "breitbandgraphics-amalgamated"
 BreitbandGraphics = nil
 
----@module "ugui"
+---@module "ugui-amalgamated"
 ugui = nil
-
----@module "ugui-ext"
-ugui_ext = nil
 
 local load_BreitbandGraphics = loadfile(path_root .. 'build\\breitbandgraphics-amalgamated.lua')
 local load_ugui = loadfile(path_root .. 'build\\ugui-amalgamated.lua')
@@ -21,7 +18,7 @@ local load_ugui = loadfile(path_root .. 'build\\ugui-amalgamated.lua')
 local function reset_ugui_state()
     UGUI_QUIET = true
     BreitbandGraphics = load_BreitbandGraphics()
-    ugui, ugui_ext = load_ugui()
+    ugui = load_ugui()
 end
 
 reset_ugui_state()
