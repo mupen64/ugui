@@ -392,7 +392,7 @@ BreitbandGraphics.draw_image = function(destination_rectangle, source_rectangle,
     end
     local float_color
     if color then
-        float_color = color_source_to_float_color(color)
+        float_color = BreitbandGraphics.internal.color_source_to_float_color(color)
     else
         float_color = BreitbandGraphics.colors.white
     end
