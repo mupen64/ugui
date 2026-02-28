@@ -39,7 +39,7 @@ ugui.registry.carrousel_button = {
         return {
             primary = selected_index,
             meta = {
-                { signal_change = data.signal_change },
+                signal_change = data.signal_change,
             },
         }
     end,

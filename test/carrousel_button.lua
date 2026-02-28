@@ -20,24 +20,33 @@ group.tests[#group.tests + 1] = {
         }
 
         local index = 2
+        local meta
 
-        for i = 1, 3, 1 do
+        for i = 1, 6, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = 10,
                     y = 10,
                 },
                 wheel = 0,
-                is_primary_down = i % 2 == 0,
+                is_primary_down = i == 2,
                 held_keys = {},
             })
 
-            index = ugui.carrousel_button({
+            index, meta = ugui.carrousel_button({
                 uid = 5,
                 rectangle = button_rect,
                 selected_index = index,
                 items = items,
             })
+
+            if i == 3 then
+                ctx.assert_eq(ugui.signal_change_states.started, meta.signal_change)
+            elseif i == 4 then
+                ctx.assert_eq(ugui.signal_change_states.ongoing, meta.signal_change)
+            elseif i == 5 then
+                ctx.assert_eq(ugui.signal_change_states.ended, meta.signal_change)
+            end
 
             ugui.end_frame()
         end
@@ -58,23 +67,31 @@ group.tests[#group.tests + 1] = {
 
         local index = 2
 
-        for i = 1, 3, 1 do
+        for i = 1, 6, 1 do
             ugui.begin_frame({
                 mouse_position = {
                     x = 90,
                     y = 10,
                 },
                 wheel = 0,
-                is_primary_down = i % 2 == 0,
+                is_primary_down = i == 2,
                 held_keys = {},
             })
 
-            index = ugui.carrousel_button({
+            index, meta = ugui.carrousel_button({
                 uid = 5,
                 rectangle = button_rect,
                 selected_index = index,
                 items = items,
             })
+
+            if i == 3 then
+                ctx.assert_eq(ugui.signal_change_states.started, meta.signal_change)
+            elseif i == 4 then
+                ctx.assert_eq(ugui.signal_change_states.ongoing, meta.signal_change)
+            elseif i == 5 then
+                ctx.assert_eq(ugui.signal_change_states.ended, meta.signal_change)
+            end
 
             ugui.end_frame()
         end
