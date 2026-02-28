@@ -6,24 +6,19 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\')
 local test_root = debug.getinfo(1).short_src:gsub('(\\[^\\]+)\\[^\\]+$', '%1\\')
 
----@module "breitbandgraphics"
+---@module "breitbandgraphics-amalgamated"
 BreitbandGraphics = nil
 
----@module "mupen-lua-ugui"
+---@module "ugui-amalgamated"
 ugui = nil
 
----@module "mupen-lua-ugui-ext"
-ugui_ext = nil
-
-local load_BreitbandGraphics = loadfile(path_root .. 'breitbandgraphics.lua')
-local load_ugui = loadfile(path_root .. 'mupen-lua-ugui.lua')
-local load_ugui_ext = loadfile(path_root .. 'mupen-lua-ugui-ext.lua')
+local load_BreitbandGraphics = loadfile(path_root .. 'build\\breitbandgraphics-amalgamated.lua')
+local load_ugui = loadfile(path_root .. 'build\\ugui-amalgamated.lua')
 
 local function reset_ugui_state()
     UGUI_QUIET = true
     BreitbandGraphics = load_BreitbandGraphics()
     ugui = load_ugui()
-    ugui_ext = load_ugui_ext()
 end
 
 reset_ugui_state()
@@ -64,7 +59,7 @@ for key, group in pairs(groups) do
     end
 
     for _, test in pairs(group.tests) do
-        local test_params = test.params and test.params or {0}
+        local test_params = test.params and test.params or { 0 }
 
         for test_param_index, test_param in pairs(test_params) do
             reset_ugui_state()
@@ -86,7 +81,8 @@ for key, group in pairs(groups) do
                     assertion_count = assertion_count + 1
                     if expected ~= actual then
                         passed = false
-                        messages[# messages + 1] = string.format('Expected %s, got %s', tostring(expected), tostring(actual))
+                        messages[# messages + 1] = string.format('Expected %s, got %s', tostring(expected),
+                            tostring(actual))
                     end
                 end,
                 log = function(str)

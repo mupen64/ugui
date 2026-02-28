@@ -13,8 +13,11 @@
 # 🚀 Quickstart
 
 ```lua
----@module "mupen-lua-ugui"
-ugui = dofile('mupen-lua-ugui.lua')
+---@module "breitbandgraphics-amalgamated"
+BreitbandGraphics = dofile('breitbandgraphics-amalgamated.lua')
+
+---@module "ugui-amalgamated"
+ugui = dofile('ugui-amalgamated.lua')
 ```
 
 That's it. Don't forget to pass an absolute path, not a relative one.
@@ -43,8 +46,9 @@ Read the [demo scripts](https://github.com/Aurumaker72/mupen-lua-ugui/tree/main/
 
 mupen-lua-ugui  —  The base library
 
-- Stylers
-  - Windows 10 (built-in)
+- Built-in stylers
+  - Windows 10
+  - Nineslice
 - Flexibility
   - Modify any part of the framework to your liking
 - User Productivity
@@ -73,15 +77,8 @@ mupen-lua-ugui  —  The base library
 - Spinner
 - NumberBox
 - TabControl
-
-<img width="28" align="left" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/ugui-ext.png?raw=true">
-
-mupen-lua-ugui-ext  —  Extensions and advanced features
-
 - Performance
   - Graphics caching extension
-- Stylers
-  - Nineslice (built-in)
 
 <img width="28" align="left" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/breitbandgraphics.png?raw=true">
 

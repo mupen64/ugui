@@ -2,13 +2,10 @@ local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\')
 local test_root = debug.getinfo(1).short_src:gsub('(\\[^\\]+)\\[^\\]+$', '%1\\')
 
 ---@module "breitbandgraphics"
-BreitbandGraphics = dofile(path_root .. 'breitbandgraphics.lua')
+BreitbandGraphics = dofile(path_root .. 'build\\breitbandgraphics-amalgamated.lua')
 
----@module "mupen-lua-ugui"
-ugui = dofile(path_root .. 'mupen-lua-ugui.lua')
-
----@module "mupen-lua-ugui-ext"
-ugui_ext = dofile(path_root .. 'mupen-lua-ugui-ext.lua')
+---@module "ugui"
+ugui = dofile(path_root .. 'build\\ugui-amalgamated.lua')
 
 local frame_times = {}
 local last_frame_time = nil

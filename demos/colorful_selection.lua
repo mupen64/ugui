@@ -8,11 +8,11 @@ local function rainbow(progress)
 
     local section = math.floor(div)
     if section == 0 then
-        return {255, transition, 0, 255}
+        return { 255, transition, 0, 255 }
     elseif section == 1 then
-        return {inverse, 255, 0, 255}
+        return { inverse, 255, 0, 255 }
     else
-        return {0, inverse, 255, 255}
+        return { 0, inverse, 255, 255 }
     end
 end
 
@@ -27,7 +27,7 @@ emu.atdrawd2d(function()
 
     text = ugui.textbox({
         uid = 1,
-        rectangle = {x = 10, y = 10, width = 100, height = 20},
+        rectangle = { x = 10, y = 10, width = 100, height = 20 },
         text = text,
     })
 
