@@ -13,10 +13,10 @@
 # 🚀 Quickstart
 
 ```lua
----@module "breitbandgraphics"
+---@module "breitbandgraphics-amalgamated"
 BreitbandGraphics = dofile('breitbandgraphics-amalgamated.lua')
 
----@module "ugui"
+---@module "ugui-amalgamated"
 ugui = dofile('ugui-amalgamated.lua')
 ```
 
