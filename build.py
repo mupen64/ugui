@@ -42,6 +42,7 @@ JOBS: list[tuple[list[Path], Path]] = [
             Path("src/ugui/controls/textbox.lua"),
             Path("src/ugui/controls/joystick.lua"),
             Path("src/ugui/controls/trackbar.lua"),
+            Path("src/ugui/controls/menu.lua"),
             Path("src/ugui/controls/tabcontrol.lua"),
             Path("src/ugui/controls/numberbox.lua"),
             Path("src/ugui/controls/spinner.lua"),
