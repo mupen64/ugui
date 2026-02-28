@@ -41,8 +41,7 @@ ugui.tabcontrol = function(control)
             y = y + ugui.standard_styler.params.tabcontrol.rail_size + ugui.standard_styler.params.tabcontrol.gap_y
         end
 
-        local previous = selected_index == i
-        local new = ugui.toggle_button({
+        local _, meta = ugui.toggle_button({
             uid = control.uid + i,
             is_enabled = control.is_enabled,
             rectangle = {
@@ -55,7 +54,7 @@ ugui.tabcontrol = function(control)
             is_checked = selected_index == i,
         })
 
-        if not previous == new then
+        if meta.signal_change == ugui.signal_change_states.started then
             selected_index = i
         end
 
