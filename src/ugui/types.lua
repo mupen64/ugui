@@ -34,8 +34,8 @@
 ---@field public rectangle Rectangle The rectangle in which the control is drawn.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
----@field package plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
----@field package z_index integer? The control's Z-index. If nil, `0` is assumed.
+---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
+---@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
 ---The base class for all controls.
 
 ---@class Button : Control
