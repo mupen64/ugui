@@ -60,8 +60,9 @@ ugui.registry.textbox = {
                             data.selection_start = lower_selection
                             data.selection_end = lower_selection
                         else
-                            data.text = data.text:sub(1, -2)
-                            data.caret_index = data.text:len() + 1
+                            local delete_index = data.caret_index - 1
+                            data.text = ugui.internal.remove_at(data.text, delete_index)
+                            data.caret_index = delete_index
                         end
                     elseif e.keycode == ugui.keycodes.VK_LEFT then
                         if has_selection then
