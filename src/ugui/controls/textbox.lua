@@ -44,10 +44,8 @@ ugui.registry.textbox = {
 
         -- If we're capturing the keyboard, we process all the key presses.
         if ugui.internal.keyboard_captured_control == control.uid then
-            local has_selection = data.selection_start ~=
-                data.selection_end
-
             for _, e in ipairs(ugui.internal.environment.key_events) do
+                local has_selection = data.selection_start ~= data.selection_end
                 if e.keycode and e.pressed then
                     local lower_selection = math.min(data.selection_start, data.selection_end)
                     local higher_selection = math.max(data.selection_start, data.selection_end)
