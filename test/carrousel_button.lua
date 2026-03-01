@@ -30,7 +30,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i == 2,
-                held_keys = {},
+                key_events = {},
             })
 
             index, meta = ugui.carrousel_button({
@@ -75,7 +75,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i == 2,
-                held_keys = {},
+                key_events = {},
             })
 
             index, meta = ugui.carrousel_button({
@@ -120,7 +120,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i % 2 == 0,
-                held_keys = {},
+                key_events = {},
             })
 
             index = ugui.carrousel_button({
@@ -157,7 +157,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i % 2 == 0,
-                held_keys = {},
+                key_events = {},
             })
 
             index = ugui.carrousel_button({

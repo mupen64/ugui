@@ -97,7 +97,7 @@ group.tests[#group.tests + 1] = {
                 mouse_position = ctx.data.mouse_position,
                 wheel = 0,
                 is_primary_down = i > 1,
-                held_keys = {},
+                key_events = {},
             })
             position = ugui.joystick({
                 uid = 5,

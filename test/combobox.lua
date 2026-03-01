@@ -24,7 +24,7 @@ group.tests[#group.tests + 1] = {
                 mouse_position = {x = 15, y = 15},
                 wheel = 0,
                 is_primary_down = i == 2,
-                held_keys = {},
+                key_events = {},
             })
             ugui.combobox({
                 uid = 5,
@@ -53,7 +53,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 0, y = 0},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.combobox({
             uid = 5,
@@ -67,7 +67,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 15, y = 15},
             wheel = 0,
             is_primary_down = true,
-            held_keys = {},
+            key_events = {},
         })
         ugui.combobox({
             uid = 5,
@@ -81,7 +81,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 15, y = 15},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.combobox({
             uid = 5,
@@ -95,7 +95,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 200, y = 200},
             wheel = 0,
             is_primary_down = true,
-            held_keys = {},
+            key_events = {},
         })
         local called = false
         ugui.listbox = function(lb)

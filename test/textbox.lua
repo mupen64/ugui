@@ -40,7 +40,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i == 2,
-                held_keys = {},
+                key_events = {},
             })
 
             ugui.textbox({
@@ -93,7 +93,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i > 1,
-                held_keys = {},
+                key_events = {},
             })
 
             ugui.textbox({
@@ -152,7 +152,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.textbox({
             uid = 5,
@@ -165,7 +165,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = true,
-            held_keys = {},
+            key_events = {},
         })
         ugui.textbox({
             uid = 5,
@@ -182,7 +182,12 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {[ctx.data.key] = true},
+            key_events = {
+                {
+                    keycode = ctx.data.key,
+                    pressed = true,
+                },
+            },
         })
         ugui.textbox({
             uid = 5,
@@ -195,7 +200,12 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {[ctx.data.key] = true},
+            key_events = {
+                {
+                    keycode = ctx.data.key,
+                    pressed = true,
+                },
+            },
         })
         ugui.textbox({
             uid = 5,
@@ -282,7 +292,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.internal.keyboard_captured_control = 5
         ugui.internal.mouse_captured_control = 5
@@ -301,7 +311,12 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {[ctx.data.key] = true},
+            key_events = {
+                {
+                    keycode = ctx.data.key,
+                    pressed = true,
+                },
+            },
         })
         text = ugui.textbox({
             uid = 5,

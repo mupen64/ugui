@@ -23,7 +23,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i == 2,
-                held_keys = {},
+                key_events = {},
             })
 
             pressed = ugui.button({

@@ -11,7 +11,7 @@ group.tests[#group.tests + 1] = {
                 mouse_position = {x = 15, y = 15},
                 wheel = 0,
                 is_primary_down = true,
-                held_keys = {},
+                key_events = {},
             })
             ugui.button({
                 uid = 5,
@@ -104,7 +104,7 @@ group.tests[#group.tests + 1] = {
                     mouse_position = {x = 15, y = 15},
                     wheel = 0,
                     is_primary_down = true,
-                    held_keys = {},
+                    key_events = {},
                 })
                 control_func(ctx.data)
                 ugui.end_frame()
@@ -280,7 +280,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = -5, y = -5},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ctx.data.func()
         ugui.end_frame()
@@ -288,7 +288,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = -5, y = -5},
             wheel = 0,
             is_primary_down = true,
-            held_keys = {},
+            key_events = {},
         })
         local pressed = ctx.data.func()
         ugui.end_frame()

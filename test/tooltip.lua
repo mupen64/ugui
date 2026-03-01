@@ -75,7 +75,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = ctx.data.mouse_position,
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.standard_styler.params.tooltip.delay = 0
         ugui.button({
@@ -199,7 +199,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = ctx.data.mouse_position,
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
             window_size = ctx.data.window_size,
         })
         ugui.standard_styler.params.tooltip.delay = 0
@@ -238,7 +238,7 @@ group.tests[#group.tests + 1] = {
 
         ugui.standard_styler.params.tooltip.delay = ctx.data.delay
         local time = 0
-        os.clock = function ()
+        os.clock = function()
             return time
         end
 
@@ -246,7 +246,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 1, y = 1},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.button({
             uid = 5,
@@ -265,7 +265,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 1, y = 1},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.button({
             uid = 5,
