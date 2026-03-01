@@ -9,12 +9,13 @@ ugui = dofile(path_root .. 'build\\ugui-amalgamated.lua')
 
 local frame_times = {}
 local last_frame_time = nil
+local key_events = {}
 
 local function new_frametime()
     local now = os.clock()
     if last_frame_time ~= nil then
         local frametime = now - last_frame_time
-        frame_times[#frame_times + 1] = { t = now, dt = frametime }
+        frame_times[#frame_times + 1] = {t = now, dt = frametime}
     end
     last_frame_time = now
 
@@ -50,15 +51,19 @@ function begin_frame()
         b = 253,
     })
 
-    local keys = input.get()
+    local mup_input = input.get()
+    local mouse_x = mup_input.xmouse
+    local mouse_y = mup_input.ymouse
+    local lmb_down = mup_input.leftclick
+
     ugui.begin_frame({
         mouse_position = {
-            x = keys.xmouse,
-            y = keys.ymouse,
+            x = mouse_x,
+            y = mouse_y,
         },
         wheel = mouse_wheel,
-        is_primary_down = keys.leftclick,
-        held_keys = keys,
+        is_primary_down = lmb_down,
+        key_events = key_events,
         window_size = {
             x = window_size.width,
             y = window_size.height - 23,
@@ -69,14 +74,15 @@ end
 
 function end_frame()
     ugui.end_frame()
+    key_events = {}
 
     local label = new_frametime()
     BreitbandGraphics.draw_text2({
-        rectangle = { x = 4, y = 4, width = 200, height = 16 },
+        rectangle = {x = 4, y = 4, width = 200, height = 16},
         align_x = BreitbandGraphics.alignment.start,
         align_y = BreitbandGraphics.alignment.center,
         text = label,
-        color = { r = 0, g = 0, b = 0 },
+        color = {r = 0, g = 0, b = 0},
         font_name = ugui.standard_styler.params.font_name,
         font_size = ugui.standard_styler.params.font_size,
     })
@@ -91,4 +97,8 @@ emu.atwindowmessage(function(_, msg_id, wparam, _)
             mouse_wheel = -1
         end
     end
+end)
+
+emu.atkey(function(args)
+    key_events[#key_events + 1] = args
 end)

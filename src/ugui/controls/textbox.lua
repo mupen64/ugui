@@ -44,52 +44,58 @@ ugui.registry.textbox = {
 
         -- If we're capturing the keyboard, we process all the key presses.
         if ugui.internal.keyboard_captured_control == control.uid then
-            local just_pressed_keys = ugui.internal.get_just_pressed_keys()
             local has_selection = data.selection_start ~=
                 data.selection_end
 
-            for key, _ in pairs(just_pressed_keys) do
-                local result = ugui.internal.handle_special_key(key, has_selection, data.text,
-                    data.selection_start,
-                    data.selection_end,
-                    data.caret_index)
+            for _, e in pairs(ugui.internal.environment.key_events) do
+                if e.keycode and e.pressed then
+                    local lower_selection = math.min(data.selection_start, data.selection_end)
+                    local higher_selection = math.max(data.selection_start, data.selection_end)
 
+                    if e.keycode == ugui.keycodes.VK_BACK then
+                        if has_selection then
+                            data.text = ugui.internal.remove_range(data.text, lower_selection, higher_selection)
 
-                -- special key press wasn't handled, we proceed to just insert the pressed character (or replace the selection)
-                if not result.handled then
-                    if #key ~= 1 then
-                        goto continue
+                            data.caret_index = lower_selection
+                            data.selection_start = lower_selection
+                            data.selection_end = lower_selection
+                        else
+                            data.text = data.text:sub(1, -2)
+                            data.caret_index = data.text:len() + 1
+                        end
+                    elseif e.keycode == ugui.keycodes.VK_LEFT then
+                        if has_selection then
+                            data.selection_start = lower_selection
+                            data.selection_end = lower_selection
+                            data.caret_index = lower_selection
+                        else
+                            data.caret_index = data.caret_index - 1
+                        end
+                    elseif e.keycode == ugui.keycodes.VK_RIGHT then
+                        if has_selection then
+                            data.selection_start = higher_selection
+                            data.selection_end = higher_selection
+                            data.caret_index = higher_selection
+                        else
+                            data.caret_index = data.caret_index + 1
+                        end
                     end
+                end
 
+                if e.text then
                     if has_selection then
                         local lower_selection = math.min(data.selection_start, data.selection_end)
                         local higher_selection = math.max(data.selection_start, data.selection_end)
+
                         data.text = ugui.internal.remove_range(data.text, lower_selection, higher_selection)
+
                         data.caret_index = lower_selection
                         data.selection_start = lower_selection
                         data.selection_end = lower_selection
-                        data.text = ugui.internal.insert_at(data.text, key,
-                            data.caret_index - 1)
-                        data.caret_index = ugui.internal
-                            .control_data[control.uid]
-                            .caret_index + 1
-                    else
-                        data.text = ugui.internal.insert_at(data.text, key,
-                            data.caret_index - 1)
-                        data.caret_index = ugui.internal
-                            .control_data[control.uid]
-                            .caret_index + 1
                     end
-
-                    goto continue
+                    data.text = ugui.internal.insert_at(data.text, e.text, data.caret_index - 1)
+                    data.caret_index = data.caret_index + 1
                 end
-
-                data.caret_index = result.caret_index
-                data.selection_start = result.selection_start
-                data.selection_end = result.selection_end
-                data.text = result.text
-
-                ::continue::
             end
         end
 
@@ -99,7 +105,7 @@ ugui.registry.textbox = {
 
         return {
             primary = data.text,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control TextBox
