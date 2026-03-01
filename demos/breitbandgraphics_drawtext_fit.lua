@@ -43,18 +43,21 @@ emu.atdrawd2d(function()
         fit = true,
     })
 
-    if keys.leftclick then
-        rectangle.width = math.max(1, keys.xmouse)
-        rectangle.height = math.max(1, keys.ymouse)
+    local mup_input = input.get()
+    if mup_input.leftclick then
+        rectangle.width = math.max(1, mup_input.xmouse)
+        rectangle.height = math.max(1, mup_input.ymouse)
     end
 
-    if keys.rightclick then
-        rectangle.x = math.max(1, keys.xmouse)
-        rectangle.y = math.max(1, keys.ymouse)
+    if mup_input.rightclick then
+        rectangle.x = math.max(1, mup_input.xmouse)
+        rectangle.y = math.max(1, mup_input.ymouse)
     end
 
-    if ugui.internal.get_just_pressed_keys()['F1'] then
-        print(rectangle)
+    for _, e in pairs(ugui.internal.environment.key_events) do
+        if e.keycode == ugui.keycodes.VK_F1 and e.pressed then
+            print(rectangle)
+        end
     end
 
     end_frame()

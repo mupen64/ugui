@@ -54,19 +54,21 @@ ugui.registry.listbox = {
         -- Keyboard-based selection. FIXME: Why is this based on the mouse being inside it???
         -- FIXME: We want the separate concept of "keyboard focus" to be introduced
         if ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
-            for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-                if key == 'up' and data.selected_index ~= nil then
-                    data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
-                end
-                if key == 'down' and data.selected_index ~= nil then
-                    data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
-                end
-                if not y_overflow then
-                    if key == 'pageup' or key == 'home' then
-                        data.selected_index = 1
+            for _, e in pairs(ugui.internal.environment.key_events) do
+                if e.keycode and e.pressed then
+                    if e.keycode == ugui.keycodes.VK_UP and data.selected_index ~= nil then
+                        data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
                     end
-                    if key == 'pagedown' or key == 'end' then
-                        data.selected_index = #control.items
+                    if e.keycode == ugui.keycodes.VK_DOWN and data.selected_index ~= nil then
+                        data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
+                    end
+                    if not y_overflow then
+                        if e.keycode == ugui.keycodes.VK_HOME or e.keycode == ugui.keycodes.VK_PRIOR then
+                            data.selected_index = 1
+                        end
+                        if e.keycode == ugui.keycodes.VK_END or e.keycode == ugui.keycodes.VK_NEXT then
+                            data.selected_index = #control.items
+                        end
                     end
                 end
             end
@@ -81,20 +83,22 @@ ugui.registry.listbox = {
                 inc = 1 / #control.items
             end
 
-            for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-                if key == 'pageup' then
-                    inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                        #control.items
-                end
-                if key == 'pagedown' then
-                    inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                        #control.items
-                end
-                if key == 'home' then
-                    inc = -1
-                end
-                if key == 'end' then
-                    inc = 1
+            for _, e in pairs(ugui.internal.environment.key_events) do
+                if e.keycode and e.pressed then
+                    if e.keycode == ugui.keycodes.VK_PRIOR then
+                        inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
+                            #control.items
+                    end
+                    if e.keycode == ugui.keycodes.VK_NEXT then
+                        inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
+                            #control.items
+                    end
+                    if e.keycode == ugui.keycodes.VK_HOME then
+                        inc = -1
+                    end
+                    if e.keycode == ugui.keycodes.VK_END then
+                        inc = 1
+                    end
                 end
             end
 
@@ -108,7 +112,7 @@ ugui.registry.listbox = {
 
         return {
             primary = data.selected_index,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control ListBox
