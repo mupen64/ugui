@@ -49,7 +49,7 @@ ugui.standard_styler = {
             },
         },
         textbox = {
-            padding = { x = 2, y = 0 },
+            padding = {x = 2, y = 0},
             back = {
                 [1] = BreitbandGraphics.hex_to_color('#FFFFFF'),
                 [2] = BreitbandGraphics.hex_to_color('#FFFFFF'),
@@ -293,10 +293,10 @@ ugui.standard_styler = {
                 aliased = not ugui.standard_styler.params.cleartype,
             })
         elseif key == 'checkmark' then
-            local connection_point = { x = rectangle.x + rectangle.width * 0.3, y = rectangle.y + rectangle.height }
-            BreitbandGraphics.draw_line({ x = rectangle.x, y = rectangle.y + rectangle.height / 2 }, connection_point,
+            local connection_point = {x = rectangle.x + rectangle.width * 0.3, y = rectangle.y + rectangle.height}
+            BreitbandGraphics.draw_line({x = rectangle.x, y = rectangle.y + rectangle.height / 2}, connection_point,
                 color, 1)
-            BreitbandGraphics.draw_line(connection_point, { x = rectangle.x + rectangle.width, y = rectangle.y }, color,
+            BreitbandGraphics.draw_line(connection_point, {x = rectangle.x + rectangle.width, y = rectangle.y}, color,
                 1)
         else
             -- Unknown icon, probably a good idea to nag the user
@@ -310,7 +310,7 @@ ugui.standard_styler = {
     ---@return { segment_data: { segment: RichTextSegment, rectangle: Rectangle }[], size: Vector2  } # The computed rich text segment data.
     compute_rich_text = function(text, plaintext)
         if not text then
-            return { segment_data = {}, size = { x = 0, y = 0 } }
+            return {segment_data = {}, size = {x = 0, y = 0}}
         end
 
         if plaintext then
@@ -777,7 +777,7 @@ ugui.standard_styler = {
         if not text then
             return
         end
-        local rectangle = { x = position.x, y = position.y, width = 0, height = 0 }
+        local rectangle = {x = position.x, y = position.y, width = 0, height = 0}
         local size = ugui.standard_styler.compute_rich_text(text, control.plaintext).size
 
         rectangle.width = size.x
@@ -1155,7 +1155,7 @@ ugui.standard_styler = {
     end,
 
     ---Gets the desired bounds of a listbox's content.
-    ---@param control table A table abiding by the mupen-lua-ugui control contract
+    ---@param control table A table abiding by the ugui control contract
     ---@return _ table A rectangle specifying the desired bounds of the content as `{x = 0, y = 0, width: number, height: number}`.
     get_desired_listbox_content_bounds = function(control)
         -- Since horizontal content bounds measuring is expensive, we only do this if explicitly enabled.

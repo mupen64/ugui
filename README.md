@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="128" align="center" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/ugui.png?raw=true">
+  <img width="128" align="center" src="https://github.com/mupen64/ugui/blob/main/assets/ugui.png?raw=true">
 </p>
 
 
@@ -22,7 +22,7 @@ ugui = dofile('ugui-amalgamated.lua')
 
 That's it. Don't forget to pass an absolute path, not a relative one.
 
-Read the [demo scripts](https://github.com/Aurumaker72/mupen-lua-ugui/tree/main/demos) and function documentation for usage information.
+Read the [demo scripts](https://github.com/mupen64/ugui/tree/main/demos) and function documentation for usage information.
 
 # 📈 Advantages
 
@@ -42,9 +42,9 @@ Read the [demo scripts](https://github.com/Aurumaker72/mupen-lua-ugui/tree/main/
 
 # ✨ Features
 
-<img width="28" align="left" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/ugui.png?raw=true">
+<img width="28" align="left" src="https://github.com/mupen64/ugui/blob/main/assets/ugui.png?raw=true">
 
-mupen-lua-ugui  —  The base library
+ugui  —  The GUI library
 
 - Built-in stylers
   - Windows 10
@@ -80,7 +80,7 @@ mupen-lua-ugui  —  The base library
 - Performance
   - Graphics caching extension
 
-<img width="28" align="left" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/breitbandgraphics.png?raw=true">
+<img width="28" align="left" src="https://github.com/mupen64/ugui/blob/main/assets/breitbandgraphics.png?raw=true">
 
 BreitbandGraphics  —  ugui's rendering core
 
@@ -91,10 +91,3 @@ BreitbandGraphics  —  ugui's rendering core
   - Hexadecimal color conversion
   - Standard color tables
 - Low overhead
-
-## 🧩 Porting
-
-### To mupen-lua-ugui
-
-Porting a script to `mupen-lua-ugui` requires an understanding of the library's usage, achieved by reading the demos and comment docs.
-For help, post an issue in this repository.
