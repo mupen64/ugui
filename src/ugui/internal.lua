@@ -29,7 +29,7 @@ ugui.internal = {
 
     ---@type Vector2
     -- The position of the mouse the last time the primary button was pressed.
-    mouse_down_position = { x = 0, y = 0 },
+    mouse_down_position = {x = 0, y = 0},
 
     ---@type UID?
     ---The control that was clicked this frame.
@@ -309,18 +309,6 @@ ugui.internal = {
         return math.max(math.min(value, max), min)
     end,
 
-    ---Gets all the keys that are newly pressed since the last frame.
-    ---@return table<string, boolean> # The newly pressed keys.
-    get_just_pressed_keys = function()
-        local keys = {}
-        for key, _ in pairs(ugui.internal.environment.held_keys) do
-            if not ugui.internal.previous_environment.held_keys[key] then
-                keys[key] = 1
-            end
-        end
-        return keys
-    end,
-
     ---Gets the character index for the specified relative x position in a textbox.
     ---Considers font_size and font_name, as provided by the styler.
     ---@param text string The textbox's text.
@@ -344,78 +332,6 @@ ugui.internal = {
         end
 
         return 1
-    end,
-
-    ---Handles navigation key presses in a textbox.
-    ---@param key string The pressed key identifier.
-    ---@param has_selection boolean Whether the textbox has a selection.
-    ---@param text string The textbox's text.
-    ---@param selection_start integer The textbox selection start index.
-    ---@param selection_end integer The textbox selection end index.
-    ---@param caret_index integer The textbox caret index.
-    ---@return TextBoxNavigationKeyProcessingResult # The result of the navigation key press processing.
-    handle_special_key = function(key, has_selection, text, selection_start, selection_end, caret_index)
-        local sel_lo = math.min(selection_start, selection_end)
-        local sel_hi = math.max(selection_start, selection_end)
-
-        if key == 'left' then
-            if has_selection then
-                -- nuke the selection and set caret index to lower (left)
-                local lower_selection = sel_lo
-                selection_start = lower_selection
-                selection_end = lower_selection
-                caret_index = lower_selection
-            else
-                caret_index = caret_index - 1
-            end
-        elseif key == 'right' then
-            if has_selection then
-                -- nuke the selection and set caret index to higher (right)
-                local higher_selection = sel_hi
-                selection_start = higher_selection
-                selection_end = higher_selection
-                caret_index = higher_selection
-            else
-                caret_index = caret_index + 1
-            end
-        elseif key == 'space' then
-            if has_selection then
-                -- replace selection contents by one space
-                local lower_selection = sel_lo
-                text = ugui.internal.remove_range(text, sel_lo, sel_hi)
-                caret_index = lower_selection
-                selection_start = lower_selection
-                selection_end = lower_selection
-                text = ugui.internal.insert_at(text, ' ', caret_index - 1)
-                caret_index = caret_index + 1
-            else
-                text = ugui.internal.insert_at(text, ' ', caret_index - 1)
-                caret_index = caret_index + 1
-            end
-        elseif key == 'backspace' then
-            if has_selection then
-                local lower_selection = sel_lo
-                text = ugui.internal.remove_range(text, lower_selection, sel_hi)
-                caret_index = lower_selection
-                selection_start = lower_selection
-                selection_end = lower_selection
-            else
-                text = ugui.internal.remove_at(text,
-                    caret_index - 1)
-                caret_index = caret_index - 1
-            end
-        else
-            return {
-                handled = false,
-            }
-        end
-        return {
-            handled = true,
-            text = text,
-            selection_start = selection_start,
-            selection_end = selection_end,
-            caret_index = caret_index,
-        }
     end,
 
     ---Applies a control's styler mixin if it has one.
@@ -497,7 +413,7 @@ ugui.internal = {
         local last_pos = 1
         for before_text, full_icon, icon_name, _, color in text:gmatch(pattern) do
             if before_text ~= '' then
-                table.insert(segments, { type = 'text', value = before_text })
+                table.insert(segments, {type = 'text', value = before_text})
             end
             if color:find('.') then
                 -- The color is a path in standard_styler.params
@@ -513,14 +429,14 @@ ugui.internal = {
                 end
                 color = result
             end
-            table.insert(segments, { type = 'icon', value = icon_name, color = color ~= '' and color or nil })
+            table.insert(segments, {type = 'icon', value = icon_name, color = color ~= '' and color or nil})
             last_pos = last_pos + #before_text + #full_icon
         end
 
         if last_pos <= #text then
             local remaining_text = text:sub(last_pos)
             if remaining_text ~= '' then
-                table.insert(segments, { type = 'text', value = remaining_text })
+                table.insert(segments, {type = 'text', value = remaining_text})
             end
         end
 

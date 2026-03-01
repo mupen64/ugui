@@ -12,7 +12,7 @@ group.tests[#group.tests + 1] = {
                 y = 10,
             },
             wheel = 0,
-            held_keys = {},
+            key_events = {},
         })
         ugui.tabcontrol({
             uid = 1,

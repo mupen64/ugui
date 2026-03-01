@@ -39,7 +39,7 @@ group.tests[#group.tests + 1] = {
                 mouse_position = ctx.data.mouse_position,
                 wheel = 0,
                 is_primary_down = i > 1,
-                held_keys = {},
+                key_events = {},
             })
             selected_index = ugui.listbox({
                 uid = 5,
@@ -68,20 +68,20 @@ group.tests[#group.tests + 1] = {
             items = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'},
             rect = {x = 10, y = 10, width = 100, height = 200},
             mouse_position = {x = 20, y = 20},
-            key = 'up',
+            key = ugui.keycodes.VK_UP,
         },
         {
             items = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'},
             rect = {x = 10, y = 10, width = 100, height = 200},
             mouse_position = {x = 20, y = 20},
-            key = 'down',
+            key = ugui.keycodes.VK_DOWN,
         },
     },
     func = function(ctx)
         ugui.begin_frame({
             mouse_position = ctx.data.mouse_position,
             wheel = 0,
-            held_keys = {},
+            key_events = {},
         })
         ugui.listbox({
             uid = 5,
@@ -93,7 +93,12 @@ group.tests[#group.tests + 1] = {
         ugui.begin_frame({
             mouse_position = ctx.data.mouse_position,
             wheel = 0,
-            held_keys = {[ctx.data.key] = true},
+            key_events = {
+                {
+                    keycode = ctx.data.key,
+                    pressed = true,
+                },
+            },
         })
         local success, _ = pcall(function()
             ugui.listbox({

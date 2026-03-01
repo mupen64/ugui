@@ -40,7 +40,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i == 2,
-                held_keys = {},
+                key_events = {},
             })
 
             ugui.textbox({
@@ -93,7 +93,7 @@ group.tests[#group.tests + 1] = {
                 },
                 wheel = 0,
                 is_primary_down = i > 1,
-                held_keys = {},
+                key_events = {},
             })
 
             ugui.textbox({
@@ -116,25 +116,45 @@ group.tests[#group.tests + 1] = {
     name = 'arrow_keys_modify_caret_index',
     params = {
         {
-            key = 'left',
+            key_events = {
+                {
+                    keycode = ugui.keycodes.VK_LEFT,
+                    pressed = true,
+                },
+            },
             initial_start_index = 2,
             initial_end_index = 3,
             expected_caret_index = 1,
         },
         {
-            key = 'left',
+            key_events = {
+                {
+                    keycode = ugui.keycodes.VK_LEFT,
+                    pressed = true,
+                },
+            },
             initial_start_index = 2,
             initial_end_index = 2,
             expected_caret_index = 1,
         },
         {
-            key = 'right',
+            key_events = {
+                {
+                    keycode = ugui.keycodes.VK_RIGHT,
+                    pressed = true,
+                },
+            },
             initial_start_index = 2,
             initial_end_index = 3,
             expected_caret_index = 3,
         },
         {
-            key = 'right',
+            key_events = {
+                {
+                    keycode = ugui.keycodes.VK_RIGHT,
+                    pressed = true,
+                },
+            },
             initial_start_index = 2,
             initial_end_index = 2,
             expected_caret_index = 3,
@@ -152,7 +172,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.textbox({
             uid = 5,
@@ -165,7 +185,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = true,
-            held_keys = {},
+            key_events = {},
         })
         ugui.textbox({
             uid = 5,
@@ -182,7 +202,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {[ctx.data.key] = true},
+            key_events = ctx.data.key_events,
         })
         ugui.textbox({
             uid = 5,
@@ -195,7 +215,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {[ctx.data.key] = true},
+            key_events = {},
         })
         ugui.textbox({
             uid = 5,
@@ -212,7 +232,11 @@ group.tests[#group.tests + 1] = {
     name = 'keys_modify_text_correctly',
     params = {
         {
-            key = 'A',
+            key_events = {
+                {
+                    text = 'A',
+                },
+            },
             text = 'Hello World!',
             expected_text = 'HAello World!',
             caret_index = 2,
@@ -220,7 +244,12 @@ group.tests[#group.tests + 1] = {
             end_index = 2,
         },
         {
-            key = 'backspace',
+            key_events = {
+                {
+                    keycode = ugui.keycodes.VK_BACK,
+                    pressed = true,
+                },
+            },
             text = 'Hello World!',
             expected_text = 'ello World!',
             caret_index = 2,
@@ -228,7 +257,12 @@ group.tests[#group.tests + 1] = {
             end_index = 2,
         },
         {
-            key = 'backspace',
+            key_events = {
+                {
+                    keycode = ugui.keycodes.VK_BACK,
+                    pressed = true,
+                },
+            },
             text = 'Hello World!',
             expected_text = 'llo World!',
             caret_index = 3,
@@ -236,7 +270,11 @@ group.tests[#group.tests + 1] = {
             end_index = 3,
         },
         {
-            key = 'A',
+            key_events = {
+                {
+                    text = 'A',
+                },
+            },
             text = 'Hello World!',
             expected_text = 'Allo World!',
             caret_index = 3,
@@ -244,7 +282,11 @@ group.tests[#group.tests + 1] = {
             end_index = 3,
         },
         {
-            key = 'A',
+            key_events = {
+                {
+                    text = 'A',
+                },
+            },
             text = 'Hello World!',
             expected_text = 'A',
             caret_index = 13,
@@ -252,7 +294,12 @@ group.tests[#group.tests + 1] = {
             end_index = 13,
         },
         {
-            key = 'backspace',
+            key_events = {
+                {
+                    keycode = ugui.keycodes.VK_BACK,
+                    pressed = true,
+                },
+            },
             text = 'Hello World!',
             expected_text = '',
             caret_index = 13,
@@ -260,9 +307,13 @@ group.tests[#group.tests + 1] = {
             end_index = 13,
         },
         {
-            key = 'O',
+            key_events = {
+                {
+                    text = 'A',
+                },
+            },
             text = 'Hello World!',
-            expected_text = 'Hello World!O',
+            expected_text = 'Hello World!A',
             caret_index = 13,
             start_index = 13,
             end_index = 13,
@@ -282,7 +333,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {},
+            key_events = {},
         })
         ugui.internal.keyboard_captured_control = 5
         ugui.internal.mouse_captured_control = 5
@@ -301,7 +352,7 @@ group.tests[#group.tests + 1] = {
             mouse_position = {x = 10, y = 10},
             wheel = 0,
             is_primary_down = false,
-            held_keys = {[ctx.data.key] = true},
+            key_events = ctx.data.key_events,
         })
         text = ugui.textbox({
             uid = 5,

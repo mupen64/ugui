@@ -12,7 +12,7 @@ group.tests[#group.tests + 1] = {
                 y = 10,
             },
             wheel = 0,
-            held_keys = {},
+            key_events = {},
         })
         ugui.spinner({
             uid = 1,
@@ -38,7 +38,7 @@ group.tests[#group.tests + 1] = {
                 y = 15,
             },
             wheel = 0,
-            held_keys = {},
+            key_events = {},
         })
         ugui.spinner({
             uid = 1,
@@ -58,7 +58,7 @@ group.tests[#group.tests + 1] = {
                 y = 15,
             },
             wheel = 1,
-            held_keys = {},
+            key_events = {},
         })
         ugui.spinner({
             uid = 1,
@@ -78,7 +78,7 @@ group.tests[#group.tests + 1] = {
                 y = 15,
             },
             wheel = 0,
-            held_keys = {},
+            key_events = {},
         })
         ugui.spinner({
             uid = 1,
@@ -90,7 +90,7 @@ group.tests[#group.tests + 1] = {
             },
         })
         ugui.end_frame()
-        
+
         ctx.assert(true)
     end,
 }

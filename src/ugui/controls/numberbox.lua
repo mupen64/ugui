@@ -63,27 +63,28 @@ ugui.registry.numberbox = {
 
         if ugui.internal.keyboard_captured_control == control.uid then
             -- handle number key press
-            for key, _ in pairs(ugui.internal.get_just_pressed_keys()) do
-                local num_1 = tonumber(key)
-                local num_2 = tonumber(key:sub(7))
-                local digit = num_1 and num_1 or num_2
+            for _, e in ipairs(ugui.internal.environment.key_events) do
+                if e.keycode and e.pressed then
+                    if e.keycode == ugui.keycodes.VK_LEFT then
+                        data.caret_index = data.caret_index - 1
+                    end
+                    if e.keycode == ugui.keycodes.VK_RIGHT then
+                        data.caret_index = data.caret_index + 1
+                    end
+                    if e.keycode == ugui.keycodes.VK_UP then
+                        increment_digit(data.caret_index, 1)
+                    end
+                    if e.keycode == ugui.keycodes.VK_DOWN then
+                        increment_digit(data.caret_index, -1)
+                    end
+                end
+                if e.text then
+                    local num = tonumber(e.text)
 
-                if digit then
-                    data.value = ugui.internal.set_digit(data.value, control.places, digit, data.caret_index)
-                    data.caret_index = data.caret_index + 1
-                end
-
-                if key == 'left' then
-                    data.caret_index = data.caret_index - 1
-                end
-                if key == 'right' then
-                    data.caret_index = data.caret_index + 1
-                end
-                if key == 'up' then
-                    increment_digit(data.caret_index, 1)
-                end
-                if key == 'down' then
-                    increment_digit(data.caret_index, -1)
+                    if num then
+                        data.value = ugui.internal.set_digit(data.value, control.places, num, data.caret_index)
+                        data.caret_index = data.caret_index + 1
+                    end
                 end
             end
 
@@ -105,7 +106,7 @@ ugui.registry.numberbox = {
 
         return {
             primary = data.value,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control NumberBox
