@@ -312,26 +312,43 @@ ugui.internal = {
     ---Gets the character index for the specified relative x position in a textbox.
     ---Considers font_size and font_name, as provided by the styler.
     ---@param text string The textbox's text.
+    ---@param scroll_offset integer The scroll offset.
     ---@param relative_x number The relative x position.
     ---@return integer The character index.
-    ---FIXME: This should be moved to BreitbandGraphics!!!
-    get_caret_index = function(text, relative_x)
-        local positions = {}
-        for i = 1, #text, 1 do
-            local width = BreitbandGraphics.get_text_size(text:sub(1, i),
-                ugui.standard_styler.params.font_size,
-                ugui.standard_styler.params.font_name).width
+    get_caret_index = function(text, scroll_offset, relative_x)
+        local font_size = ugui.standard_styler.params.font_size
+        local font_name = ugui.standard_styler.params.font_name
 
-            positions[#positions + 1] = width
+        local scroll_pixel = 0
+        if scroll_offset > 1 then
+            scroll_pixel = BreitbandGraphics.get_text_size(
+                text:sub(1, scroll_offset - 1),
+                font_size,
+                font_name
+            ).width
         end
 
-        for i = #positions, 1, -1 do
-            if relative_x > positions[i] then
-                return ugui.internal.clamp(i + 1, 1, #positions + 1)
+        local text_x = relative_x + scroll_pixel
+
+        if text_x <= 0 then
+            return 1
+        end
+
+        local cumulative_width = 0
+
+        for i = 1, #text do
+            local char = text:sub(i, i)
+            local char_width = BreitbandGraphics.get_text_size(char, font_size, font_name).width
+
+            local midpoint = cumulative_width + char_width * 0.5
+            if text_x < midpoint then
+                return i
             end
+
+            cumulative_width = cumulative_width + char_width
         end
 
-        return 1
+        return #text + 1
     end,
 
     ---Applies a control's styler mixin if it has one.

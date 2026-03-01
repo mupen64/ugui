@@ -49,7 +49,7 @@ ugui.standard_styler = {
             },
         },
         textbox = {
-            padding = { x = 2, y = 0 },
+            padding = {x = 2, y = 0},
             back = {
                 [1] = BreitbandGraphics.hex_to_color('#FFFFFF'),
                 [2] = BreitbandGraphics.hex_to_color('#FFFFFF'),
@@ -293,10 +293,10 @@ ugui.standard_styler = {
                 aliased = not ugui.standard_styler.params.cleartype,
             })
         elseif key == 'checkmark' then
-            local connection_point = { x = rectangle.x + rectangle.width * 0.3, y = rectangle.y + rectangle.height }
-            BreitbandGraphics.draw_line({ x = rectangle.x, y = rectangle.y + rectangle.height / 2 }, connection_point,
+            local connection_point = {x = rectangle.x + rectangle.width * 0.3, y = rectangle.y + rectangle.height}
+            BreitbandGraphics.draw_line({x = rectangle.x, y = rectangle.y + rectangle.height / 2}, connection_point,
                 color, 1)
-            BreitbandGraphics.draw_line(connection_point, { x = rectangle.x + rectangle.width, y = rectangle.y }, color,
+            BreitbandGraphics.draw_line(connection_point, {x = rectangle.x + rectangle.width, y = rectangle.y}, color,
                 1)
         else
             -- Unknown icon, probably a good idea to nag the user
@@ -310,7 +310,7 @@ ugui.standard_styler = {
     ---@return { segment_data: { segment: RichTextSegment, rectangle: Rectangle }[], size: Vector2  } # The computed rich text segment data.
     compute_rich_text = function(text, plaintext)
         if not text then
-            return { segment_data = {}, size = { x = 0, y = 0 } }
+            return {segment_data = {}, size = {x = 0, y = 0}}
         end
 
         if plaintext then
@@ -777,7 +777,7 @@ ugui.standard_styler = {
         if not text then
             return
         end
-        local rectangle = { x = position.x, y = position.y, width = 0, height = 0 }
+        local rectangle = {x = position.x, y = position.y, width = 0, height = 0}
         local size = ugui.standard_styler.compute_rich_text(text, control.plaintext).size
 
         rectangle.width = size.x
@@ -878,7 +878,8 @@ ugui.standard_styler = {
     draw_textbox = function(control)
         local data = ugui.internal.control_data[control.uid]
         local visual_state = ugui.get_visual_state(control)
-        local text = control.text or ''
+        local text = control.text
+        local scrolled_text = control.text:sub(data.scroll_offset)
 
         -- Special case: if we're capturing the keyboard, we consider ourselves "active"
         if ugui.internal.keyboard_captured_control == control.uid then
@@ -886,33 +887,39 @@ ugui.standard_styler = {
         end
 
         ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
+        BreitbandGraphics.push_clip(control.rectangle)
 
         local should_visualize_selection =
             control.is_enabled ~= false
             and data.selection_start ~= data.selection_end
             and ugui.internal.keyboard_captured_control == control.uid
 
-        if should_visualize_selection then
-            local string_to_selection_start = text:sub(1,
-                data.selection_start - 1)
-            local string_to_selection_end = text:sub(1,
-                data.selection_end - 1)
+        local string_to_caret = text:sub(data.scroll_offset, data.caret_index - 1)
+        local string_to_caret_width = BreitbandGraphics.get_text_size(string_to_caret, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name).width
+        local caret_x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_caret_width
+        local string_to_selection_start
+        local string_to_selection_end
+        local string_to_selection_start_width
+        local string_to_selection_end_width
+        local selection_start_x
+        local selection_end_x
 
+        if should_visualize_selection then
+            string_to_selection_start = text:sub(data.scroll_offset, data.selection_start - 1)
+            string_to_selection_end = text:sub(data.scroll_offset, data.selection_end - 1)
+
+            string_to_selection_start_width = BreitbandGraphics.get_text_size(string_to_selection_start, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name).width
+            string_to_selection_end_width = BreitbandGraphics.get_text_size(string_to_selection_end, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name).width
+
+            selection_start_x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_start_width
+            selection_end_x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_end_width
+        end
+
+        if should_visualize_selection then
             BreitbandGraphics.fill_rectangle({
-                    x = control.rectangle.x +
-                        BreitbandGraphics.get_text_size(string_to_selection_start,
-                            ugui.standard_styler.params.font_size,
-                            ugui.standard_styler.params.font_name)
-                        .width + ugui.standard_styler.params.textbox.padding.x,
+                    x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_start_width,
                     y = control.rectangle.y,
-                    width = BreitbandGraphics.get_text_size(string_to_selection_end,
-                            ugui.standard_styler.params.font_size,
-                            ugui.standard_styler.params.font_name)
-                        .width -
-                        BreitbandGraphics.get_text_size(string_to_selection_start,
-                            ugui.standard_styler.params.font_size,
-                            ugui.standard_styler.params.font_name)
-                        .width,
+                    width = string_to_selection_end_width - string_to_selection_start_width,
                     height = control.rectangle.height,
                 },
                 ugui.standard_styler.params.textbox.selection)
@@ -921,47 +928,22 @@ ugui.standard_styler = {
         local text_rect = {
             x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x,
             y = control.rectangle.y,
-            width = control.rectangle.width - ugui.standard_styler.params.textbox.padding.x * 2,
+            width = 9999,
             height = control.rectangle.height,
         }
 
         BreitbandGraphics.draw_text2({
-            text = text,
+            text = scrolled_text,
             rectangle = text_rect,
             color = ugui.standard_styler.params.textbox.text[visual_state],
             align_x = BreitbandGraphics.alignment.start,
             align_y = BreitbandGraphics.alignment.start,
             font_name = ugui.standard_styler.params.font_name,
             font_size = ugui.standard_styler.params.font_size,
-            clip = true,
             aliased = not ugui.standard_styler.params.cleartype,
         })
 
         if should_visualize_selection then
-            local lower = data.selection_start
-            local higher = data.selection_end
-            if data.selection_start > data.selection_end then
-                lower = data.selection_end
-                higher = data.selection_start
-            end
-
-            local string_to_selection_start = text:sub(1,
-                lower - 1)
-            local string_to_selection_end = text:sub(1,
-                higher - 1)
-
-            local selection_start_x = control.rectangle.x +
-                BreitbandGraphics.get_text_size(string_to_selection_start,
-                    ugui.standard_styler.params.font_size,
-                    ugui.standard_styler.params.font_name).width +
-                ugui.standard_styler.params.textbox.padding.x
-
-            local selection_end_x = control.rectangle.x +
-                BreitbandGraphics.get_text_size(string_to_selection_end,
-                    ugui.standard_styler.params.font_size,
-                    ugui.standard_styler.params.font_name).width +
-                ugui.standard_styler.params.textbox.padding.x
-
             BreitbandGraphics.push_clip({
                 x = selection_start_x,
                 y = control.rectangle.y,
@@ -969,22 +951,14 @@ ugui.standard_styler = {
                 height = control.rectangle.height,
             })
 
-            local text_rect = {
-                x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x,
-                y = control.rectangle.y,
-                width = control.rectangle.width - ugui.standard_styler.params.textbox.padding.x * 2,
-                height = control.rectangle.height,
-            }
-
             BreitbandGraphics.draw_text2({
-                text = text,
+                text = scrolled_text,
                 rectangle = text_rect,
                 color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
                 align_x = BreitbandGraphics.alignment.start,
                 align_y = BreitbandGraphics.alignment.start,
                 font_name = ugui.standard_styler.params.font_name,
                 font_size = ugui.standard_styler.params.font_size,
-                clip = true,
                 aliased = not ugui.standard_styler.params.cleartype,
             })
 
@@ -992,29 +966,21 @@ ugui.standard_styler = {
         end
 
 
-        local string_to_caret = text:sub(1, data.caret_index - 1)
-        local caret_x = BreitbandGraphics.get_text_size(string_to_caret,
-                ugui.standard_styler.params.font_size,
-                ugui.standard_styler.params.font_name).width +
-            ugui.standard_styler.params.textbox.padding.x
-
         if visual_state == ugui.visual_states.active and math.floor(os.clock() * 2) % 2 == 0 and not should_visualize_selection then
             BreitbandGraphics.draw_line({
-                x = control.rectangle.x + caret_x,
-                y = control.rectangle.y + 2,
+                x = caret_x,
+                y = control.rectangle.y + 3,
             }, {
-                x = control.rectangle.x + caret_x,
-                y = control.rectangle.y +
-                    math.max(15,
-                        BreitbandGraphics.get_text_size(string_to_caret, 12,
-                            ugui.standard_styler.params.font_name)
-                        .height), -- TODO: move text measurement into BreitbandGraphics
+                x = caret_x,
+                y = control.rectangle.y + control.rectangle.height - 3,
             }, {
                 r = 0,
                 g = 0,
                 b = 0,
             }, 1)
         end
+
+        BreitbandGraphics.pop_clip()
     end,
 
     ---Draws a Joystick with the specified parameters.
