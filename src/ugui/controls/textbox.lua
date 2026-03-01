@@ -21,14 +21,16 @@ ugui.registry.textbox = {
         if data.selection_end == nil then
             data.selection_end = 1
         end
+        if data.scroll_offset == nil then
+            data.scroll_offset = 0
+        end
     end,
     ---@param control TextBox
     ---@return ControlReturnValue
     logic = function(control, data)
         data.text = control.text
 
-        local index_at_mouse = ugui.internal.get_caret_index(data.text,
-            ugui.internal.environment.mouse_position.x - control.rectangle.x)
+        local index_at_mouse = ugui.internal.get_caret_index(data.text, data.scroll_offset, ugui.internal.environment.mouse_position.x - control.rectangle.x)
 
         -- If the control was just clicked, start a new selection.
         if ugui.internal.clicked_control == control.uid then
@@ -98,7 +100,42 @@ ugui.registry.textbox = {
             end
         end
 
+        data.scroll_offset = ugui.internal.clamp(data.scroll_offset, 0, #data.text + 1)
         data.caret_index = ugui.internal.clamp(data.caret_index, 1, #data.text + 1)
+
+        local padding_x = ugui.standard_styler.params.textbox.padding.x
+        local visible_width = control.rectangle.width - padding_x
+
+        local function width_from_offset(offset, target_index)
+            if target_index <= offset then
+                return 0
+            end
+
+            local font_size = ugui.standard_styler.params.font_size
+            local font_name = ugui.standard_styler.params.font_name
+
+            local text_segment = data.text:sub(offset, target_index - 1)
+            return BreitbandGraphics.get_text_size(
+                text_segment,
+                font_size,
+                font_name
+            ).width
+        end
+
+        local range_start = math.min(data.caret_index, data.selection_start, data.selection_end)
+        local range_end = math.max(data.caret_index, data.selection_start, data.selection_end)
+
+        local caret_x = width_from_offset(data.scroll_offset, range_end)
+        if caret_x > visible_width then
+            repeat
+                data.scroll_offset = data.scroll_offset + 1
+                caret_x = width_from_offset(data.scroll_offset, range_end)
+            until caret_x <= visible_width or data.scroll_offset >= range_end
+        end
+
+        if range_start < data.scroll_offset then
+            data.scroll_offset = range_start
+        end
 
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.text ~= data.text)
 
