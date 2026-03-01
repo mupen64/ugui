@@ -63,7 +63,7 @@ ugui.registry.numberbox = {
 
         if ugui.internal.keyboard_captured_control == control.uid then
             -- handle number key press
-            for _, e in pairs(ugui.internal.environment.key_events) do
+            for _, e in ipairs(ugui.internal.environment.key_events) do
                 if e.keycode and e.pressed then
                     if e.keycode == ugui.keycodes.VK_LEFT then
                         data.caret_index = data.caret_index - 1

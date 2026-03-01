@@ -54,7 +54,7 @@ ugui.registry.listbox = {
         -- Keyboard-based selection. FIXME: Why is this based on the mouse being inside it???
         -- FIXME: We want the separate concept of "keyboard focus" to be introduced
         if ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
-            for _, e in pairs(ugui.internal.environment.key_events) do
+            for _, e in ipairs(ugui.internal.environment.key_events) do
                 if e.keycode and e.pressed then
                     if e.keycode == ugui.keycodes.VK_UP and data.selected_index ~= nil then
                         data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
@@ -83,7 +83,7 @@ ugui.registry.listbox = {
                 inc = 1 / #control.items
             end
 
-            for _, e in pairs(ugui.internal.environment.key_events) do
+            for _, e in ipairs(ugui.internal.environment.key_events) do
                 if e.keycode and e.pressed then
                     if e.keycode == ugui.keycodes.VK_PRIOR then
                         inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /

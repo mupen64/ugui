@@ -54,7 +54,7 @@ emu.atdrawd2d(function()
         rectangle.y = math.max(1, mup_input.ymouse)
     end
 
-    for _, e in pairs(ugui.internal.environment.key_events) do
+    for _, e in ipairs(ugui.internal.environment.key_events) do
         if e.keycode == ugui.keycodes.VK_F1 and e.pressed then
             print(rectangle)
         end
