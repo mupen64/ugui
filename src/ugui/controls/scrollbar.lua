@@ -12,38 +12,47 @@ ugui.registry.scrollbar = {
         ugui.internal.assert(type(control.ratio) == 'number', 'expected ratio to be number')
     end,
     ---@param control ScrollBar
+    setup = function(control, data)
+        data.drag_offset = nil
+    end,
+    ---@param control ScrollBar
     ---@return ControlReturnValue
     logic = function(control, data)
         data.value = control.value
 
         local is_horizontal = control.rectangle.width > control.rectangle.height
 
+        local thumb_size = is_horizontal
+            and control.rectangle.width * control.ratio
+            or control.rectangle.height * control.ratio
+
         if ugui.internal.mouse_captured_control == control.uid then
-            local relative_mouse = {
-                x = ugui.internal.environment.mouse_position.x - control.rectangle.x,
-                y = ugui.internal.environment.mouse_position.y - control.rectangle.y,
-            }
-            local relative_mouse_down = {
-                x = ugui.internal.mouse_down_position.x - control.rectangle.x,
-                y = ugui.internal.mouse_down_position.y - control.rectangle.y,
-            }
-            local current
-            local start
-            if is_horizontal then
-                current = relative_mouse.x / control.rectangle.width
-                start = relative_mouse_down.x / control.rectangle.width
-            else
-                current = relative_mouse.y / control.rectangle.height
-                start = relative_mouse_down.y / control.rectangle.height
+            local mouse_pos = ugui.internal.environment.mouse_position
+            local mouse_down = ugui.internal.mouse_down_position
+
+            if data.drag_offset == nil then
+                if is_horizontal then
+                    local thumb_start = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.width - thumb_size)
+                    data.drag_offset = mouse_down.x - (control.rectangle.x + thumb_start)
+                else
+                    local thumb_start = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.height - thumb_size)
+                    data.drag_offset = mouse_down.y - (control.rectangle.y + thumb_start)
+                end
             end
-            data.value = ugui.internal.clamp(start + (current - start), 0, 1)
+
+            local current_pos = is_horizontal and (mouse_pos.x - control.rectangle.x - data.drag_offset) or (mouse_pos.y - control.rectangle.y - data.drag_offset)
+            local track_length = (is_horizontal and control.rectangle.width or control.rectangle.height) - thumb_size
+
+            data.value = ugui.internal.clamp(current_pos / track_length, 0, 1)
+        else
+            data.drag_offset = nil
         end
 
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= data.value)
 
         return {
             primary = data.value,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control ScrollBar
