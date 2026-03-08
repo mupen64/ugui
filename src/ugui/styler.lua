@@ -1121,7 +1121,7 @@ ugui.standard_styler = {
     end,
 
     ---Gets the desired bounds of a listbox's content.
-    ---@param control table A table abiding by the mupen-lua-ugui control contract
+    ---@param control table A table abiding by the ugui control contract
     ---@return _ table A rectangle specifying the desired bounds of the content as `{x = 0, y = 0, width: number, height: number}`.
     get_desired_listbox_content_bounds = function(control)
         -- Since horizontal content bounds measuring is expensive, we only do this if explicitly enabled.

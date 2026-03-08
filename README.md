@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="128" align="center" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/ugui.png?raw=true">
+  <img width="128" align="center" src="https://github.com/mupen64/ugui/blob/main/assets/ugui.png?raw=true">
 </p>
 
 
@@ -22,79 +22,55 @@ ugui = dofile('ugui-amalgamated.lua')
 
 That's it. Don't forget to pass an absolute path, not a relative one.
 
-Read the [demo scripts](https://github.com/Aurumaker72/mupen-lua-ugui/tree/main/demos) and function documentation for usage information.
-
-# 📈 Advantages
-
-- Easy Usage
-  - Immediate-mode control spawning API
-- Flexible
-  - Add or extend controls
-  - Add or extend stylers
-  - Mock subsystems
-- Host-authoritative
-  - Invokable anytime and anywhere
-  - No global pollution - only necessary components are exposed as tables
-- Fast
-  - Shallow callstacks
-  - Reduced indirection
-  - Controls optimized for large datasets
+Read the [demo scripts](https://github.com/mupen64/ugui/tree/main/demos) for usage examples.
 
 # ✨ Features
 
-<img width="28" align="left" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/ugui.png?raw=true">
+<img width="28" align="left" src="https://github.com/mupen64/ugui/blob/main/assets/ugui.png?raw=true">
 
-mupen-lua-ugui  —  The base library
+ugui  —  The GUI library
 
-- Built-in stylers
-  - Windows 10
-  - Nineslice
-- Flexibility
-  - Modify any part of the framework to your liking
-- User Productivity
-  - Controls behave like Windows controls, ensuring consistency
-- Button
-- TextBox
-  - Full-fledged selection and editing system
-- ToggleButton
-- CarrouselButton
-- Joystick
-  - Adjustable magnitude circle 
-- TrackBar
-  - Automatic layout adjustement based on size ratio 
-- ComboBox
-- ListBox
+### Control Suite
+
+- `button`
+- `textbox`
+- `toggle_button`
+- `carrousel_button`
+- `trackbar`
+- `combobox`
+- `listbox`
   - Scrolling support
   - Unlimited items with no performance degradation
-- Scrollbar
-- Menu
-  - Unlimited child items and tree depth
+- `scrollbar`
+- `menu`
   - Checkable items
-- Single-Pass Layout System
-- StackPanel
-  - Horizontal/Vertical stacking
-  - Element gap size
-- Spinner
-- NumberBox
-- TabControl
-- Performance
-  - Graphics caching extension
+- `spinner`
+  - Optional negative/positive toggle
+- `numberbox`
+- `tabcontrol`
+- `joystick`
+  - Adjustable magnitude circle 
 
-<img width="28" align="left" src="https://github.com/Aurumaker72/mupen-lua-ugui/blob/main/assets/breitbandgraphics.png?raw=true">
+### Rendering
 
-BreitbandGraphics  —  ugui's rendering core
+Can render using a built-in Windows 10-like style, or with ninesliced images.
 
-- Powerful abstraction layer over Mupen Lua drawing APIs
-- Maximized usability
-  - Stable API surface
-- Helpful utilities
-  - Hexadecimal color conversion
-  - Standard color tables
-- Low overhead
+Depends on BreitbandGraphics for rendering.
 
-## 🧩 Porting
+### Hackability
 
-### To mupen-lua-ugui
+Any part of the library can be overwritten externally. Future compatibility not guaranteed.
 
-Porting a script to `mupen-lua-ugui` requires an understanding of the library's usage, achieved by reading the demos and comment docs.
-For help, post an issue in this repository.
+<img width="28" align="left" src="https://github.com/mupen64/ugui/blob/main/assets/breitbandgraphics.png?raw=true">
+
+#
+
+BreitbandGraphics  —  The rendering abstraction
+
+### Backends
+
+Built-in backend for the [Mupen64](https://github.com/mupen64/mupen64-rr-lua) emulator.
+
+### Utilities
+
+Provides various utilities for color conversion and manipulation.

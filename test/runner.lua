@@ -1,6 +1,3 @@
---- mupen-lua-ugui test runner
---- https://github.com/Aurumaker72/mupen-lua-ugui
-
 -- FIXME: Strong typing for the test runner!!!
 
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\')
@@ -59,7 +56,7 @@ for key, group in pairs(groups) do
     end
 
     for _, test in pairs(group.tests) do
-        local test_params = test.params and test.params or { 0 }
+        local test_params = test.params and test.params or {0}
 
         for test_param_index, test_param in pairs(test_params) do
             reset_ugui_state()
