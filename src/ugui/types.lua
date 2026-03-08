@@ -22,7 +22,7 @@
 ---Represents a computed segment from a rich text string.
 
 ---@class UguiKeyEventArgs
----@field keycode VKeycode? The virtual keycode, if the event is a key event.
+---@field keycode UguiVKeycodes? The virtual keycode, if the event is a key event.
 ---@field ctrl boolean Whether the Ctrl key is held down.
 ---@field alt boolean Whether the Alt key is held down.
 ---@field shift boolean Whether the Shift key is held down.
