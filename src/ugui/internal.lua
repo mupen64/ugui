@@ -369,15 +369,37 @@ ugui.internal = {
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 
-    ---Gets the focus chain for a control.
-    ---@param control Control
+    ---Gets the focus chain for a control or the scene.
+    ---@param control Control? The control to get the focus chain for, or nil to get the focus chain for the scene.
     ---@return UguiFocusChain
     get_focus_chain = function(control)
+        local min_uid = nil
+        local max_uid = nil
+
+        for _, entry in ipairs(ugui.internal.scene) do
+            local control = entry.control
+
+            if control.is_enabled == false then
+                goto continue
+            end
+
+            if min_uid == nil or control.uid < min_uid then
+                min_uid = control.uid
+            end
+            if max_uid == nil or control.uid > max_uid then
+                max_uid = control.uid
+            end
+
+            ::continue::
+        end
+
+        if not control then
+            return {previous = max_uid, next = min_uid}
+        end
+
         local uid = control.uid
         local prev_uid = nil
         local next_uid = nil
-        local min_uid = nil
-        local max_uid = nil
 
         for _, entry in ipairs(ugui.internal.scene) do
             local control = entry.control
@@ -385,13 +407,6 @@ ugui.internal = {
 
             if control.is_enabled == false then
                 goto continue
-            end
-
-            if min_uid == nil or cid < min_uid then
-                min_uid = cid
-            end
-            if max_uid == nil or cid > max_uid then
-                max_uid = cid
             end
 
             if uid == nil then
@@ -460,9 +475,6 @@ ugui.internal = {
     ---Handles tab navigation.
     handle_tab_navigation = function()
         local keyboard_captured_control = ugui.internal.get_control_with_uid(ugui.internal.keyboard_captured_control)
-        if not keyboard_captured_control then
-            return
-        end
 
         for _, e in pairs(ugui.internal.environment.key_events) do
             if e.keycode == ugui.keycodes.VK_TAB and e.pressed then
