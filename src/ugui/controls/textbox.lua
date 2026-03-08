@@ -24,6 +24,9 @@ ugui.registry.textbox = {
         if data.scroll_offset == nil then
             data.scroll_offset = 0
         end
+        if data.last_changed_anchor == nil then
+            data.last_changed_anchor = 'caret'
+        end
     end,
     ---@param control TextBox
     ---@return ControlReturnValue
@@ -37,11 +40,13 @@ ugui.registry.textbox = {
             data.caret_index = index_at_mouse
             data.selection_start = index_at_mouse
             data.selection_end = index_at_mouse
+            data.last_changed_anchor = 'caret'
         end
 
         -- If we're dragging the control, extend the existing selection.
         if ugui.internal.mouse_captured_control == control.uid then
             data.selection_end = index_at_mouse
+            data.last_changed_anchor = 'selection_end'
         end
 
         -- If we're capturing the keyboard, we process all the key presses.
@@ -59,26 +64,32 @@ ugui.registry.textbox = {
                             data.caret_index = lower_selection
                             data.selection_start = lower_selection
                             data.selection_end = lower_selection
+                            data.last_changed_anchor = 'caret'
                         else
                             local delete_index = data.caret_index - 1
                             data.text = ugui.internal.remove_at(data.text, delete_index)
                             data.caret_index = delete_index
+                            data.last_changed_anchor = 'caret'
                         end
                     elseif e.keycode == ugui.keycodes.VK_LEFT then
                         if has_selection then
                             data.selection_start = lower_selection
                             data.selection_end = lower_selection
                             data.caret_index = lower_selection
+                            data.last_changed_anchor = 'caret'
                         else
                             data.caret_index = data.caret_index - 1
+                            data.last_changed_anchor = 'caret'
                         end
                     elseif e.keycode == ugui.keycodes.VK_RIGHT then
                         if has_selection then
                             data.selection_start = higher_selection
                             data.selection_end = higher_selection
                             data.caret_index = higher_selection
+                            data.last_changed_anchor = 'caret'
                         else
                             data.caret_index = data.caret_index + 1
+                            data.last_changed_anchor = 'caret'
                         end
                     end
                 end
@@ -93,15 +104,21 @@ ugui.registry.textbox = {
                         data.caret_index = lower_selection
                         data.selection_start = lower_selection
                         data.selection_end = lower_selection
+
+                        data.last_changed_anchor = 'caret'
                     end
                     data.text = ugui.internal.insert_at(data.text, e.text, data.caret_index - 1)
                     data.caret_index = data.caret_index + 1
+                    data.last_changed_anchor = 'caret'
                 end
             end
         end
 
+        -- Clamp indices to valid ranges.
         data.scroll_offset = ugui.internal.clamp(data.scroll_offset, 0, #data.text + 1)
         data.caret_index = ugui.internal.clamp(data.caret_index, 1, #data.text + 1)
+        data.selection_start = ugui.internal.clamp(data.selection_start, 1, #data.text + 1)
+        data.selection_end = ugui.internal.clamp(data.selection_end, 1, #data.text + 1)
 
         local padding_x = ugui.standard_styler.params.textbox.padding.x
         local visible_width = control.rectangle.width - padding_x
@@ -122,19 +139,25 @@ ugui.registry.textbox = {
             ).width
         end
 
-        local range_start = math.min(data.caret_index, data.selection_start, data.selection_end)
-        local range_end = math.max(data.caret_index, data.selection_start, data.selection_end)
-
-        local caret_x = width_from_offset(data.scroll_offset, range_end)
-        if caret_x > visible_width then
-            repeat
-                data.scroll_offset = data.scroll_offset + 1
-                caret_x = width_from_offset(data.scroll_offset, range_end)
-            until caret_x <= visible_width or data.scroll_offset >= range_end
+        local scroll_target = data.caret_index
+        if data.last_changed_anchor == 'selection_start' then
+            scroll_target = data.selection_start
+        elseif data.last_changed_anchor == 'selection_end' then
+            scroll_target = data.selection_end
         end
 
-        if range_start < data.scroll_offset then
-            data.scroll_offset = range_start
+        -- If the chosen target is off the right edge, advance scroll_offset until it fits.
+        local target_x = width_from_offset(data.scroll_offset, scroll_target)
+        if target_x > visible_width then
+            repeat
+                data.scroll_offset = data.scroll_offset + 1
+                target_x = width_from_offset(data.scroll_offset, scroll_target)
+            until target_x <= visible_width or data.scroll_offset >= scroll_target
+        end
+
+        -- If the chosen target is off the left edge, snap scroll_offset to it.
+        if scroll_target < data.scroll_offset then
+            data.scroll_offset = scroll_target
         end
 
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.text ~= data.text)
