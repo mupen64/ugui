@@ -421,6 +421,20 @@ ugui.internal = {
 
         if control.next_uid ~= nil then
             next_uid = control.next_uid
+
+            while true do
+                local next_control = ugui.internal.get_control_with_uid(next_uid)
+                if not next_control then
+                    break
+                end
+
+                if next_control.is_enabled == false then
+                    local chain = ugui.internal.get_focus_chain(next_control)
+                    next_uid = chain.next
+                end
+
+                break
+            end
         end
 
         return {previous = prev_uid, next = next_uid}
