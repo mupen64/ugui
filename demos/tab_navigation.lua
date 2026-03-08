@@ -61,5 +61,17 @@ emu.atdrawd2d(function()
         text = '3',
     })
 
+    ugui.button({
+        uid = 6,
+        is_enabled = false,
+        rectangle = {
+            x = 40,
+            y = 160,
+            width = 80,
+            height = 23,
+        },
+        text = '4',
+    })
+
     end_frame()
 end)
