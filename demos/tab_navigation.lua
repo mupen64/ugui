@@ -53,6 +53,7 @@ emu.atdrawd2d(function()
 
     ugui.button({
         uid = 5,
+        is_enabled = false,
         rectangle = {
             x = 220,
             y = 100,
@@ -60,11 +61,23 @@ emu.atdrawd2d(function()
             height = 23,
         },
         text = 'trap 3',
-        next_uid = 3,
+        next_uid = 1,
     })
 
     ugui.button({
         uid = 6,
+        rectangle = {
+            x = 310,
+            y = 100,
+            width = 80,
+            height = 23,
+        },
+        text = 'trap 4',
+        next_uid = 3,
+    })
+
+    ugui.button({
+        uid = 7,
         rectangle = {
             x = 40,
             y = 130,
@@ -75,7 +88,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.button({
-        uid = 7,
+        uid = 8,
         is_enabled = false,
         rectangle = {
             x = 40,
