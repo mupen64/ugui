@@ -28,6 +28,8 @@ ugui.standard_styler = {
         --- The icon size.
         icon_size = 12,
 
+        focus_ring_color = BreitbandGraphics.hex_to_color('#000000'),
+
         button = {
             back = {
                 [1] = BreitbandGraphics.hex_to_color('#E1E1E1'),
@@ -520,14 +522,13 @@ ugui.standard_styler = {
     ---@param rectangle Rectangle
     draw_focus_ring = function(rectangle)
         local r = BreitbandGraphics.inflate_rectangle(rectangle, -2)
-        local color = '#000000'
         local step = 2
 
         for x = r.x, r.x + r.width, step do
             BreitbandGraphics.draw_line(
                 {x = x, y = r.y},
                 {x = x + 1, y = r.y},
-                color,
+                ugui.standard_styler.params.focus_ring_color,
                 1
             )
         end
@@ -536,7 +537,7 @@ ugui.standard_styler = {
             BreitbandGraphics.draw_line(
                 {x = x, y = r.y + r.height},
                 {x = x + 1, y = r.y + r.height},
-                color,
+                ugui.standard_styler.params.focus_ring_color,
                 1
             )
         end
@@ -545,7 +546,7 @@ ugui.standard_styler = {
             BreitbandGraphics.draw_line(
                 {x = r.x, y = y},
                 {x = r.x, y = y + 1},
-                color,
+                ugui.standard_styler.params.focus_ring_color,
                 1
             )
         end
@@ -554,7 +555,7 @@ ugui.standard_styler = {
             BreitbandGraphics.draw_line(
                 {x = r.x + r.width, y = y},
                 {x = r.x + r.width, y = y + 1},
-                color,
+                ugui.standard_styler.params.focus_ring_color,
                 1
             )
         end
