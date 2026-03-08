@@ -903,6 +903,7 @@ ugui.standard_styler = {
         local string_to_selection_end_width
         local selection_start_x
         local selection_end_x
+        local caret_height<const> = ugui.standard_styler.params.font_size * 1.5
 
         if should_visualize_selection then
             string_to_selection_start = text:sub(data.scroll_offset, data.selection_start - 1)
@@ -920,7 +921,7 @@ ugui.standard_styler = {
                     x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_start_width,
                     y = control.rectangle.y,
                     width = string_to_selection_end_width - string_to_selection_start_width,
-                    height = control.rectangle.height,
+                    height = caret_height,
                 },
                 ugui.standard_styler.params.textbox.selection)
         end
@@ -972,7 +973,7 @@ ugui.standard_styler = {
                 y = control.rectangle.y + 3,
             }, {
                 x = caret_x,
-                y = control.rectangle.y + control.rectangle.height - 3,
+                y = control.rectangle.y + caret_height - 3,
             }, {
                 r = 0,
                 g = 0,
