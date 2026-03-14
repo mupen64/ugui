@@ -28,6 +28,8 @@ ugui.standard_styler = {
         --- The icon size.
         icon_size = 12,
 
+        focus_ring_color = BreitbandGraphics.hex_to_color('#000000'),
+
         button = {
             back = {
                 [1] = BreitbandGraphics.hex_to_color('#E1E1E1'),
@@ -514,6 +516,49 @@ ugui.standard_styler = {
             ugui.standard_styler.params.listbox.border[visual_state])
         BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(rectangle, -1),
             ugui.standard_styler.params.listbox.back[visual_state])
+    end,
+
+    ---Draws a focus ring.
+    ---@param rectangle Rectangle
+    draw_focus_ring = function(rectangle)
+        local r = BreitbandGraphics.inflate_rectangle(rectangle, -2)
+        local step = 2
+
+        for x = r.x, r.x + r.width, step do
+            BreitbandGraphics.draw_line(
+                {x = x, y = r.y},
+                {x = x + 1, y = r.y},
+                ugui.standard_styler.params.focus_ring_color,
+                1
+            )
+        end
+
+        for x = r.x, r.x + r.width, step do
+            BreitbandGraphics.draw_line(
+                {x = x, y = r.y + r.height},
+                {x = x + 1, y = r.y + r.height},
+                ugui.standard_styler.params.focus_ring_color,
+                1
+            )
+        end
+
+        for y = r.y, r.y + r.height, step do
+            BreitbandGraphics.draw_line(
+                {x = r.x, y = y},
+                {x = r.x, y = y + 1},
+                ugui.standard_styler.params.focus_ring_color,
+                1
+            )
+        end
+
+        for y = r.y, r.y + r.height, step do
+            BreitbandGraphics.draw_line(
+                {x = r.x + r.width, y = y},
+                {x = r.x + r.width, y = y + 1},
+                ugui.standard_styler.params.focus_ring_color,
+                1
+            )
+        end
     end,
 
     ---Draws a joystick's inner part with the specified parameters.

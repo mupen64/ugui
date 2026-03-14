@@ -46,6 +46,7 @@
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
+---@field public next_uid UID? The UID of the next control in the tab order. If nil, the control with the next-highest UID will be used.
 ---The base class for all controls.
 
 ---@class Button : Control
@@ -411,3 +412,7 @@ ugui.keycodes = {
 ---@field public selection_start integer? The new textbox selection start index.
 ---@field public selection_end integer? The new textbox selection end index.
 ---@field public caret_index integer? The new textbox caret index.
+
+---@class UguiFocusChain
+---@field previous UID
+---@field next UID

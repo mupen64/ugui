@@ -45,7 +45,7 @@ ugui.begin_frame = function(environment)
     end
     if not environment.window_size then
         -- Assume unbounded window size if user is too lazy to provide one
-        environment.window_size = { x = math.maxinteger, y = math.maxinteger }
+        environment.window_size = {x = math.maxinteger, y = math.maxinteger}
     end
     ugui.internal.previous_environment = ugui.internal.deep_clone(ugui.internal
         .environment)
@@ -85,6 +85,10 @@ ugui.end_frame = function()
 
         revert_styler_mixin()
 
+        if control.uid == ugui.internal.keyboard_captured_control then
+            ugui.standard_styler.draw_focus_ring(control.rectangle)
+        end
+
         if ugui.DEBUG then
             if ugui.internal.keyboard_captured_control == control.uid then
                 BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
@@ -96,6 +100,7 @@ ugui.end_frame = function()
     end
 
     ugui.internal.tooltip()
+    ugui.internal.handle_tab_navigation()
 
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}

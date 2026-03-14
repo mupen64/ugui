@@ -385,4 +385,126 @@ ugui.internal = {
             nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
+
+    ---Gets the focus chain for a control or the scene.
+    ---@param control Control? The control to get the focus chain for, or nil to get the focus chain for the scene.
+    ---@return UguiFocusChain
+    get_focus_chain = function(control)
+        local min_uid = nil
+        local max_uid = nil
+
+        for _, entry in ipairs(ugui.internal.scene) do
+            local control = entry.control
+
+            if control.is_enabled == false then
+                goto continue
+            end
+
+            if min_uid == nil or control.uid < min_uid then
+                min_uid = control.uid
+            end
+            if max_uid == nil or control.uid > max_uid then
+                max_uid = control.uid
+            end
+
+            ::continue::
+        end
+
+        if not control then
+            return {previous = max_uid, next = min_uid}
+        end
+
+        local uid = control.uid
+        local prev_uid = nil
+        local next_uid = nil
+
+        for _, entry in ipairs(ugui.internal.scene) do
+            local control = entry.control
+            local cid = control.uid
+
+            if control.is_enabled == false then
+                goto continue
+            end
+
+            if uid == nil then
+                goto continue
+            end
+
+            if cid < uid then
+                if prev_uid == nil or cid > prev_uid then
+                    prev_uid = cid
+                end
+            elseif cid > uid then
+                if next_uid == nil or cid < next_uid then
+                    next_uid = cid
+                end
+            end
+
+            ::continue::
+        end
+
+        if prev_uid == nil and max_uid ~= nil then
+            prev_uid = max_uid
+        end
+
+        if next_uid == nil and min_uid ~= nil then
+            next_uid = min_uid
+        end
+
+        if control.next_uid ~= nil then
+            next_uid = control.next_uid
+
+            while true do
+                local next_control = ugui.internal.get_control_with_uid(next_uid)
+                if not next_control then
+                    break
+                end
+
+                if next_control.is_enabled == false then
+                    local chain = ugui.internal.get_focus_chain(next_control)
+                    next_uid = chain.next
+                end
+
+                break
+            end
+        end
+
+        return {previous = prev_uid, next = next_uid}
+    end,
+
+    ---Gets the control with the given UID in the scene.
+    ---@param uid UID?
+    ---@return Control?
+    get_control_with_uid = function(uid)
+        if uid == nil then
+            return nil
+        end
+
+        for i = 1, #ugui.internal.scene, 1 do
+            local control = ugui.internal.scene[i].control
+            if control.uid == uid then
+                return control
+            end
+        end
+        return nil
+    end,
+
+    ---Handles tab navigation.
+    handle_tab_navigation = function()
+        local keyboard_captured_control = ugui.internal.get_control_with_uid(ugui.internal.keyboard_captured_control)
+
+        for _, e in pairs(ugui.internal.environment.key_events) do
+            if e.keycode == ugui.keycodes.VK_TAB and e.pressed then
+                local reverse = e.shift
+
+                local chain = ugui.internal.get_focus_chain(keyboard_captured_control)
+
+                if reverse then
+                    ugui.internal.keyboard_captured_control = chain.previous
+                else
+                    ugui.internal.keyboard_captured_control = chain.next
+                end
+            end
+        end
+    end,
 }
