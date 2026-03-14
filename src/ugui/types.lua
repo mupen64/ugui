@@ -142,7 +142,7 @@
 ---@field public signal_change SignalChangeState The change state of the control's primary signal.
 ---Additional information about a placed control.
 
----@alias ControlType "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
+---@alias ControlType "label" | "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
 
 ---@alias ControlReturnValue { primary: any, meta: Meta }
 
