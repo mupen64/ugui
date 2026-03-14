@@ -1,0 +1,12 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
+---@class Environment
+---@field public mouse_position { x: number, y: number } The mouse position.
+---@field public wheel number The mouse wheel delta.
+---@field public is_primary_down boolean? Whether the primary mouse button is being pressed.
+---@field public key_events UguiKeyEventArgs[] The key events that happened since the last frame.
+---@field public window_size { x: number, y: number }? The rendering bounds. If nil, no rendering bounds are considered and certain controls, such as menus, might overflow off-screen.

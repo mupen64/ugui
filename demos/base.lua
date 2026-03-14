@@ -7,6 +7,18 @@ BreitbandGraphics = dofile(path_root .. 'build\\breitbandgraphics-amalgamated.lu
 ---@module "ugui"
 ugui = dofile(path_root .. 'build\\ugui-amalgamated.lua')
 
+ugui.STATIC_ENV = {
+    clipboard = {
+        get = function()
+            return clipboard.get('text')
+        end,
+        set = function(text)
+            print(text)
+            clipboard.set('text', text)
+        end,
+    },
+}
+
 local frame_times = {}
 local last_frame_time = nil
 local key_events = {}
