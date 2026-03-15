@@ -93,15 +93,12 @@ ugui.registry.textbox = {
                         end
                     end
 
-                    -- if e.keycode == ugui.keycodes.VK_C and e.ctrl then
-                    --     if has_selection then
-                    --         local selected_text = data.text:sub(lower_selection, higher_selection)
-                    --         ugui.STATIC_ENV.clipboard.set(selected_text)
-                    --     end
-                    -- end
+                    if e.keycode == ugui.keycodes.VK_C and e.ctrl and has_selection then
+                        local selected_text = data.text:sub(lower_selection, higher_selection)
+                        ugui.STATIC_ENV.clipboard.set(selected_text)
+                    end
                 end
 
-                    print("typed", e.text)
                 if e.text then
                     if has_selection then
                         local lower_selection = math.min(data.selection_start, data.selection_end)
