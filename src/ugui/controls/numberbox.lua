@@ -83,11 +83,23 @@ ugui.registry.numberbox = {
                     end
                 end
                 if e.text then
-                    if tonumber(e.text) == nil then
+                    -- accept only digit characters for insertion/paste
+                    local digits = e.text:match('^%d+$')
+                    if not digits then
                         goto continue
                     end
-                    data.value = ugui.internal.set_digit_range(data.value, control.places, e.text, data.caret_index)
-                    data.caret_index = data.caret_index + #e.text
+
+                    -- clamp/truncate so caret_index + #digits - 1 does not exceed control.places
+                    local max_digits = control.places - data.caret_index + 1
+                    if max_digits <= 0 then
+                        goto continue
+                    end
+                    if #digits > max_digits then
+                        digits = digits:sub(1, max_digits)
+                    end
+
+                    data.value = ugui.internal.set_digit_range(data.value, control.places, digits, data.caret_index)
+                    data.caret_index = data.caret_index + #digits
                 end
                 ::continue::
             end
