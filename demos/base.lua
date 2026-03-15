@@ -13,7 +13,6 @@ ugui.STATIC_ENV = {
             return clipboard.get('text')
         end,
         set = function(text)
-            print(text)
             clipboard.set('text', text)
         end,
     },
