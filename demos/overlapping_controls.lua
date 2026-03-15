@@ -137,6 +137,14 @@ emu.atdrawd2d(function()
         font_name = ugui.standard_styler.params.font_name,
         font_size = ugui.standard_styler.params.font_size,
     })
+    ugui.label({
+        uid = 75,
+        rectangle = {x = 350, y = 150, width = 160, height = 23},
+        text = 'Hello World!',
+        color = BreitbandGraphics.colors.black,
+        font_name = "Wingdings",
+        font_size = 24,
+    })
 
     end_frame()
 end)
