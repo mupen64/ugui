@@ -79,13 +79,13 @@ ugui.registry.numberbox = {
                     end
                 end
                 if e.text then
-                    local num = tonumber(e.text)
-
-                    if num then
-                        data.value = ugui.internal.set_digit(data.value, control.places, num, data.caret_index)
-                        data.caret_index = data.caret_index + 1
+                    if tonumber(e.text) == nil then
+                        goto continue
                     end
+                    data.value = ugui.internal.set_digit_range(data.value, control.places, e.text, data.caret_index)
+                    data.caret_index = data.caret_index + #e.text
                 end
+                ::continue::
             end
 
             if ugui.internal.is_mouse_wheel_up() then

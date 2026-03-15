@@ -166,6 +166,29 @@ ugui.internal.set_digit = function(value, length, digit_value, index)
     return (new_value + max) % max
 end
 
+---Sets a range of digits in a padded number.
+---@param value integer The number.
+---@param length integer The number's padded length.
+---@param digits string The digits to insert.
+---@param index integer The starting index (1 = leftmost).
+---@return integer
+ugui.internal.set_digit_range = function(value, length, digits, index)
+    local count = #digits
+    local digits_value = tonumber(digits)
+
+    local insert_pow = math.pow(10, length - index - count + 1)
+    local range_pow = math.pow(10, count)
+
+    -- extract existing digits in that range
+    local old_range = math.floor(value / insert_pow) % range_pow
+
+    -- replace them
+    local new_value = value + (digits_value - old_range) * insert_pow
+
+    local max = math.pow(10, length)
+    return (new_value + max) % max
+end
+
 ---Remaps a value from one range to another.
 ---@param value number The value.
 ---@param from1 number The lower bound of the first range.
