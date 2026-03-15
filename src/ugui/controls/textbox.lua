@@ -101,6 +101,11 @@ ugui.registry.textbox = {
                         local selected_text = data.text:sub(lower_selection, higher_selection - 1)
                         ugui.STATIC_ENV.clipboard.set(selected_text)
                     end
+
+                    if e.keycode == ugui.keycodes.VK_A and e.ctrl then
+                        data.selection_start = 1
+                        data.selection_end = #data.text + 1
+                    end
                 end
 
                 if e.text then
