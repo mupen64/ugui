@@ -307,15 +307,16 @@ ugui.standard_styler = {
     ---Computes the segment data of rich text.
     ---@param text RichText The rich text.
     ---@param plaintext boolean? Whether the text is drawn without rich formatting. If nil, false is assumed.
+    ---@param font_name string The font name to use for the text.
+    ---@param font_size number The font size to use for the text.
     ---@return { segment_data: { segment: RichTextSegment, rectangle: Rectangle }[], size: Vector2  } # The computed rich text segment data.
-    compute_rich_text = function(text, plaintext)
+    compute_rich_text = function(text, plaintext, font_name, font_size)
         if not text then
             return {segment_data = {}, size = {x = 0, y = 0}}
         end
 
         if plaintext then
-            local size = BreitbandGraphics.get_text_size(text, ugui.standard_styler.params.font_size,
-                ugui.standard_styler.params.font_name)
+            local size = BreitbandGraphics.get_text_size(text, font_size, font_name)
             return {
                 segment_data = {
                     segment = {
@@ -355,8 +356,8 @@ ugui.standard_styler = {
                 }
                 x = x + ugui.standard_styler.params.icon_size
             elseif segment.type == 'text' then
-                local size = BreitbandGraphics.get_text_size(segment.value, ugui.standard_styler.params.font_size,
-                    ugui.standard_styler.params.font_name)
+                local size = BreitbandGraphics.get_text_size(segment.value, font_size,
+                    font_name)
                 segment_data[#segment_data + 1] = {
                     segment = segment,
                     rectangle = {
@@ -404,9 +405,13 @@ ugui.standard_styler = {
     ---@param color Color The rich text's color. If a rich text segment contains a color, it is used instead.
     ---@param visual_state VisualState The visual state for rich icons.
     ---@param plaintext boolean? Whether the text is drawn without rich formatting. If nil, false is assumed.
-    draw_rich_text = function(rectangle, align_x, align_y, text, color, visual_state, plaintext)
+    ---@param font_name string? The font name to use for the text. If nil, the default is assumed.
+    ---@param font_size number? The font size to use for the text. If nil, the default is assumed.
+    draw_rich_text = function(rectangle, align_x, align_y, text, color, visual_state, plaintext, font_name, font_size)
         align_x = align_x or BreitbandGraphics.alignment.center
         align_y = align_y or BreitbandGraphics.alignment.center
+        font_name = font_name or ugui.standard_styler.params.font_name
+        font_size = font_size or ugui.standard_styler.params.font_size
 
         if plaintext then
             BreitbandGraphics.draw_text2({
@@ -415,8 +420,8 @@ ugui.standard_styler = {
                 color = color,
                 align_x = align_x,
                 align_y = align_y,
-                font_name = ugui.standard_styler.params.font_name,
-                font_size = ugui.standard_styler.params.font_size,
+                font_name = font_name,
+                font_size = font_size,
                 clip = true,
                 aliased = not ugui.standard_styler.params.cleartype,
             })
@@ -424,7 +429,7 @@ ugui.standard_styler = {
         end
 
         -- 1. Compute rich text segment data
-        local computed = ugui.standard_styler.compute_rich_text(text, plaintext)
+        local computed = ugui.standard_styler.compute_rich_text(text, plaintext, font_name, font_size)
         local segment_data = computed.segment_data
         local total_width = computed.size.x
 
@@ -477,8 +482,8 @@ ugui.standard_styler = {
                     color = color,
                     align_x = BreitbandGraphics.alignment.start,
                     align_y = BreitbandGraphics.alignment.start,
-                    font_name = ugui.standard_styler.params.font_name,
-                    font_size = ugui.standard_styler.params.font_size,
+                    font_name = font_name,
+                    font_size = font_size,
                     clip = true,
                     aliased = not ugui.standard_styler.params.cleartype,
                 })

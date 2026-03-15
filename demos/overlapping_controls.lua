@@ -142,6 +142,8 @@ emu.atdrawd2d(function()
         rectangle = {x = 350, y = 150, width = 160, height = 23},
         text = 'Hello World!',
         color = BreitbandGraphics.colors.black,
+        font_name = "Wingdings",
+        font_size = 24,
     })
 
     end_frame()
