@@ -29,17 +29,6 @@
 ---@alias RichTextSegment { type: ["text"|"icon"], value: string, color: string? }
 ---Represents a computed segment from a rich text string.
 
----@class UguiKeyEventArgs
----@field keycode UguiVKeycodes? The virtual keycode, if the event is a key event.
----@field ctrl boolean Whether the Ctrl key is held down.
----@field alt boolean Whether the Alt key is held down.
----@field shift boolean Whether the Shift key is held down.
----@field meta boolean Whether the Meta key is held down.
----@field pressed boolean? Whether the key was pressed or released, if the event is a key event.
----@field text string? The typed character, if the event is a char event and the key corresponds to a character.
----@field repeat boolean Whether the event is a repeat event (i.e. the key is being held down and this event is firing multiple times).
-
-
 ---@class ToolTip
 ---@field public text RichText The tooltip's text.
 ---A tooltip, which can be used to show additional information about a control.
@@ -48,9 +37,9 @@
 ---@field public signal_change SignalChangeState The change state of the control's primary signal.
 ---Additional information about a placed control.
 
----@alias ControlType "label" | "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
-
 ---@alias ControlReturnValue { primary: any, meta: Meta }
+
+---@alias ControlType "label" | "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
 
 ---@enum VisualState
 -- The possible states of a control, which are used by the styler for drawing.
