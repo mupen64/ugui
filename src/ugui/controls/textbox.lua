@@ -118,10 +118,16 @@ ugui.registry.textbox = {
                         end
                     elseif e.keycode == ugui.keycodes.VK_LEFT then
                         if e.ctrl then
-                            local prev_word, _ = surrounding_word_index(data.text, data.caret_index)
-                            data.selection_start = prev_word
-                            data.selection_end = prev_word
-                            data.caret_index = prev_word
+                            local prev_word, _ = surrounding_word_index(data.text, lower_selection)
+
+                            if e.shift then
+                                data.selection_start = prev_word
+                                data.caret_index = prev_word
+                            else
+                                data.selection_start = prev_word
+                                data.selection_end = prev_word
+                                data.caret_index = prev_word
+                            end
                         else
                             if has_selection then
                                 data.selection_start = lower_selection
@@ -135,10 +141,15 @@ ugui.registry.textbox = {
                         end
                     elseif e.keycode == ugui.keycodes.VK_RIGHT then
                         if e.ctrl then
-                            local _, next_word = surrounding_word_index(data.text, data.caret_index)
-                            data.selection_start = next_word
-                            data.selection_end = next_word
-                            data.caret_index = next_word
+                            local _, next_word = surrounding_word_index(data.text, higher_selection)
+                            if e.shift then
+                                data.selection_end = next_word
+                                data.caret_index = next_word
+                            else
+                                data.selection_start = next_word
+                                data.selection_end = next_word
+                                data.caret_index = next_word
+                            end
                         else
                             if has_selection then
                                 data.selection_start = higher_selection
