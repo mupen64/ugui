@@ -38,7 +38,7 @@ ugui.registry.label = {
 
 ---Places a Label.
 ---@param control Label The control table.
----@return integer, Meta # Nothing.
+---@return nil, Meta # Nothing.
 ugui.label = function(control)
     local result = ugui.control(control, 'label')
     return result.primary, result.meta
