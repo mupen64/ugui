@@ -141,7 +141,8 @@ end
 ---@param index integer The index into the first string to begin inserting the second string at.
 ---@return string # A new string with the other string inserted.
 ugui.internal.insert_at = function(string, string2, index)
-    return string:sub(1, index) .. string2 .. string:sub(index + string2:len(), string:len())
+    index = math.max(1, math.min(index, #string + 1))
+    return string:sub(1, index - 1) .. string2 .. string:sub(index)
 end
 
 ---Gets the digit at a specific index in a number with a specific padded length.
@@ -162,6 +163,29 @@ end
 ugui.internal.set_digit = function(value, length, digit_value, index)
     local old_digit_value = ugui.internal.get_digit(value, length, index)
     local new_value = value + (digit_value - old_digit_value) * math.pow(10, length - index)
+    local max = math.pow(10, length)
+    return (new_value + max) % max
+end
+
+---Sets a range of digits in a padded number.
+---@param value integer The number.
+---@param length integer The number's padded length.
+---@param digits string The digits to insert.
+---@param index integer The starting index (1 = leftmost).
+---@return integer
+ugui.internal.set_digit_range = function(value, length, digits, index)
+    local count = #digits
+    local digits_value = tonumber(digits)
+
+    local insert_pow = math.pow(10, length - index - count + 1)
+    local range_pow = math.pow(10, count)
+
+    -- extract existing digits in that range
+    local old_range = math.floor(value / insert_pow) % range_pow
+
+    -- replace them
+    local new_value = value + (digits_value - old_range) * insert_pow
+
     local max = math.pow(10, length)
     return (new_value + max) % max
 end

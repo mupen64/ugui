@@ -43,12 +43,34 @@ ugui.begin_frame = function(environment)
     if not ugui.internal.environment then
         ugui.internal.environment = environment
     end
+
     if not environment.window_size then
         -- Assume unbounded window size if user is too lazy to provide one
-        environment.window_size = { x = math.maxinteger, y = math.maxinteger }
+        environment.window_size = {x = math.maxinteger, y = math.maxinteger}
     end
-    ugui.internal.previous_environment = ugui.internal.deep_clone(ugui.internal
-        .environment)
+
+    -- Replace paste operations with synthetic type events.
+    local clipboard_text
+    for i, e in ipairs(environment.key_events) do
+        if e.pressed and e.keycode == ugui.keycodes.VK_V and e.ctrl then
+            if not clipboard_text then
+                clipboard_text = ugui.STATIC_ENV.clipboard.get()
+            end
+
+            if clipboard_text then
+                environment.key_events[i] = {
+                    ctrl = false,
+                    shift = false,
+                    alt = false,
+                    meta = false,
+                    text = clipboard_text,
+                    ['repeat'] = false,
+                }
+            end
+        end
+    end
+
+    ugui.internal.previous_environment = ugui.internal.deep_clone(ugui.internal.environment)
     ugui.internal.environment = ugui.internal.deep_clone(environment)
 
     if ugui.internal.is_mouse_just_down() then
