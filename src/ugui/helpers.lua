@@ -141,7 +141,8 @@ end
 ---@param index integer The index into the first string to begin inserting the second string at.
 ---@return string # A new string with the other string inserted.
 ugui.internal.insert_at = function(string, string2, index)
-    return string:sub(1, index) .. string2 .. string:sub(index + string2:len(), string:len())
+    index = math.max(1, math.min(index, #string + 1))
+    return string:sub(1, index - 1) .. string2 .. string:sub(index)
 end
 
 ---Gets the digit at a specific index in a number with a specific padded length.

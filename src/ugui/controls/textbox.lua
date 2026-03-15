@@ -112,7 +112,7 @@ ugui.registry.textbox = {
 
                         data.last_changed_anchor = 'caret'
                     end
-                    data.text = ugui.internal.insert_at(data.text, e.text, data.caret_index - 1)
+                    data.text = ugui.internal.insert_at(data.text, e.text, data.caret_index)
                     data.caret_index = data.caret_index + #e.text
                     data.last_changed_anchor = 'caret'
                 end
