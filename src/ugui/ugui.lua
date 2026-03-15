@@ -10,6 +10,7 @@ local ugui = {
     _DESCRIPTION = 'Flexible immediate-mode GUI library for Mupen Lua',
     _LICENSE = 'GPL-3',
     DEBUG = false,
+    STATIC_ENV = {},
 }
 
 if not BreitbandGraphics then

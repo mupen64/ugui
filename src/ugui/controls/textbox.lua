@@ -92,6 +92,11 @@ ugui.registry.textbox = {
                             data.last_changed_anchor = 'caret'
                         end
                     end
+
+                    if e.keycode == ugui.keycodes.VK_C and e.ctrl and has_selection then
+                        local selected_text = data.text:sub(lower_selection, higher_selection - 1)
+                        ugui.STATIC_ENV.clipboard.set(selected_text)
+                    end
                 end
 
                 if e.text then
@@ -107,8 +112,8 @@ ugui.registry.textbox = {
 
                         data.last_changed_anchor = 'caret'
                     end
-                    data.text = ugui.internal.insert_at(data.text, e.text, data.caret_index - 1)
-                    data.caret_index = data.caret_index + 1
+                    data.text = ugui.internal.insert_at(data.text, e.text, data.caret_index)
+                    data.caret_index = data.caret_index + #e.text
                     data.last_changed_anchor = 'caret'
                 end
             end

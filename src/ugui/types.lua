@@ -31,13 +31,6 @@
 ---@field text string? The typed character, if the event is a char event and the key corresponds to a character.
 ---@field repeat boolean Whether the event is a repeat event (i.e. the key is being held down and this event is firing multiple times).
 
----@class Environment
----@field public mouse_position { x: number, y: number } The mouse position.
----@field public wheel number The mouse wheel delta.
----@field public is_primary_down boolean? Whether the primary mouse button is being pressed.
----@field public key_events UguiKeyEventArgs[] The key events that happened since the last frame.
----@field public window_size { x: number, y: number }? The rendering bounds. If nil, no rendering bounds are considered and certain controls, such as menus, might overflow off-screen.
-
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.

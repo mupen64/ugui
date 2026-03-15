@@ -77,15 +77,31 @@ ugui.registry.numberbox = {
                     if e.keycode == ugui.keycodes.VK_DOWN then
                         increment_digit(data.caret_index, -1)
                     end
-                end
-                if e.text then
-                    local num = tonumber(e.text)
-
-                    if num then
-                        data.value = ugui.internal.set_digit(data.value, control.places, num, data.caret_index)
-                        data.caret_index = data.caret_index + 1
+                    if e.keycode == ugui.keycodes.VK_C and e.ctrl then
+                        local digit = ugui.internal.get_digit(data.value, control.places, data.caret_index)
+                        ugui.STATIC_ENV.clipboard.set(tostring(digit))
                     end
                 end
+                if e.text then
+                    -- accept only digit characters for insertion/paste
+                    local digits = e.text:match('^%d+$')
+                    if not digits then
+                        goto continue
+                    end
+
+                    -- clamp/truncate so caret_index + #digits - 1 does not exceed control.places
+                    local max_digits = control.places - data.caret_index + 1
+                    if max_digits <= 0 then
+                        goto continue
+                    end
+                    if #digits > max_digits then
+                        digits = digits:sub(1, max_digits)
+                    end
+
+                    data.value = ugui.internal.set_digit_range(data.value, control.places, digits, data.caret_index)
+                    data.caret_index = data.caret_index + #digits
+                end
+                ::continue::
             end
 
             if ugui.internal.is_mouse_wheel_up() then

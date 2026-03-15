@@ -30,6 +30,9 @@ JOBS: list[tuple[list[Path], Path]] = [
         [
             Path("src/ugui/ugui.lua"),
             Path("src/ugui/types.lua"),
+            Path("src/ugui/environment/static_env.lua"),
+            Path("src/ugui/environment/env.lua"),
+            Path("src/ugui/environment/clipboard.lua"),
             Path("src/ugui/core.lua"),
             Path("src/ugui/internal.lua"),
             Path("src/ugui/helpers.lua"),
