@@ -49,7 +49,7 @@ ugui.begin_frame = function(environment)
         environment.window_size = {x = math.maxinteger, y = math.maxinteger}
     end
 
-    -- Replace paste operations with synthethic type events.
+    -- Replace paste operations with synthetic type events.
     local clipboard_text = ugui.STATIC_ENV.clipboard.get()
     if clipboard_text then
         for i, e in ipairs(environment.key_events) do
