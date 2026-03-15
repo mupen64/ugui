@@ -62,6 +62,10 @@ ugui.registry.listbox = {
                     if e.keycode == ugui.keycodes.VK_DOWN and data.selected_index ~= nil then
                         data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
                     end
+                    if e.keycode == ugui.keycodes.VK_C and e.ctrl and data.selected_index ~= nil then
+                        local item = control.items[data.selected_index]
+                        ugui.STATIC_ENV.clipboard.set(item)
+                    end
                     if not y_overflow then
                         if e.keycode == ugui.keycodes.VK_HOME or e.keycode == ugui.keycodes.VK_PRIOR then
                             data.selected_index = 1
