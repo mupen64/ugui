@@ -4,6 +4,14 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class Spinner : Control
+---@field public value number The spinner's numerical value.
+---@field public increment number? The increment applied when the + or - buttons are clicked (negated when - is clicked). If nil, 1 is assumed.
+---@field public minimum_value number? The minimum value.
+---@field public maximum_value number? The maximum value.
+---@field public is_horizontal boolean? Whether the increment buttons are stacked horizontally.
+---A spinner, consisting of a textbox and buttons for incrementing or decrementing a number.
+
 ---Places a Spinner.
 ---@param control Spinner The control table.
 ---@return number, Meta # The new value.

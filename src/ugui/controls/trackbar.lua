@@ -4,6 +4,10 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class Trackbar : Control
+---@field public value number The current value in the range 0-1.
+---A trackbar which can have its value adjusted.
+
 ---@type ControlRegistryEntry
 ugui.registry.trackbar = {
     ---@param control Trackbar

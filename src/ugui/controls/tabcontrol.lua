@@ -4,6 +4,15 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class TabControl : Control
+---@field public items RichText[] The tab headers.
+---@field public selected_index integer The index of the currently selected tab.
+---A tab control, which allows the user to choose from a list of tabs.
+
+---@class TabControlResult
+---@field public selected_index integer The index of the selected tab.
+---@field public rectangle Rectangle The visual bounds the selected tab can place its contents in.
+
 ---Places a TabControl.
 ---@param control TabControl The control table.
 ---@return TabControlResult, Meta # The result.

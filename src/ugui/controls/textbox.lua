@@ -4,6 +4,10 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class TextBox : Control
+---@field public text string The text contained in the textbox.
+---A textbox which can be edited.
+
 ---@type ControlRegistryEntry
 ugui.registry.textbox = {
     ---@param control TextBox

@@ -4,6 +4,10 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class ToggleButton : Button
+---@field public is_checked boolean? Whether the button is checked. If nil, the ToggleButton is considered unchecked.
+---A button which can be toggled on and off.
+
 ---@type ControlRegistryEntry
 ugui.registry.toggle_button = {
     ---@param control ToggleButton
