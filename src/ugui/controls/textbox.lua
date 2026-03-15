@@ -8,6 +8,47 @@
 ---@field public text string The text contained in the textbox.
 ---A textbox which can be edited.
 
+
+---Gets the index of the surrounding words in the specified text.
+---@param text string The text to search.
+---@param from integer The index to start searching from.
+---@return integer, integer The index of the surrounding words.
+local function surrounding_word_index(text, from)
+    local lo = 1
+    local hi = #text + 1
+
+    local function classify(c)
+        if c:match('%s') ~= nil then
+            return 'space'
+        end
+        if c:match('[%w_]') ~= nil then
+            return 'char'
+        end
+        return 'punct'
+    end
+
+    local initial_class = classify(text:sub(from, from))
+    local initial_class_lo = classify(text:sub(from - 1, from - 1))
+
+    for i = from - 1, 1, -1 do
+        local class = classify(text:sub(i, i))
+        if class ~= initial_class_lo then
+            lo = i + 1
+            break
+        end
+    end
+
+    for i = from, #text, 1 do
+        local class = classify(text:sub(i, i))
+        if class ~= initial_class then
+            hi = i
+            break
+        end
+    end
+
+    return lo, hi
+end
+
 ---@type ControlRegistryEntry
 ugui.registry.textbox = {
     ---@param control TextBox
@@ -76,24 +117,38 @@ ugui.registry.textbox = {
                             data.last_changed_anchor = 'caret'
                         end
                     elseif e.keycode == ugui.keycodes.VK_LEFT then
-                        if has_selection then
-                            data.selection_start = lower_selection
-                            data.selection_end = lower_selection
-                            data.caret_index = lower_selection
-                            data.last_changed_anchor = 'caret'
+                        if e.ctrl then
+                            local prev_word, _ = surrounding_word_index(data.text, data.caret_index)
+                            data.selection_start = prev_word
+                            data.selection_end = prev_word
+                            data.caret_index = prev_word
                         else
-                            data.caret_index = data.caret_index - 1
-                            data.last_changed_anchor = 'caret'
+                            if has_selection then
+                                data.selection_start = lower_selection
+                                data.selection_end = lower_selection
+                                data.caret_index = lower_selection
+                                data.last_changed_anchor = 'caret'
+                            else
+                                data.caret_index = data.caret_index - 1
+                                data.last_changed_anchor = 'caret'
+                            end
                         end
                     elseif e.keycode == ugui.keycodes.VK_RIGHT then
-                        if has_selection then
-                            data.selection_start = higher_selection
-                            data.selection_end = higher_selection
-                            data.caret_index = higher_selection
-                            data.last_changed_anchor = 'caret'
+                        if e.ctrl then
+                            local _, next_word = surrounding_word_index(data.text, data.caret_index)
+                            data.selection_start = next_word
+                            data.selection_end = next_word
+                            data.caret_index = next_word
                         else
-                            data.caret_index = data.caret_index + 1
-                            data.last_changed_anchor = 'caret'
+                            if has_selection then
+                                data.selection_start = higher_selection
+                                data.selection_end = higher_selection
+                                data.caret_index = higher_selection
+                                data.last_changed_anchor = 'caret'
+                            else
+                                data.caret_index = data.caret_index + 1
+                                data.last_changed_anchor = 'caret'
+                            end
                         end
                     end
 
