@@ -77,6 +77,10 @@ ugui.registry.numberbox = {
                     if e.keycode == ugui.keycodes.VK_DOWN then
                         increment_digit(data.caret_index, -1)
                     end
+                    if e.keycode == ugui.keycodes.VK_C and e.ctrl then
+                        local digit = ugui.internal.get_digit(data.value, control.places, data.caret_index)
+                        ugui.STATIC_ENV.clipboard.set(tostring(digit))
+                    end
                 end
                 if e.text then
                     if tonumber(e.text) == nil then
