@@ -50,10 +50,14 @@ ugui.begin_frame = function(environment)
     end
 
     -- Replace paste operations with synthetic type events.
-    local clipboard_text = ugui.STATIC_ENV.clipboard.get()
-    if clipboard_text then
-        for i, e in ipairs(environment.key_events) do
-            if e.pressed and e.keycode == ugui.keycodes.VK_V and e.ctrl then
+    local clipboard_text
+    for i, e in ipairs(environment.key_events) do
+        if e.pressed and e.keycode == ugui.keycodes.VK_V and e.ctrl then
+            if not clipboard_text then
+                clipboard_text = ugui.STATIC_ENV.clipboard.get()
+            end
+
+            if clipboard_text then
                 environment.key_events[i] = {
                     ctrl = false,
                     shift = false,
