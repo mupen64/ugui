@@ -4,6 +4,14 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class ControlRegistryEntry
+---@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
+---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
+---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
+---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
+---@field public draw fun(control: Control) Draws the control.
+---Represents an entry in the control registry.
+
 ---@type { [string]: ControlRegistryEntry }
 ugui.registry = {}
 
