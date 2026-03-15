@@ -12,6 +12,72 @@
 ---@field public draw fun(control: Control) Draws the control.
 ---Represents an entry in the control registry.
 
+---@alias UID number
+---Unique identifier for a control. Must be unique within a frame.
+
+---@alias RichText string
+---Text which can contain other inline elements, such as icons.
+---
+---Examples:
+---
+---    [icon:arrow_left] Go Back
+---    Move up [icon:arrow_up]
+---    Down [icon:arrow_down:#FFFF00]
+---    [icon:arrow_right:textbox.selection] Go Forward
+---    Hello World!
+
+---@alias RichTextSegment { type: ["text"|"icon"], value: string, color: string? }
+---Represents a computed segment from a rich text string.
+
+---@class UguiKeyEventArgs
+---@field keycode UguiVKeycodes? The virtual keycode, if the event is a key event.
+---@field ctrl boolean Whether the Ctrl key is held down.
+---@field alt boolean Whether the Alt key is held down.
+---@field shift boolean Whether the Shift key is held down.
+---@field meta boolean Whether the Meta key is held down.
+---@field pressed boolean? Whether the key was pressed or released, if the event is a key event.
+---@field text string? The typed character, if the event is a char event and the key corresponds to a character.
+---@field repeat boolean Whether the event is a repeat event (i.e. the key is being held down and this event is firing multiple times).
+
+
+---@class ToolTip
+---@field public text RichText The tooltip's text.
+---A tooltip, which can be used to show additional information about a control.
+
+---@class Meta
+---@field public signal_change SignalChangeState The change state of the control's primary signal.
+---Additional information about a placed control.
+
+---@alias ControlType "label" | "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
+
+---@alias ControlReturnValue { primary: any, meta: Meta }
+
+---@enum VisualState
+-- The possible states of a control, which are used by the styler for drawing.
+ugui.visual_states = {
+    --- The control doesn't accept user interactions.
+    disabled = 0,
+    --- The control isn't being interacted with.
+    normal = 1,
+    --- The mouse is over the control.
+    hovered = 2,
+    --- The control is currently capturing inputs.
+    active = 3,
+}
+
+---@enum SignalChangeState
+--- The change in the primary signal ("return value") of a control.
+ugui.signal_change_states = {
+    --- The signal isn't changing.
+    none = 0,
+    --- The signal has just started changing.
+    started = 1,
+    --- The signal is currently changing.
+    ongoing = 2,
+    --- The signal has just stopped changing.
+    ended = 3,
+}
+
 ---@type { [string]: ControlRegistryEntry }
 ugui.registry = {}
 
