@@ -4,6 +4,12 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class CarrouselButton : Control
+---@field public items string[] The items contained in the carrousel button.
+---@field public selected_index integer The index of the currently selected item into the items array.
+---A button which can be toggled on and off.
+---TODO: Make wraparound optional
+
 ---@type ControlRegistryEntry
 ugui.registry.carrousel_button = {
     ---@param control CarrouselButton

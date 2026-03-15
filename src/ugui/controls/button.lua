@@ -4,6 +4,10 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class Button : Control
+---@field public text RichText The text displayed on the button.
+---A button which can be clicked.
+
 ---@type ControlRegistryEntry
 ugui.registry.button = {
     ---@param control Button

@@ -4,6 +4,69 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class ControlRegistryEntry
+---@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
+---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
+---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
+---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
+---@field public draw fun(control: Control) Draws the control.
+---Represents an entry in the control registry.
+
+---@alias UID number
+---Unique identifier for a control. Must be unique within a frame.
+
+---@alias RichText string
+---Text which can contain other inline elements, such as icons.
+---
+---Examples:
+---
+---    [icon:arrow_left] Go Back
+---    Move up [icon:arrow_up]
+---    Down [icon:arrow_down:#FFFF00]
+---    [icon:arrow_right:textbox.selection] Go Forward
+---    Hello World!
+
+---@alias RichTextSegment { type: ["text"|"icon"], value: string, color: string? }
+---Represents a computed segment from a rich text string.
+
+---@class ToolTip
+---@field public text RichText The tooltip's text.
+---A tooltip, which can be used to show additional information about a control.
+
+---@class Meta
+---@field public signal_change SignalChangeState The change state of the control's primary signal.
+---Additional information about a placed control.
+
+---@alias ControlReturnValue { primary: any, meta: Meta }
+
+---@alias ControlType "label" | "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
+
+---@enum VisualState
+-- The possible states of a control, which are used by the styler for drawing.
+ugui.visual_states = {
+    --- The control doesn't accept user interactions.
+    disabled = 0,
+    --- The control isn't being interacted with.
+    normal = 1,
+    --- The mouse is over the control.
+    hovered = 2,
+    --- The control is currently capturing inputs.
+    active = 3,
+}
+
+---@enum SignalChangeState
+--- The change in the primary signal ("return value") of a control.
+ugui.signal_change_states = {
+    --- The signal isn't changing.
+    none = 0,
+    --- The signal has just started changing.
+    started = 1,
+    --- The signal is currently changing.
+    ongoing = 2,
+    --- The signal has just stopped changing.
+    ended = 3,
+}
+
 ---@type { [string]: ControlRegistryEntry }
 ugui.registry = {}
 

@@ -4,6 +4,21 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class MenuItem
+---@field public items MenuItem[]? The item's child items. If nil or empty, the item has no child items and is clickable.
+---@field public enabled boolean? Whether the item is enabled. If nil or true, the item is enabled.
+---@field public checked boolean? Whether the item is checked. If true, the item is checked.
+---@field public text RichText The item's text.
+---Represents an item inside of a Menu.
+
+---@class MenuResult
+---@field public item MenuItem? The item that was clicked, or nil if none was.
+---@field public dismissed boolean Whether the menu was dismissed by clicking outside of it.
+
+---@class Menu : Control
+---@field public items MenuItem[] The items contained in the menu.
+---A menu, which allows the user to choose from a list of items.
+
 ---@type ControlRegistryEntry
 ugui.registry.menu = {
     ---@param control Menu

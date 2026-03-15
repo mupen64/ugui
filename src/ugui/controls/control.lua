@@ -1,0 +1,15 @@
+--
+-- Copyright (c) 2026, Mupen64 maintainers.
+--
+-- SPDX-License-Identifier: GPL-3.0-or-later
+--
+
+---@class Control
+---@field public uid UID The unique identifier of the control.
+---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
+---@field public rectangle Rectangle The rectangle in which the control is drawn.
+---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
+---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
+---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
+---@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
+---The base class for all controls.

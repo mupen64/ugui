@@ -4,6 +4,11 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class ScrollBar : Control
+---@field public value number The scroll proportion in the range 0-1.
+---@field public ratio number The overflow ratio, which is calculated by dividing the desired content dimensions by the relevant attached control's (e.g.: a listbox's) dimensions.
+---A scrollbar which allows scrolling horizontally or vertically, depending on the control's dimensions.
+
 ---@type ControlRegistryEntry
 ugui.registry.scrollbar = {
     ---@param control ScrollBar

@@ -4,6 +4,15 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@class ListBox : Control
+---@field public items RichText[] The items contained in the control.
+---@field public selected_index integer? The index of the currently selected item into the items array.
+---@field public horizontal_scroll boolean? Whether horizontal scrolling will be enabled when items go beyond the width of the control. Will impact performance greatly, use with care.
+---A listbox which allows the user to choose from a list of items.
+---If the items don't fit in the control's bounds vertically, vertical scrolling will be enabled.
+---If the items don't fit in the control's bounds horizontally, horizontal scrolling will be enabled if horizontal_scroll is true.
+---The `rectangle` field might be mutated to accommodate the scrollbars.
+
 ---@type ControlRegistryEntry
 ugui.registry.listbox = {
     ---@param control ListBox

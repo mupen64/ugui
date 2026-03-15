@@ -4,6 +4,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@alias SceneEntry { control: Control, type: ControlType }
+
 ugui.internal = {
     ---@type SceneEntry[]
     scene = {},
