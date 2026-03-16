@@ -58,7 +58,7 @@ Read the [demo scripts](https://github.com/mupen64/ugui/tree/main/demos) for usa
 
 Can render using a built-in Windows 10-like style, or with ninesliced images.
 
-Depends on BreitbandGraphics for rendering.
+Depends on BreitbandGraphics for rendering, which is included in this repository as well ([see below](#breitbandgraphics)).
 
 ### Hackability
 
