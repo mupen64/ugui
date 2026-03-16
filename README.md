@@ -42,6 +42,7 @@ ugui  —  The GUI library
 - `carrousel_button`
 - `combobox`
 - `joystick`
+- `label`
 - `listbox`
   - Scrolling support
   - Unlimited items with no performance degradation
