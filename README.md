@@ -2,15 +2,15 @@
   <img width="128" align="center" src="https://github.com/mupen64/ugui/blob/main/assets/ugui.png?raw=true">
 </p>
 
+<div align="center">
 
-<h1 align="center">
-  ugui
-</h1>
-<p align="center">
-  Flexible immediate-mode GUI library for Lua
-</p>
+# ugui
 
-# 🚀 Quickstart
+Flexible immediate-mode GUI library for Lua
+
+</div>
+
+## 🚀 Quickstart
 
 Download `breitbandgraphics-amalgamated.lua` and `ugui-amalgamated.lua` from the latest [release](https://github.com/mupen64/ugui/releases)
 and place them anywhere in your repository. Then simply do the following in your main script file call `dofile` for them with their absolute file paths, for example:
@@ -30,11 +30,7 @@ ugui = dofile(folder .. 'ugui-amalgamated.lua')
 That's it.  
 Read the [demo scripts](https://github.com/mupen64/ugui/tree/main/demos) for usage examples.
 
-# ✨ Features
-
-<img width="28" align="left" src="https://github.com/mupen64/ugui/blob/main/assets/ugui.png?raw=true">
-
-ugui  —  The GUI library
+## ✨ Features
 
 ### Control Suite
 
@@ -68,16 +64,24 @@ Depends on BreitbandGraphics for rendering.
 
 Any part of the library can be overwritten externally. Future compatibility not guaranteed.
 
-<img width="28" align="left" src="https://github.com/mupen64/ugui/blob/main/assets/breitbandgraphics.png?raw=true">
+---
 
-#
+<p align="center">
+  <img width="128" align="center" src="https://github.com/mupen64/ugui/blob/main/assets/breitbandgraphics.png?raw=true">
+</p>
 
-BreitbandGraphics  —  The rendering abstraction
+<div align="center">
 
-### Backends
+# BreitbandGraphics
+
+The rendering abstraction
+
+</div>
+
+## Backends
 
 Built-in backend for the [Mupen64](https://github.com/mupen64/mupen64-rr-lua) emulator.
 
-### Utilities
+## Utilities
 
 Provides various utilities for color conversion and manipulation.
