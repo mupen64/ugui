@@ -39,23 +39,23 @@ ugui  —  The GUI library
 ### Control Suite
 
 - `button`
-- `textbox`
-- `toggle_button`
 - `carrousel_button`
-- `trackbar`
 - `combobox`
+- `joystick`
 - `listbox`
   - Scrolling support
   - Unlimited items with no performance degradation
-- `scrollbar`
 - `menu`
   - Checkable items
+- `numberbox`
+- `scrollbar`
 - `spinner`
   - Optional negative/positive toggle
-- `numberbox`
 - `tabcontrol`
-- `joystick`
   - Adjustable magnitude circle 
+- `textbox`
+- `toggle_button`
+- `trackbar`
 
 ### Rendering
 
