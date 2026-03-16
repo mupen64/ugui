@@ -12,16 +12,22 @@
 
 # 🚀 Quickstart
 
+Download `breitbandgraphics-amalgamated.lua` and `ugui-amalgamated.lua` from the latest [release](https://github.com/mupen64/ugui/releases)
+and place them anywhere in your repository. Then simply do the following in your main script file call `dofile` for them with their absolute file paths, for example:
+
 ```lua
+
+-- Get the directory where your entry script file is located (Windows, includes trailing backslash)
+folder = debug.getinfo(1).source:sub(2):match('(.*\\)')
+
 ---@module "breitbandgraphics-amalgamated"
-BreitbandGraphics = dofile('breitbandgraphics-amalgamated.lua')
+BreitbandGraphics = dofile(folder .. 'breitbandgraphics-amalgamated.lua')
 
 ---@module "ugui-amalgamated"
-ugui = dofile('ugui-amalgamated.lua')
+ugui = dofile(folder .. 'ugui-amalgamated.lua')
 ```
 
-That's it. Don't forget to pass an absolute path, not a relative one.
-
+That's it.  
 Read the [demo scripts](https://github.com/mupen64/ugui/tree/main/demos) for usage examples.
 
 # ✨ Features
