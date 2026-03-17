@@ -64,6 +64,38 @@ Depends on BreitbandGraphics for rendering, which is included in this repository
 
 Any part of the library can be overwritten externally. Future compatibility not guaranteed.
 
+## 🛠️ Building from source
+
+The `breitbandgraphics-amalgamated.lua` and `ugui-amalgamated.lua` files are both built via the `build.py` python script.
+
+Requirements:
+- Python >= 3.9 ([official download site](https://www.python.org/downloads/))
+- git bash (as included in [Git for Windows](https://git-scm.com/install/windows))
+
+Build steps:
+1. Open a git bash, then clone the repository and navigate into the repository via the following command:
+```bash
+git clone https://github.com/mupen64/ugui.git && cd ./ugui
+```
+2. Create a python virtual environment and activate it:
+```bash
+python -m venv ./.venv
+source ./.venv/Scripts/activate
+```
+> Note: The second line must be executed in each new terminal session in order to build.
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+4. Run the build script:
+```
+python build.py
+```
+
+That's it.  
+`breitbandgraphics-amalgamated.lua` and `ugui-amalgamated.lua` should now have been created in the `./build/` directory.
+
 ---
 
 <p align="center">
