@@ -8,6 +8,7 @@
 ---@field clipboard UguiClipboard? The clipboard access provider.
 ---The script's environment that provides access to external facilities.
 
+---@type UguiStaticEnvironment
 ugui.STATIC_ENV = {
     clipboard = {
         get = function() end,
