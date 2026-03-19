@@ -12,8 +12,9 @@ Flexible immediate-mode GUI library for Lua
 
 ## 🚀 Quickstart
 
-Download `breitbandgraphics-amalgamated.lua` and `ugui-amalgamated.lua` from the latest [release](https://github.com/mupen64/ugui/releases)
-and place them anywhere in your repository. Then simply do the following in your main script file call `dofile` for them with their absolute file paths, for example:
+Download `breitbandgraphics-amalgamated.lua` and `ugui-amalgamated.lua` from the latest [release](https://github.com/mupen64/ugui/releases/latest) and place them anywhere in your project.
+
+Then call `dofile` for them with their absolute paths:
 
 ```lua
 
