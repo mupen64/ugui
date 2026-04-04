@@ -110,87 +110,74 @@ ugui.combobox = function(control)
         end
     end
 
-    ---@type RichText[]
-    local filtered_items = {}
-
-    ---@type integer[] Maps filtered index -> original index
-    local filtered_to_original = {}
-
-    ---@type table<integer, integer> Maps original index -> filtered index
-    local original_to_filtered = {}
-
-    if data.searching then
-        for i, item in ipairs(control.items) do
-            if item:lower():find(data.search_text:lower(), 1, true) then
-                table.insert(filtered_items, item)
-                local filtered_index = #filtered_items
-                filtered_to_original[filtered_index] = i
-                original_to_filtered[i] = filtered_index
-            end
-        end
-    else
-        for i, item in ipairs(control.items) do
-            table.insert(filtered_items, item)
-            filtered_to_original[i] = i
-            original_to_filtered[i] = i
-        end
-    end
-
-
-    -- If there's only one item, select it automatically.
-    if #filtered_items == 1 then
-        data.selected_index = filtered_to_original[1]
-        data.open = false
-    end
-
-    if #filtered_items == 0 then
-        data.open = false
-    end
-
     if data.open then
-        -- Swap out the items so the measurement is correct...
-        if data.searching then
+        local items_to_show = control.items
+        local filtered_to_original = nil
+
+        if control.editable and data.searching then
+            ---@type RichText[]
+            local filtered_items = {}
+
+            ---@type integer[]
+            filtered_to_original = {}
+
+            for i, item in ipairs(control.items) do
+                if item:lower():find(data.search_text:lower(), 1, true) then
+                    table.insert(filtered_items, item)
+                    local filtered_index = #filtered_items
+                    filtered_to_original[filtered_index] = i
+                end
+            end
+
+            if #filtered_items == 1 then
+                data.selected_index = filtered_to_original[1]
+                data.open = false
+            end
+
+            if #filtered_items == 0 then
+                data.open = false
+            end
+
+            items_to_show = filtered_items
             control.items = filtered_items
         end
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
 
-        local width = control.rectangle.width
-        if control.rectangle.x + width > ugui.internal.environment.window_size.x then
-            width = ugui.internal.environment.window_size.x - control.rectangle.x
-        end
+        if data.open then
+            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
 
-        local height = content_bounds.height
-        if control.rectangle.y + height > ugui.internal.environment.window_size.y then
-            height = ugui.internal.environment.window_size.y - control.rectangle.y -
-                ugui.standard_styler.params.listbox_item.height * 2
-        end
+            local width = control.rectangle.width
+            if control.rectangle.x + width > ugui.internal.environment.window_size.x then
+                width = ugui.internal.environment.window_size.x - control.rectangle.x
+            end
 
-        local list_rect = {
-            x = control.rectangle.x,
-            y = control.rectangle.y + control.rectangle.height,
-            width = width,
-            height = height,
-        }
+            local height = content_bounds.height
+            if control.rectangle.y + height > ugui.internal.environment.window_size.y then
+                height = ugui.internal.environment.window_size.y - control.rectangle.y -
+                    ugui.standard_styler.params.listbox_item.height * 2
+            end
 
-        local filtered_selected = original_to_filtered[data.selected_index]
-        if filtered_selected == nil and #filtered_items > 0 then
-            filtered_selected = 1
-        end
+            local list_rect = {
+                x = control.rectangle.x,
+                y = control.rectangle.y + control.rectangle.height,
+                width = width,
+                height = height,
+            }
 
-        local listbox_result, meta_listbox = ugui.listbox({
-            uid = listbox_uid,
-            rectangle = list_rect,
-            items = filtered_items,
-            selected_index = filtered_selected,
-            plaintext = control.plaintext,
-            z_index = math.maxinteger,
-        })
+            local listbox_result, meta_listbox = ugui.listbox({
+                uid = listbox_uid,
+                rectangle = list_rect,
+                items = items_to_show,
+                selected_index = data.selected_index,
+                plaintext = control.plaintext,
+                z_index = math.maxinteger,
+            })
 
-        if meta_listbox.signal_change == ugui.signal_change_states.started then
-            data.selected_index = filtered_to_original[listbox_result]
-            data.searching = false
-            data.search_text = ''
-            data.open = false
+            if meta_listbox.signal_change == ugui.signal_change_states.started then
+                data.selected_index = filtered_to_original and filtered_to_original[listbox_result] or listbox_result
+                data.searching = false
+                data.search_text = ''
+                data.open = false
+            end
         end
     end
 
