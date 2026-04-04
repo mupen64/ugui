@@ -78,7 +78,7 @@ ugui.combobox = function(control)
     local button_size<const> = 30
 
     if control.editable then
-        local current_text = data.searching and data.search_text or control.items[data.selected_index]
+        local current_text = (data.searching and data.search_text or control.items[data.selected_index]) or ''
         local search_text = ugui.textbox({
             uid = textbox_uid,
             rectangle = {
