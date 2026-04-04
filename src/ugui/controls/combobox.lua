@@ -87,6 +87,7 @@ ugui.combobox = function(control)
                 width = control.rectangle.width - button_size,
                 height = control.rectangle.height,
             },
+            is_enabled = control.is_enabled,
             text = current_text,
         })
 
@@ -104,6 +105,7 @@ ugui.combobox = function(control)
                     width = button_size,
                     height = control.rectangle.height,
                 },
+                is_enabled = control.is_enabled,
                 text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
             }) then
             data.open = not data.open
