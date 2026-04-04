@@ -118,12 +118,14 @@ ugui.registry.textbox = {
                         end
                     elseif e.keycode == ugui.keycodes.VK_LEFT then
                         if e.ctrl then
-                            local prev_word, _ = surrounding_word_index(data.text, lower_selection)
-
                             if e.shift then
-                                data.selection_start = prev_word
+                                local prev_word, _ = surrounding_word_index(data.text, data.caret_index)
+                                local anchor = (data.caret_index == data.selection_end) and data.selection_start or data.selection_end
                                 data.caret_index = prev_word
+                                data.selection_start = math.min(anchor, prev_word)
+                                data.selection_end = math.max(anchor, prev_word)
                             else
+                                local prev_word, _ = surrounding_word_index(data.text, lower_selection)
                                 data.selection_start = prev_word
                                 data.selection_end = prev_word
                                 data.caret_index = prev_word
@@ -141,11 +143,14 @@ ugui.registry.textbox = {
                         end
                     elseif e.keycode == ugui.keycodes.VK_RIGHT then
                         if e.ctrl then
-                            local _, next_word = surrounding_word_index(data.text, higher_selection)
                             if e.shift then
-                                data.selection_end = next_word
+                                local _, next_word = surrounding_word_index(data.text, data.caret_index)
+                                local anchor = (data.caret_index == data.selection_start) and data.selection_end or data.selection_start
                                 data.caret_index = next_word
+                                data.selection_start = math.min(anchor, next_word)
+                                data.selection_end = math.max(anchor, next_word)
                             else
+                                local _, next_word = surrounding_word_index(data.text, higher_selection)
                                 data.selection_start = next_word
                                 data.selection_end = next_word
                                 data.caret_index = next_word
