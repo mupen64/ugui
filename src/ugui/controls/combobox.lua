@@ -1,4 +1,3 @@
---
 -- Copyright (c) 2026, Mupen64 maintainers.
 --
 -- SPDX-License-Identifier: GPL-3.0-or-later
@@ -7,6 +6,7 @@
 ---@class ComboBox : Control
 ---@field public items RichText[] The items contained in the control.
 ---@field public selected_index integer? The index of the currently selected item into the items array. If nil, no item is selected.
+---@field public editable boolean? Whether the user can type in the combobox to filter the items.
 ---A combobox which allows the user to choose from a list of items.
 
 ---@type ControlRegistryEntry
@@ -18,12 +18,10 @@ ugui.registry.combobox = {
     end,
     ---@param control ComboBox
     setup = function(control, data)
-        if data.open == nil then
-            data.open = false
-        end
-        if data.hovered_index == nil then
-            data.hovered_index = control.selected_index
-        end
+        data.open = false
+        data.hovered_index = control.selected_index
+        data.searching = false
+        data.search_text = ''
     end,
     ---@param control ComboBox
     ---@return ControlReturnValue
@@ -34,7 +32,8 @@ ugui.registry.combobox = {
             data.open = false
         end
 
-        if ugui.internal.clicked_control == control.uid then
+        -- Only toggle on click if NOT editable (editable mode handles this via the button)
+        if not control.editable and ugui.internal.clicked_control == control.uid then
             data.open = not data.open
         end
 
@@ -55,7 +54,7 @@ ugui.registry.combobox = {
 
         return {
             primary = data.selected_index,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control ComboBox
@@ -72,35 +71,116 @@ ugui.combobox = function(control)
     local result = ugui.control(control, 'combobox')
     local data = ugui.internal.control_data[control.uid]
 
-    if data.open then
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+    local textbox_uid<const> = control.uid + 1
+    local button_uid<const> = control.uid + 2
+    local listbox_uid<const> = control.uid + 3
 
-        local width = control.rectangle.width
-        if control.rectangle.x + width > ugui.internal.environment.window_size.x then
-            width = ugui.internal.environment.window_size.x - control.rectangle.x
-        end
+    local button_size<const> = 30
 
-        local height = content_bounds.height
-        if control.rectangle.y + height > ugui.internal.environment.window_size.y then
-            height = ugui.internal.environment.window_size.y - control.rectangle.y -
-                ugui.standard_styler.params.listbox_item.height * 2
-        end
-
-        local list_rect = {
-            x = control.rectangle.x,
-            y = control.rectangle.y + control.rectangle.height,
-            width = width,
-            height = height,
-        }
-
-        data.selected_index = ugui.listbox({
-            uid = control.uid + 1,
-            rectangle = list_rect,
-            items = control.items,
-            selected_index = data.selected_index,
-            plaintext = control.plaintext,
-            z_index = math.maxinteger,
+    if control.editable then
+        local current_text = (data.searching and data.search_text or control.items[data.selected_index]) or ''
+        local search_text = ugui.textbox({
+            uid = textbox_uid,
+            rectangle = {
+                x = control.rectangle.x,
+                y = control.rectangle.y,
+                width = control.rectangle.width - button_size,
+                height = control.rectangle.height,
+            },
+            is_enabled = control.is_enabled,
+            text = current_text,
         })
+
+        if search_text ~= current_text then
+            data.searching = true
+            data.open = true
+            data.search_text = search_text
+        end
+
+        if ugui.button({
+                uid = button_uid,
+                rectangle = {
+                    x = control.rectangle.x + control.rectangle.width - button_size,
+                    y = control.rectangle.y,
+                    width = button_size,
+                    height = control.rectangle.height,
+                },
+                is_enabled = control.is_enabled,
+                text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
+            }) then
+            data.open = not data.open
+        end
+    end
+
+    if data.open then
+        local items_to_show = control.items
+        local filtered_to_original = nil
+
+        if control.editable and data.searching then
+            ---@type RichText[]
+            local filtered_items = {}
+
+            ---@type integer[]
+            filtered_to_original = {}
+
+            for i, item in ipairs(control.items) do
+                if item:lower():find(data.search_text:lower(), 1, true) then
+                    table.insert(filtered_items, item)
+                    local filtered_index = #filtered_items
+                    filtered_to_original[filtered_index] = i
+                end
+            end
+
+            if #filtered_items == 1 then
+                data.selected_index = filtered_to_original[1]
+                data.open = false
+            end
+
+            if #filtered_items == 0 then
+                data.open = false
+            end
+
+            items_to_show = filtered_items
+            control.items = filtered_items
+        end
+
+        if data.open then
+            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+
+            local width = control.rectangle.width
+            if control.rectangle.x + width > ugui.internal.environment.window_size.x then
+                width = ugui.internal.environment.window_size.x - control.rectangle.x
+            end
+
+            local height = content_bounds.height
+            if control.rectangle.y + height > ugui.internal.environment.window_size.y then
+                height = ugui.internal.environment.window_size.y - control.rectangle.y -
+                    ugui.standard_styler.params.listbox_item.height * 2
+            end
+
+            local list_rect = {
+                x = control.rectangle.x,
+                y = control.rectangle.y + control.rectangle.height,
+                width = width,
+                height = height,
+            }
+
+            local listbox_result, meta_listbox = ugui.listbox({
+                uid = listbox_uid,
+                rectangle = list_rect,
+                items = items_to_show,
+                selected_index = data.selected_index,
+                plaintext = control.plaintext,
+                z_index = math.maxinteger,
+            })
+
+            if meta_listbox.signal_change == ugui.signal_change_states.started then
+                data.selected_index = filtered_to_original and filtered_to_original[listbox_result] or listbox_result
+                data.searching = false
+                data.search_text = ''
+                data.open = false
+            end
+        end
     end
 
     return data.selected_index, result.meta

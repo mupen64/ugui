@@ -25,14 +25,14 @@ emu.atdrawd2d(function()
         print('1')
     end
     if ugui.button({
-            uid = 10,
+            uid = 15,
             rectangle = {x = 80, y = 80, width = 100, height = 50},
             text = tostring(index),
         }) then
         index = index + 1
     end
     if ugui.button({
-            uid = 15,
+            uid = 25,
             rectangle = {x = 80, y = 140, width = 100, height = 30},
             text = 'Hello, world!',
             is_enabled = false,
@@ -40,48 +40,48 @@ emu.atdrawd2d(function()
         print('3')
     end
     checked = ugui.toggle_button({
-        uid = 20,
+        uid = 35,
         rectangle = {x = 80, y = 200, width = 200, height = 50},
         text = 'Hello, world!',
         is_checked = checked,
     })
     text = ugui.textbox({
-        uid = 25,
+        uid = 45,
         rectangle = {x = 20, y = 20, width = 100, height = 20},
         text = text,
     })
     position = ugui.joystick({
-        uid = 30,
+        uid = 55,
         rectangle = {x = 20, y = 200, width = 150, height = 150},
         position = position,
     })
 
     index = ugui.listbox({
-        uid = 40,
+        uid = 65,
         rectangle = {x = 20, y = 300, width = 120, height = 200},
         items = items,
         selected_index = index,
     })
     value = ugui.scrollbar({
-        uid = 45,
+        uid = 75,
         rectangle = {x = 230, y = 10, width = 20, height = 300},
         value = value,
         ratio = 0.2,
     })
     value = ugui.scrollbar({
-        uid = 46,
+        uid = 85,
         rectangle = {x = 280, y = 10, width = 300, height = 20},
         value = value,
         ratio = 0.2,
     })
     index = ugui.combobox({
-        uid = 50,
+        uid = 95,
         rectangle = {x = 200, y = 300, width = 160, height = 23},
         items = items,
         selected_index = index,
     })
     ugui.joystick({
-        uid = 55,
+        uid = 105,
         rectangle = {x = 200, y = 350, width = 150, height = 150},
         position = {
             x = math.sin(os.clock() / 2) * 50,
@@ -94,7 +94,7 @@ emu.atdrawd2d(function()
         },
     })
     ugui.joystick({
-        uid = 56,
+        uid = 115,
         rectangle = {x = 355, y = 350, width = 150, height = 150},
         position = {
             x = math.sin(os.clock() / 2) * 50,
@@ -102,14 +102,14 @@ emu.atdrawd2d(function()
         },
     })
     index = ugui.carrousel_button({
-        uid = 60,
+        uid = 125,
         rectangle = {x = 380, y = 300, width = 160, height = 23},
         items = items,
         selected_index = index,
     })
 
     num = ugui.numberbox({
-        uid = 65,
+        uid = 135,
         rectangle = {x = 350, y = 50, width = 160, height = 23},
         value = num,
         places = 4,
@@ -123,7 +123,7 @@ emu.atdrawd2d(function()
         font_size = ugui.standard_styler.params.font_size,
     })
     num2 = ugui.numberbox({
-        uid = 70,
+        uid = 145,
         rectangle = {x = 350, y = 75, width = 160, height = 23},
         value = num2,
         places = 4,
@@ -138,13 +138,19 @@ emu.atdrawd2d(function()
         font_size = ugui.standard_styler.params.font_size,
     })
     ugui.label({
-        uid = 75,
+        uid = 155,
         rectangle = {x = 350, y = 150, width = 160, height = 23},
         text = 'Hello World!',
         color = BreitbandGraphics.colors.black,
-        font_name = "Wingdings",
+        font_name = 'Wingdings',
         font_size = 24,
     })
-
+    index = ugui.combobox({
+        uid = 165,
+        rectangle = {x = 350, y = 230, width = 160, height = 23},
+        items = items,
+        selected_index = index,
+        editable = true,
+    })
     end_frame()
 end)
