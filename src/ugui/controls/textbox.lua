@@ -80,12 +80,20 @@ ugui.registry.textbox = {
 
         local index_at_mouse = ugui.internal.get_caret_index(data.text, data.scroll_offset, ugui.internal.environment.mouse_position.x - control.rectangle.x)
 
-        -- If the control was just clicked, start a new selection.
+        -- If the control was just clicked, start a new selection or create/extend one with shift held.
         if ugui.internal.clicked_control == control.uid then
-            data.caret_index = index_at_mouse
-            data.selection_start = index_at_mouse
-            data.selection_end = index_at_mouse
-            data.last_changed_anchor = 'caret'
+            if ugui.internal.environment.shift then
+                local anchor = (data.caret_index == data.selection_end) and data.selection_start or data.selection_end
+                data.selection_start = anchor
+                data.selection_end = index_at_mouse
+                data.caret_index = index_at_mouse
+                data.last_changed_anchor = 'selection_end'
+            else
+                data.caret_index = index_at_mouse
+                data.selection_start = index_at_mouse
+                data.selection_end = index_at_mouse
+                data.last_changed_anchor = 'caret'
+            end
         end
 
         -- If we're dragging the control, extend the existing selection.

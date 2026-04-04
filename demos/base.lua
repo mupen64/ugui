@@ -66,7 +66,6 @@ function begin_frame()
     local mouse_x = mup_input.xmouse
     local mouse_y = mup_input.ymouse
     local lmb_down = mup_input.leftclick
-
     ugui.begin_frame({
         mouse_position = {
             x = mouse_x,
@@ -79,6 +78,7 @@ function begin_frame()
             x = window_size.width,
             y = window_size.height - 23,
         },
+        shift = mup_input.shift,
     })
     mouse_wheel = 0
 end
