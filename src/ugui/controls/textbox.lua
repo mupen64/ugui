@@ -111,18 +111,36 @@ ugui.registry.textbox = {
                     local higher_selection = math.max(data.selection_start, data.selection_end)
 
                     if e.keycode == ugui.keycodes.VK_BACK then
-                        if has_selection then
-                            data.text = ugui.internal.remove_range(data.text, lower_selection, higher_selection)
+                        if e.ctrl then
+                            -- Ctrl+Backspace with a selection is REALLY weird and unintuitive, but this is what EDIT does:
+                            -- 1. collapse selection to lower bound 2. delete backwards word from there (we already have that so we just fall through to it)
+                            if has_selection then
+                                data.caret_index = lower_selection
+                                data.selection_start = lower_selection
+                                data.selection_end = lower_selection
+                                data.last_changed_anchor = 'caret'
+                            end
 
-                            data.caret_index = lower_selection
-                            data.selection_start = lower_selection
-                            data.selection_end = lower_selection
+                            local prev_word, _ = surrounding_word_index(data.text, data.caret_index)
+                            data.text = ugui.internal.remove_range(data.text, prev_word, data.caret_index)
+                            data.caret_index = prev_word
+                            data.selection_start = prev_word
+                            data.selection_end = prev_word
                             data.last_changed_anchor = 'caret'
                         else
-                            local delete_index = data.caret_index - 1
-                            data.text = ugui.internal.remove_at(data.text, delete_index)
-                            data.caret_index = delete_index
-                            data.last_changed_anchor = 'caret'
+                            if has_selection then
+                                data.text = ugui.internal.remove_range(data.text, lower_selection, higher_selection)
+
+                                data.caret_index = lower_selection
+                                data.selection_start = lower_selection
+                                data.selection_end = lower_selection
+                                data.last_changed_anchor = 'caret'
+                            else
+                                local delete_index = data.caret_index - 1
+                                data.text = ugui.internal.remove_at(data.text, delete_index)
+                                data.caret_index = delete_index
+                                data.last_changed_anchor = 'caret'
+                            end
                         end
                     elseif e.keycode == ugui.keycodes.VK_LEFT then
                         if e.ctrl then
