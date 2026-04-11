@@ -68,6 +68,19 @@
 ---@field public aliased boolean? Whether the text should be drawn with no text filtering. If nil, false is assumed.
 ---@field public fit boolean? Whether the text should be resized to fit the bounding rectangle. If nil, false is assumed.
 
+---@class DrawImageParams
+---@field path string The image's absolute path on disk.
+---@field destx1 integer The x-coordinate of the top-left corner of the destination rectangle.
+---@field desty1 integer The y-coordinate of the top-left corner of the destination rectangle.
+---@field destx2 integer? The x-coordinate of the bottom-right corner of the destination rectangle. If `nil`, `destx1` plus the natural width of the image is assumed.
+---@field desty2 integer? The y-coordinate of the bottom-right corner of the destination rectangle. If `nil`, `desty1` plus the natural height of the image is assumed.
+---@field srcx1 integer? The x-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
+---@field srcy1 integer? The y-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
+---@field srcx2 integer? The x-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcx1` plus the natural width of the image is assumed.
+---@field srcy2 integer? The y-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcy1` plus the natural height of the image is assumed.
+---@field color FloatColor? The color to tint the image with. The RGB components are treated as multipliers, and the alpha component is treated as the opacity. If `nil`, the image is drawn without tinting.
+---@field interpolation integer? The interpolation mode to use. 0: nearest neighbor, 1|nil: linear.
+
 ---@class ImageInfo
 ---@field public width number The width.
 ---@field public height number The height.
