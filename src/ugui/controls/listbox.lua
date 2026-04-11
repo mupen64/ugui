@@ -67,53 +67,53 @@ ugui.registry.listbox = {
                 if ugui.internal.is_mouse_wheel_down() then
                     inc = 1 / #control.items
                 end
-
-                for _, e in ipairs(ugui.internal.environment.key_events) do
-                    if e.keycode and e.pressed then
-                        if e.keycode == ugui.keycodes.VK_PRIOR then
-                            inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                                #control.items
-                        end
-                        if e.keycode == ugui.keycodes.VK_NEXT then
-                            inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                                #control.items
-                        end
-                        if e.keycode == ugui.keycodes.VK_HOME then
-                            inc = -1
-                        end
-                        if e.keycode == ugui.keycodes.VK_END then
-                            inc = 1
-                        end
-                    end
-                end
-
-                data.scroll_y = ugui.internal.clamp(data.scroll_y + inc, 0, 1)
             end
         end
 
         if ugui.internal.keyboard_captured_control == control.uid then
             for _, e in ipairs(ugui.internal.environment.key_events) do
-                if e.keycode and e.pressed then
-                    if e.keycode == ugui.keycodes.VK_UP and data.selected_index ~= nil then
-                        data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
+                if not e.keycode or not e.pressed then
+                    goto continue
+                end
+
+                if e.keycode == ugui.keycodes.VK_UP and data.selected_index ~= nil then
+                    data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
+                end
+                if e.keycode == ugui.keycodes.VK_DOWN and data.selected_index ~= nil then
+                    data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
+                end
+                if e.keycode == ugui.keycodes.VK_C and e.ctrl and data.selected_index ~= nil then
+                    local item = control.items[data.selected_index]
+                    ugui.STATIC_ENV.clipboard.set(item)
+                end
+                if y_overflow then
+                    if e.keycode == ugui.keycodes.VK_PRIOR then
+                        inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
+                            #control.items
                     end
-                    if e.keycode == ugui.keycodes.VK_DOWN and data.selected_index ~= nil then
-                        data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
+                    if e.keycode == ugui.keycodes.VK_NEXT then
+                        inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
+                            #control.items
                     end
-                    if e.keycode == ugui.keycodes.VK_C and e.ctrl and data.selected_index ~= nil then
-                        local item = control.items[data.selected_index]
-                        ugui.STATIC_ENV.clipboard.set(item)
+                    if e.keycode == ugui.keycodes.VK_HOME then
+                        inc = -1
                     end
-                    if not y_overflow then
-                        if e.keycode == ugui.keycodes.VK_HOME or e.keycode == ugui.keycodes.VK_PRIOR then
-                            data.selected_index = 1
-                        end
-                        if e.keycode == ugui.keycodes.VK_END or e.keycode == ugui.keycodes.VK_NEXT then
-                            data.selected_index = #control.items
-                        end
+                    if e.keycode == ugui.keycodes.VK_END then
+                        inc = 1
+                    end
+                else
+                    if e.keycode == ugui.keycodes.VK_HOME or e.keycode == ugui.keycodes.VK_PRIOR then
+                        data.selected_index = 1
+                    end
+                    if e.keycode == ugui.keycodes.VK_END or e.keycode == ugui.keycodes.VK_NEXT then
+                        data.selected_index = #control.items
                     end
                 end
+
+                ::continue::
             end
+
+            data.scroll_y = ugui.internal.clamp(data.scroll_y + inc, 0, 1)
         end
 
         control.rectangle = prev_rect
