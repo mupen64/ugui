@@ -53,6 +53,15 @@ ugui.registry.listbox = {
         local one_page_scroll_y<const> = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) / #control.items
         local items_per_page<const> = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height)
 
+        -- FIXME: This is pretty weird... we should have a mechanism at the ugui core level for this
+        local can_mouse_scroll = false
+        if ugui.internal.mouse_captured_control == nil then
+            can_mouse_scroll = ugui.internal.hovered_control == control.uid
+        end
+        if ugui.internal.mouse_captured_control == control.uid then
+            can_mouse_scroll = true
+        end
+
         local function index_from_y(y)
             return math.ceil((y + (data.scroll_y *
                     ((ugui.standard_styler.params.listbox_item.height * #control.items) - control.rectangle.height))) /
@@ -72,7 +81,9 @@ ugui.registry.listbox = {
             local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
             local new_index = index_from_y(relative_y)
             data.selected_index = new_index
+        end
 
+        if can_mouse_scroll then
             if ugui.internal.is_mouse_wheel_up() then
                 data.scroll_y = data.scroll_y - one_item_scroll_y
             end
