@@ -50,7 +50,6 @@ ugui.registry.listbox = {
         end
 
         local one_item_scroll_y<const> = 1 / #control.items
-        local one_page_scroll_y<const> = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) / #control.items
         local items_per_page<const> = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height)
 
         -- FIXME: This is pretty weird... we should have a mechanism at the ugui core level for this
@@ -66,10 +65,6 @@ ugui.registry.listbox = {
             return math.ceil((y + (data.scroll_y *
                     ((ugui.standard_styler.params.listbox_item.height * #control.items) - control.rectangle.height))) /
                 ugui.standard_styler.params.listbox_item.height)
-        end
-
-        local function scroll_from_index(index)
-            return (index - 1) * one_item_scroll_y
         end
 
         local function scroll_selected_index_into_view()
