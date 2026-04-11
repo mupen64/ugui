@@ -153,13 +153,13 @@ emu.atdrawd2d(function()
         editable = true,
     })
     ugui.listbox({
-        uid = 170,
+        uid = 175,
         rectangle = {x = 560, y = 230, width = 160, height = 160},
         items = {},
         selected_index = 1,
     })
     ugui.listbox({
-        uid = 175,
+        uid = 185,
         rectangle = {x = 560, y = 360, width = 160, height = 160},
         items = {"a"},
         selected_index = nil,
