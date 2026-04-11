@@ -97,12 +97,13 @@ ugui.registry.listbox = {
 
             local overshoot = nil
             if relative_y > control.rectangle.height then
-                overshoot = math.min(relative_y - control.rectangle.height, 50)
+                overshoot = relative_y - control.rectangle.height
             end
             if relative_y < 0 then
-                overshoot = math.min(relative_y, 50)
+                overshoot = relative_y
             end
             if overshoot ~= nil then
+                overshoot = ugui.internal.clamp(overshoot, -50, 50)
                 data.scroll_y = data.scroll_y + one_item_scroll_y * ugui.internal.delta_time * overshoot * 2
             end
         end
