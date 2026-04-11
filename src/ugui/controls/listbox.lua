@@ -81,6 +81,17 @@ ugui.registry.listbox = {
             local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
             local new_index = index_from_y(relative_y)
             data.selected_index = new_index
+
+            local overshoot = nil
+            if relative_y > control.rectangle.height then
+                overshoot = math.min(relative_y - control.rectangle.height, 50)
+            end
+            if relative_y < 0 then
+                overshoot = math.min(relative_y, 50)
+            end
+            if overshoot ~= nil then
+                data.scroll_y = data.scroll_y + one_item_scroll_y * ugui.internal.delta_time * overshoot * 2
+            end
         end
 
         if can_mouse_scroll then

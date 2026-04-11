@@ -102,6 +102,9 @@ ugui.begin_frame = function(environment)
     end
 
     ugui.internal.frame_in_progress = true
+    local current_time = os.clock()
+    ugui.internal.delta_time = current_time - ugui.internal.last_frame_time
+    ugui.internal.last_frame_time = current_time
 
     if not ugui.internal.environment then
         ugui.internal.environment = environment
