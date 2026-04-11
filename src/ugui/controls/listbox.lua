@@ -6,7 +6,7 @@
 
 ---@class ListBox : Control
 ---@field public items RichText[] The items contained in the control.
----@field public selected_index integer? The index of the currently selected item into the items array.
+---@field public selected_index integer? The index of the currently selected item into the items array. If `nil`, no item is selected.
 ---@field public horizontal_scroll boolean? Whether horizontal scrolling will be enabled when items go beyond the width of the control. Will impact performance greatly, use with care.
 ---A listbox which allows the user to choose from a list of items.
 ---If the items don't fit in the control's bounds vertically, vertical scrolling will be enabled.
@@ -68,6 +68,10 @@ ugui.registry.listbox = {
         end
 
         local function scroll_selected_index_into_view()
+            if data.selected_index == nil then
+                return
+            end
+
             local item_height = ugui.standard_styler.params.listbox_item.height
             local scroll_range = (item_height * #control.items) - control.rectangle.height
 
@@ -130,11 +134,11 @@ ugui.registry.listbox = {
                     local item = control.items[data.selected_index]
                     ugui.STATIC_ENV.clipboard.set(item)
                 end
-                if e.keycode == ugui.keycodes.VK_PRIOR then
+                if e.keycode == ugui.keycodes.VK_PRIOR and data.selected_index ~= nil then
                     data.selected_index = data.selected_index - items_per_page
                     scroll_selected_index_into_view()
                 end
-                if e.keycode == ugui.keycodes.VK_NEXT then
+                if e.keycode == ugui.keycodes.VK_NEXT and data.selected_index ~= nil then
                     data.selected_index = data.selected_index + items_per_page
                     scroll_selected_index_into_view()
                 end
@@ -156,7 +160,9 @@ ugui.registry.listbox = {
         if not y_overflow then
             data.scroll_y = 0
         end
-        data.selected_index = ugui.internal.clamp(data.selected_index, 1, #control.items)
+        if data.selected_index ~= nil then
+            data.selected_index = ugui.internal.clamp(data.selected_index, 1, #control.items)
+        end
 
         control.rectangle = prev_rect
 
