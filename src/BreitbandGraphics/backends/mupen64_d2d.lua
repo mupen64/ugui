@@ -381,6 +381,7 @@ BreitbandGraphics.pop_clip = function()
 end
 
 ---Draws an image with the specified parameters.
+---@deprecated Use `BreitbandGraphics.draw_image2` instead.
 ---@param destination_rectangle Rectangle The destination rectangle on the screen.
 ---@param source_rectangle Rectangle? The source rectangle from the image. If nil, the whole image is taken as the source.
 ---@param path string The image's absolute path on disk.
