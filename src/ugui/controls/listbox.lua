@@ -58,11 +58,40 @@ ugui.registry.listbox = {
             if new_index <= #control.items then
                 data.selected_index = ugui.internal.clamp(new_index, 1, #control.items)
             end
+
+            if y_overflow then
+                local inc = 0
+                if ugui.internal.is_mouse_wheel_up() then
+                    inc = -1 / #control.items
+                end
+                if ugui.internal.is_mouse_wheel_down() then
+                    inc = 1 / #control.items
+                end
+
+                for _, e in ipairs(ugui.internal.environment.key_events) do
+                    if e.keycode and e.pressed then
+                        if e.keycode == ugui.keycodes.VK_PRIOR then
+                            inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
+                                #control.items
+                        end
+                        if e.keycode == ugui.keycodes.VK_NEXT then
+                            inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
+                                #control.items
+                        end
+                        if e.keycode == ugui.keycodes.VK_HOME then
+                            inc = -1
+                        end
+                        if e.keycode == ugui.keycodes.VK_END then
+                            inc = 1
+                        end
+                    end
+                end
+
+                data.scroll_y = ugui.internal.clamp(data.scroll_y + inc, 0, 1)
+            end
         end
 
-        -- Keyboard-based selection. FIXME: Why is this based on the mouse being inside it???
-        -- FIXME: We want the separate concept of "keyboard focus" to be introduced
-        if ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
+        if ugui.internal.keyboard_captured_control == control.uid then
             for _, e in ipairs(ugui.internal.environment.key_events) do
                 if e.keycode and e.pressed then
                     if e.keycode == ugui.keycodes.VK_UP and data.selected_index ~= nil then
@@ -85,37 +114,6 @@ ugui.registry.listbox = {
                     end
                 end
             end
-        end
-
-        if y_overflow and (ugui.internal.mouse_captured_control == control.uid or BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle)) then
-            local inc = 0
-            if ugui.internal.is_mouse_wheel_up() then
-                inc = -1 / #control.items
-            end
-            if ugui.internal.is_mouse_wheel_down() then
-                inc = 1 / #control.items
-            end
-
-            for _, e in ipairs(ugui.internal.environment.key_events) do
-                if e.keycode and e.pressed then
-                    if e.keycode == ugui.keycodes.VK_PRIOR then
-                        inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                            #control.items
-                    end
-                    if e.keycode == ugui.keycodes.VK_NEXT then
-                        inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                            #control.items
-                    end
-                    if e.keycode == ugui.keycodes.VK_HOME then
-                        inc = -1
-                    end
-                    if e.keycode == ugui.keycodes.VK_END then
-                        inc = 1
-                    end
-                end
-            end
-
-            data.scroll_y = ugui.internal.clamp(data.scroll_y + inc, 0, 1)
         end
 
         control.rectangle = prev_rect
