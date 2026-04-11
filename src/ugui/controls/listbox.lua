@@ -73,8 +73,22 @@ ugui.registry.listbox = {
         end
 
         local function scroll_selected_index_into_view()
-            -- TODO: Only scroll if the selected index is not already in view
-            data.scroll_y = scroll_from_index(data.selected_index)
+            local item_height = ugui.standard_styler.params.listbox_item.height
+            local scroll_range = (item_height * #control.items) - control.rectangle.height
+
+            if scroll_range <= 0 then
+                return
+            end
+
+            local scroll_offset_px = data.scroll_y * scroll_range
+            local first_visible = math.floor(scroll_offset_px / item_height) + 1
+            local last_visible = math.floor((scroll_offset_px + control.rectangle.height) / item_height)
+
+            if data.selected_index < first_visible then
+                data.scroll_y = (data.selected_index - 1) * item_height / scroll_range
+            elseif data.selected_index > last_visible then
+                data.scroll_y = (data.selected_index * item_height - control.rectangle.height) / scroll_range
+            end
         end
 
         if ugui.internal.mouse_captured_control == control.uid then
