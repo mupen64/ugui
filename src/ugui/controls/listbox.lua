@@ -49,24 +49,35 @@ ugui.registry.listbox = {
             control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
         end
 
-        if ugui.internal.mouse_captured_control == control.uid then
-            -- Mouse-based selection
-            local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
-            local new_index = math.ceil((relative_y + (data.scroll_y *
+        local one_item_scroll_y<const> = 1 / #control.items
+        local one_page_scroll_y<const> = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) / #control.items
+        local items_per_page<const> = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height)
+
+        local function index_from_y(y)
+            return math.ceil((y + (data.scroll_y *
                     ((ugui.standard_styler.params.listbox_item.height * #control.items) - control.rectangle.height))) /
                 ugui.standard_styler.params.listbox_item.height)
-            if new_index <= #control.items then
-                data.selected_index = ugui.internal.clamp(new_index, 1, #control.items)
-            end
+        end
 
-            if y_overflow then
-                local inc = 0
-                if ugui.internal.is_mouse_wheel_up() then
-                    inc = -1 / #control.items
-                end
-                if ugui.internal.is_mouse_wheel_down() then
-                    inc = 1 / #control.items
-                end
+        local function scroll_from_index(index)
+            return (index - 1) * one_item_scroll_y
+        end
+
+        local function scroll_selected_index_into_view()
+            -- TODO: Only scroll if the selected index is not already in view
+            data.scroll_y = scroll_from_index(data.selected_index)
+        end
+
+        if ugui.internal.mouse_captured_control == control.uid then
+            local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
+            local new_index = index_from_y(relative_y)
+            data.selected_index = new_index
+
+            if ugui.internal.is_mouse_wheel_up() then
+                data.scroll_y = data.scroll_y - one_item_scroll_y
+            end
+            if ugui.internal.is_mouse_wheel_down() then
+                data.scroll_y = data.scroll_y + one_item_scroll_y
             end
         end
 
@@ -78,43 +89,43 @@ ugui.registry.listbox = {
 
                 if e.keycode == ugui.keycodes.VK_UP and data.selected_index ~= nil then
                     data.selected_index = ugui.internal.clamp(data.selected_index - 1, 1, #control.items)
+                    scroll_selected_index_into_view()
                 end
                 if e.keycode == ugui.keycodes.VK_DOWN and data.selected_index ~= nil then
                     data.selected_index = ugui.internal.clamp(data.selected_index + 1, 1, #control.items)
+                    scroll_selected_index_into_view()
                 end
                 if e.keycode == ugui.keycodes.VK_C and e.ctrl and data.selected_index ~= nil then
                     local item = control.items[data.selected_index]
                     ugui.STATIC_ENV.clipboard.set(item)
                 end
-                if y_overflow then
-                    if e.keycode == ugui.keycodes.VK_PRIOR then
-                        inc = -math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                            #control.items
-                    end
-                    if e.keycode == ugui.keycodes.VK_NEXT then
-                        inc = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height) /
-                            #control.items
-                    end
-                    if e.keycode == ugui.keycodes.VK_HOME then
-                        inc = -1
-                    end
-                    if e.keycode == ugui.keycodes.VK_END then
-                        inc = 1
-                    end
-                else
-                    if e.keycode == ugui.keycodes.VK_HOME or e.keycode == ugui.keycodes.VK_PRIOR then
-                        data.selected_index = 1
-                    end
-                    if e.keycode == ugui.keycodes.VK_END or e.keycode == ugui.keycodes.VK_NEXT then
-                        data.selected_index = #control.items
-                    end
+                if e.keycode == ugui.keycodes.VK_PRIOR then
+                    data.selected_index = data.selected_index - items_per_page
+                    scroll_selected_index_into_view()
+                end
+                if e.keycode == ugui.keycodes.VK_NEXT then
+                    data.selected_index = data.selected_index + items_per_page
+                    scroll_selected_index_into_view()
+                end
+                if e.keycode == ugui.keycodes.VK_HOME then
+                    data.selected_index = 1
+                    scroll_selected_index_into_view()
+                end
+                if e.keycode == ugui.keycodes.VK_END then
+                    data.selected_index = #control.items
+                    scroll_selected_index_into_view()
                 end
 
                 ::continue::
             end
-
-            data.scroll_y = ugui.internal.clamp(data.scroll_y + inc, 0, 1)
         end
+
+
+        data.scroll_y = ugui.internal.clamp(data.scroll_y, 0, 1)
+        if not y_overflow then
+            data.scroll_y = 0
+        end
+        data.selected_index = ugui.internal.clamp(data.selected_index, 1, #control.items)
 
         control.rectangle = prev_rect
 
