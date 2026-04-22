@@ -56,6 +56,9 @@ ugui.internal = {
     ---Whether a frame is currently in progress.
     frame_in_progress = false,
 
+    last_frame_time = 0,
+    delta_time = 0,
+
     ---@type table<string, integer>
     ---Cache of nineslice drawings. Only used after calling `ugui.apply_nineslice`.
     nineslice_draw_cache = {},
