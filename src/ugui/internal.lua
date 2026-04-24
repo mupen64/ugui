@@ -321,9 +321,10 @@ ugui.internal = {
         for i = #ugui.internal.scene, 1, -1 do
             local entry = ugui.internal.scene[i]
             local control = entry.control
+            local registry_entry = ugui.registry[entry.type]
 
             -- Determine the clicked control if we haven't already
-            if clicked_control == nil then
+            if clicked_control == nil and registry_entry.interactive ~= false then
                 if ugui.internal.is_mouse_just_down() then
                     if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
@@ -334,7 +335,7 @@ ugui.internal = {
             end
 
             -- Determine the hovered control if we haven't already
-            if ugui.internal.hovered_control == nil then
+            if ugui.internal.hovered_control == nil and registry_entry.interactive ~= false then
                 if is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
                     ugui.internal.hovered_control = control.uid
 

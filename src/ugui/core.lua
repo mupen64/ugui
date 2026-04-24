@@ -10,6 +10,7 @@
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
 ---@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
 ---@field public draw fun(control: Control) Draws the control.
+---@field public interactive boolean? Whether the control can receive clicks and hover. If `false`, the control is transparent to input. Defaults to `true` if not specified.
 ---Represents an entry in the control registry.
 
 ---@alias UID number
