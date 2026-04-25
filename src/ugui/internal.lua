@@ -293,6 +293,15 @@ ugui.internal = {
                 point.y <= rectangle.y + rectangle.height
         end
 
+        local function compute_effective_hittestable(control, registry_entry)
+            if control.hittestable ~= nil then
+                return control.hittestable
+            elseif registry_entry.hittestable ~= nil then
+                return registry_entry.hittestable(control)
+            end
+            return true
+        end
+
         ---@type Control?
         local clicked_control = nil
 
@@ -323,18 +332,7 @@ ugui.internal = {
             local control = entry.control
             local registry_entry = ugui.registry[entry.type]
 
-            -- Compute effective hittestability:
-            -- 1. Instance-level override takes priority if specified.
-            -- 2. Otherwise, the registry-level function is called if present.
-            -- 3. Defaults to true if neither is specified.
-            local effective_hittestable
-            if control.hittestable ~= nil then
-                effective_hittestable = control.hittestable
-            elseif registry_entry.hittestable ~= nil then
-                effective_hittestable = registry_entry.hittestable(control)
-            else
-                effective_hittestable = true
-            end
+            local effective_hittestable = compute_effective_hittestable(control, registry_entry)
 
             -- Determine the clicked control if we haven't already
             if clicked_control == nil and effective_hittestable then
