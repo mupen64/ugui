@@ -429,7 +429,7 @@ end
 BreitbandGraphics.draw_image2 = function(params)
     local image = BreitbandGraphics.internal.image_from_path(params.path)
 
-    local float_color = params.color and BreitbandGraphics.internal.color_source_to_float_color(params.color) or { r = 1, g = 1, b = 1, a = 1 }
+    local float_color = params.color and BreitbandGraphics.internal.color_source_to_float_color(params.color) or nil
 
     d2d.draw_image2({
         identifier = image,
