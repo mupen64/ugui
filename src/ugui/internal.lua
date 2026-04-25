@@ -323,8 +323,21 @@ ugui.internal = {
             local control = entry.control
             local registry_entry = ugui.registry[entry.type]
 
+            -- Compute effective hittestability:
+            -- 1. Instance-level override takes priority if specified.
+            -- 2. Otherwise, the registry-level function is called if present.
+            -- 3. Defaults to true if neither is specified.
+            local effective_hittestable
+            if control.hittestable ~= nil then
+                effective_hittestable = control.hittestable
+            elseif registry_entry.hittestable ~= nil then
+                effective_hittestable = registry_entry.hittestable(control)
+            else
+                effective_hittestable = true
+            end
+
             -- Determine the clicked control if we haven't already
-            if clicked_control == nil and registry_entry.interactive ~= false then
+            if clicked_control == nil and effective_hittestable then
                 if ugui.internal.is_mouse_just_down() then
                     if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
@@ -335,7 +348,7 @@ ugui.internal = {
             end
 
             -- Determine the hovered control if we haven't already
-            if ugui.internal.hovered_control == nil and registry_entry.interactive ~= false then
+            if ugui.internal.hovered_control == nil and effective_hittestable then
                 if is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
                     ugui.internal.hovered_control = control.uid
 

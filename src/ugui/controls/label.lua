@@ -11,11 +11,14 @@
 ---@field public font_name string? The font family of the text. If `nil`, the default font family is used.
 ---@field public align_x Alignment? The text's horizontal alignment inside the control rectangle. If `nil`, `alignment.center` is assumed.
 ---@field public align_y Alignment? The text's vertical alignment inside the control rectangle. If `nil`, `alignment.center` is assumed.
+---@field public selectable boolean? Whether the label's text is selectable. If `true`, the label participates in hit-testing to allow text selection.
 ---A label that contains text.
 
 ---@type ControlRegistryEntry
 ugui.registry.label = {
-    interactive = false,
+    hittestable = function(control)
+        return control.selectable == true
+    end,
     ---@param control Label
     validate = function(control)
         ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
