@@ -16,7 +16,7 @@
 ---@type ControlRegistryEntry
 ugui.registry.label = {
     hittestable = function(control)
-        return control.selectable == true
+        return false
     end,
     ---@param control Label
     validate = function(control)
