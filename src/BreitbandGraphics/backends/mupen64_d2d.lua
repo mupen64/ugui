@@ -429,9 +429,7 @@ end
 BreitbandGraphics.draw_image2 = function(params)
     local image = BreitbandGraphics.internal.image_from_path(params.path)
 
-    if params.color.a == nil then
-        params.color.a = 1
-    end
+    local float_color = params.color and BreitbandGraphics.internal.color_source_to_float_color(params.color) or { r = 1, g = 1, b = 1, a = 1 }
 
     d2d.draw_image2({
         identifier = image,
@@ -444,7 +442,7 @@ BreitbandGraphics.draw_image2 = function(params)
         srcx2 = params.srcx2,
         srcy2 = params.srcy2,
         ---@diagnostic disable-next-line: assign-type-mismatch
-        color = params.color,
+        color = float_color,
         interpolation = params.interpolation,
     })
 end

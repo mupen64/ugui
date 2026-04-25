@@ -78,7 +78,7 @@
 ---@field srcy1 integer? The y-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
 ---@field srcx2 integer? The x-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcx1` plus the natural width of the image is assumed.
 ---@field srcy2 integer? The y-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcy1` plus the natural height of the image is assumed.
----@field color FloatColor? The color to tint the image with. The RGB components are treated as multipliers, and the alpha component is treated as the opacity. If `nil`, the image is drawn without tinting.
+---@field color ColorSource? The color to tint the image with. The RGB components are treated as multipliers after conversion to range 0-1, and the alpha component is treated as the opacity. If `nil`, the image is drawn without tinting.
 ---@field interpolation integer? The interpolation mode to use. 0: nearest neighbor, 1|nil: linear.
 
 ---@class ImageInfo
