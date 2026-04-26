@@ -142,8 +142,8 @@ end
 ---@param text string The text.
 ---@deprecated
 BreitbandGraphics.draw_text = function(rectangle, horizontal_alignment, vertical_alignment, style, color, font_size,
-                                       font_name,
-                                       text)
+    font_name,
+    text)
     if text == nil then
         text = ''
     end
@@ -381,6 +381,7 @@ BreitbandGraphics.pop_clip = function()
 end
 
 ---Draws an image with the specified parameters.
+---@deprecated Use `BreitbandGraphics.draw_image2` instead.
 ---@param destination_rectangle Rectangle The destination rectangle on the screen.
 ---@param source_rectangle Rectangle? The source rectangle from the image. If nil, the whole image is taken as the source.
 ---@param path string The image's absolute path on disk.
@@ -396,7 +397,6 @@ BreitbandGraphics.draw_image = function(destination_rectangle, source_rectangle,
     else
         float_color = BreitbandGraphics.colors.white
     end
-    local image = BreitbandGraphics.internal.image_from_path(path)
     local interpolation = filter == 'nearest' and 0 or 1
 
     if not source_rectangle then
@@ -409,18 +409,42 @@ BreitbandGraphics.draw_image = function(destination_rectangle, source_rectangle,
         }
     end
 
-    d2d.draw_image(
-        destination_rectangle.x,
-        destination_rectangle.y,
-        destination_rectangle.x + destination_rectangle.width,
-        destination_rectangle.y + destination_rectangle.height,
-        source_rectangle.x,
-        source_rectangle.y,
-        source_rectangle.x + source_rectangle.width,
-        source_rectangle.y + source_rectangle.height,
-        float_color.a,
-        interpolation,
-        image)
+    BreitbandGraphics.draw_image2({
+        path = path,
+        destx1 = destination_rectangle.x,
+        desty1 = destination_rectangle.y,
+        destx2 = destination_rectangle.x + destination_rectangle.width,
+        desty2 = destination_rectangle.y + destination_rectangle.height,
+        srcx1 = source_rectangle.x,
+        srcy1 = source_rectangle.y,
+        srcx2 = source_rectangle.x + source_rectangle.width,
+        srcy2 = source_rectangle.y + source_rectangle.height,
+        color = float_color,
+        interpolation = interpolation,
+    })
+end
+
+---Draws an image with the specified parameters.
+---@param params DrawImageParams The parameters to use when drawing the image.
+BreitbandGraphics.draw_image2 = function(params)
+    local image = BreitbandGraphics.internal.image_from_path(params.path)
+
+    local float_color = params.color and BreitbandGraphics.internal.color_source_to_float_color(params.color) or nil
+
+    d2d.draw_image2({
+        identifier = image,
+        destx1 = params.destx1,
+        desty1 = params.desty1,
+        destx2 = params.destx2,
+        desty2 = params.desty2,
+        srcx1 = params.srcx1,
+        srcy1 = params.srcy1,
+        srcx2 = params.srcx2,
+        srcy2 = params.srcy2,
+        ---@diagnostic disable-next-line: assign-type-mismatch
+        color = float_color,
+        interpolation = params.interpolation,
+    })
 end
 
 ---Gets information about an image.
