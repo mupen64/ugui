@@ -293,6 +293,15 @@ ugui.internal = {
                 point.y <= rectangle.y + rectangle.height
         end
 
+        local function compute_effective_hittestable(control, registry_entry)
+            if control.hittestable ~= nil then
+                return control.hittestable
+            elseif registry_entry.hittestable ~= nil then
+                return registry_entry.hittestable(control)
+            end
+            return true
+        end
+
         ---@type Control?
         local clicked_control = nil
 
@@ -321,9 +330,12 @@ ugui.internal = {
         for i = #ugui.internal.scene, 1, -1 do
             local entry = ugui.internal.scene[i]
             local control = entry.control
+            local registry_entry = ugui.registry[entry.type]
+
+            local effective_hittestable = compute_effective_hittestable(control, registry_entry)
 
             -- Determine the clicked control if we haven't already
-            if clicked_control == nil then
+            if clicked_control == nil and effective_hittestable then
                 if ugui.internal.is_mouse_just_down() then
                     if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
@@ -334,7 +346,7 @@ ugui.internal = {
             end
 
             -- Determine the hovered control if we haven't already
-            if ugui.internal.hovered_control == nil then
+            if ugui.internal.hovered_control == nil and effective_hittestable then
                 if is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
                     ugui.internal.hovered_control = control.uid
 

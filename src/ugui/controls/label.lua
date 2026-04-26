@@ -15,6 +15,9 @@
 
 ---@type ControlRegistryEntry
 ugui.registry.label = {
+    hittestable = function(control)
+        return false
+    end,
     ---@param control Label
     validate = function(control)
         ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
