@@ -113,3 +113,7 @@ end)
 emu.atkey(function(args)
     key_events[#key_events + 1] = args
 end)
+
+emu.atstop(function()
+    BreitbandGraphics.free()
+end)
