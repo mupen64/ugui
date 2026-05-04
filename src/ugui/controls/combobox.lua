@@ -11,6 +11,7 @@
 
 ---@type ControlRegistryEntry
 ugui.registry.combobox = {
+    hittestable = nil,
     ---@param control ComboBox
     validate = function(control)
         ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
@@ -19,15 +20,15 @@ ugui.registry.combobox = {
     ---@param control ComboBox
     setup = function(control, data)
         data.open = false
-        data.hovered_index = control.selected_index
-        data.searching = false
-        data.search_text = ''
+        data.was_open = false
+        data.selected_index = control.selected_index
+        data.update_filter = false
+        data.search_text = nil
+        data.close_on_next_update = false
     end,
     ---@param control ComboBox
     ---@return ControlReturnValue
     logic = function(control, data)
-        data.selected_index = control.selected_index
-
         if control.is_enabled == false then
             data.open = false
         end
@@ -37,24 +38,27 @@ ugui.registry.combobox = {
             data.open = not data.open
         end
 
-        if data.open and ugui.internal.is_mouse_just_down() and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
-            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-            if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, {
-                    x = control.rectangle.x,
-                    y = control.rectangle.y + control.rectangle.height,
-                    width = control.rectangle.width,
-                    height = content_bounds.height,
-                }) then
-                data.open = false
+        local selected_index = data.filtered_to_original and data.filtered_to_original[data.selected_index] or data.selected_index
+
+        local signal_change = control.selected_index ~= selected_index
+            and (data.open
+                and (data.was_open and ugui.signal_change_states.ongoing or ugui.signal_change_states.started)
+                or (data.was_open and ugui.signal_change_states.ended or ugui.signal_change_states.none))
+            or ugui.signal_change_states.none
+
+        if signal_change == ugui.signal_change_states.ended then
+            data.searching = false
+            data.search_text = nil
+        elseif signal_change == ugui.signal_change_states.none then
+            selected_index = control.selected_index
+            if not control.editable then
+                data.selected_index = selected_index
             end
         end
-
-        data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
-            control.selected_index ~= data.selected_index)
-
+        data.was_open = data.open
         return {
-            primary = data.selected_index,
-            meta = {signal_change = data.signal_change},
+            primary = selected_index,
+            meta = {signal_change = signal_change},
         }
     end,
     ---@param control ComboBox
@@ -78,7 +82,8 @@ ugui.combobox = function(control)
     local button_size<const> = 30
 
     if control.editable then
-        local current_text = (data.searching and data.search_text or control.items[data.selected_index]) or ''
+        local selected_index = data.filtered_to_original and data.filtered_to_original[data.selected_index] or data.selected_index
+        local current_text = (data.search_text or control.items[selected_index]) or ''
         local search_text = ugui.textbox({
             uid = textbox_uid,
             rectangle = {
@@ -90,12 +95,6 @@ ugui.combobox = function(control)
             is_enabled = control.is_enabled,
             text = current_text,
         })
-
-        if search_text ~= current_text then
-            data.searching = true
-            data.open = true
-            data.search_text = search_text
-        end
 
         if ugui.button({
                 uid = button_uid,
@@ -109,39 +108,45 @@ ugui.combobox = function(control)
                 text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
             }) then
             data.open = not data.open
+            data.update_filter = data.open
+            data.search_text = current_text
+        end
+
+        if search_text ~= current_text then
+            data.update_filter = true
+            data.open = true
+            data.search_text = search_text
         end
     end
 
     if data.open then
         local items_to_show = control.items
-        local filtered_to_original = nil
 
-        if control.editable and data.searching then
-            ---@type RichText[]
-            local filtered_items = {}
+        if control.editable then
+            if data.update_filter then
+                data.update_filter = false
+                ---@type RichText[]
+                data.filtered_items = {}
 
-            ---@type integer[]
-            filtered_to_original = {}
+                ---@type integer[]
+                data.filtered_to_original = {}
 
-            for i, item in ipairs(control.items) do
-                if item:lower():find(data.search_text:lower(), 1, true) then
-                    table.insert(filtered_items, item)
-                    local filtered_index = #filtered_items
-                    filtered_to_original[filtered_index] = i
+                for i, item in ipairs(control.items) do
+                    if item:lower():find(data.search_text:lower(), 1, true) then
+                        table.insert(data.filtered_items, item)
+                        local filtered_index = #data.filtered_items
+                        data.filtered_to_original[filtered_index] = i
+                        if control.selected_index == i then
+                            data.selected_index = filtered_index
+                        end
+                    end
                 end
             end
 
-            if #filtered_items == 1 then
-                data.selected_index = filtered_to_original[1]
-                data.open = false
-            end
-
-            if #filtered_items == 0 then
-                data.open = false
-            end
-
-            items_to_show = filtered_items
-            control.items = filtered_items
+            items_to_show = data.filtered_items
+            control.items = data.filtered_items
+        else
+            data.filtered_to_original = nil
         end
 
         if data.open then
@@ -165,7 +170,7 @@ ugui.combobox = function(control)
                 height = height,
             }
 
-            local listbox_result, meta_listbox = ugui.listbox({
+            data.selected_index = ugui.listbox({
                 uid = listbox_uid,
                 rectangle = list_rect,
                 items = items_to_show,
@@ -174,14 +179,17 @@ ugui.combobox = function(control)
                 z_index = math.maxinteger,
             })
 
-            if meta_listbox.signal_change == ugui.signal_change_states.started then
-                data.selected_index = filtered_to_original and filtered_to_original[listbox_result] or listbox_result
-                data.searching = false
-                data.search_text = ''
+            if data.close_on_next_update then
                 data.open = false
+                data.search_text = nil
             end
+
+            data.close_on_next_update =
+                data.open
+                and ugui.internal.is_mouse_just_down()
+                and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
         end
     end
 
-    return data.selected_index, result.meta
+    return result.primary, result.meta
 end
