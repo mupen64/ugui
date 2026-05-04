@@ -19,7 +19,7 @@ emu.atdrawd2d(function()
 
     if ugui.button({
             uid = 5,
-            rectangle = {x = 10, y = 10, width = 200, height = 400},
+            rectangle = {x = 10, y = 10, width = 600, height = 400},
             text = 'Hello, world!',
         }) then
         print('1')
@@ -145,23 +145,32 @@ emu.atdrawd2d(function()
         font_name = 'Wingdings',
         font_size = 24,
     })
-    index = ugui.combobox({
+    ugui.label({
         uid = 165,
+        rectangle = {x = 350, y = 180, width = 160, height = 23},
+        text = 'Hello World!',
+        color = BreitbandGraphics.colors.black,
+        font_name = 'Consolas',
+        font_size = 24,
+        hittestable = true
+    })
+    index = ugui.combobox({
+        uid = 175,
         rectangle = {x = 350, y = 230, width = 160, height = 23},
         items = items,
         selected_index = index,
         editable = true,
     })
     ugui.listbox({
-        uid = 175,
+        uid = 185,
         rectangle = {x = 560, y = 230, width = 160, height = 160},
         items = {},
         selected_index = 1,
     })
     ugui.listbox({
-        uid = 185,
+        uid = 195,
         rectangle = {x = 560, y = 360, width = 160, height = 160},
-        items = {"a"},
+        items = {'a'},
         selected_index = nil,
     })
     end_frame()
