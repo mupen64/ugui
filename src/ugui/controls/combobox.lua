@@ -38,6 +38,17 @@ ugui.registry.combobox = {
             data.open = not data.open
         end
 
+        if data.open then
+            -- allow confirming the selection with return when the control itself or the textbox captures keyboard input
+            if ugui.internal.keyboard_captured_control == control.uid + (control.editable and 1 or 0) then
+                for _, e in ipairs(ugui.internal.environment.key_events) do
+                    if e.keycode == ugui.keycodes.VK_RETURN and e.pressed then
+                        data.close_on_next_update = true
+                    end
+                end
+            end
+        end
+
         local selected_index = data.filtered_to_original and data.filtered_to_original[data.selected_index] or data.selected_index
 
         local signal_change = control.selected_index ~= selected_index
@@ -170,6 +181,8 @@ ugui.combobox = function(control)
                 height = height,
             }
 
+            local restore = ugui.internal.keyboard_captured_control
+            ugui.internal.keyboard_captured_control = listbox_uid
             data.selected_index = ugui.listbox({
                 uid = listbox_uid,
                 rectangle = list_rect,
@@ -178,6 +191,7 @@ ugui.combobox = function(control)
                 plaintext = control.plaintext,
                 z_index = math.maxinteger,
             })
+            ugui.internal.keyboard_captured_control = restore
 
             if data.close_on_next_update then
                 data.open = false
