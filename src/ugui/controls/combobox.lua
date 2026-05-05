@@ -22,6 +22,7 @@ ugui.registry.combobox = {
         data.open = false
         data.was_open = false
         data.selected_index = control.selected_index
+        data.quiet_selected_index = control.selected_index
         data.update_filter = false
         data.search_text = nil
         data.close_on_next_update = false
@@ -121,12 +122,14 @@ ugui.combobox = function(control)
             data.open = not data.open
             data.update_filter = data.open
             data.search_text = current_text
+            data.quiet_selected_index = 1
         end
 
         if search_text ~= current_text then
             data.update_filter = true
             data.open = true
             data.search_text = search_text
+            data.quiet_selected_index = 1
         end
     end
 
@@ -183,11 +186,11 @@ ugui.combobox = function(control)
 
             local restore = ugui.internal.keyboard_captured_control
             ugui.internal.keyboard_captured_control = listbox_uid
-            data.selected_index = ugui.listbox({
+            data.quiet_selected_index = ugui.listbox({
                 uid = listbox_uid,
                 rectangle = list_rect,
                 items = items_to_show,
-                selected_index = data.selected_index,
+                selected_index = data.quiet_selected_index,
                 plaintext = control.plaintext,
                 z_index = math.maxinteger,
             })
@@ -196,6 +199,8 @@ ugui.combobox = function(control)
             if data.close_on_next_update then
                 data.open = false
                 data.search_text = nil
+                -- Commit the selection
+                data.selected_index = data.filtered_to_original and data.filtered_to_original[data.quiet_selected_index] or data.quiet_selected_index
             end
 
             data.close_on_next_update =
