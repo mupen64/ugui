@@ -1,0 +1,11 @@
+[
+  {
+    "label": "build (watch)",
+    "reveal": "no_focus",
+    "save": "all",
+    "command": "python build.py",
+    "args": [
+      "--watch"
+    ]
+  },
+]
