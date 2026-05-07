@@ -39,6 +39,18 @@ ugui.registry.button = {
 ---@param fn fun()? The function to immediately invoke upon placing the button. In the function's context, any placed controls will be parented to this control.
 ---@return boolean, Meta # Whether the button has been pressed.
 ugui.button = function(control, fn)
-    local result = ugui.control(control, 'button', fn)
+    local result = ugui.control(control, 'button', function()
+        local visual_state = ugui.get_visual_state(control)
+        ugui.label({
+            uid = control.uid + 1,
+            text = control.text,
+            x_align = 0.5,
+            y_align = 0.5,
+            color = ugui.standard_styler.params.button.text[visual_state],
+        })
+        if fn then
+            fn()
+        end
+    end)
     return result.primary, result.meta
 end

@@ -784,7 +784,7 @@ ugui.standard_styler = {
         end
         local rectangle = {x = position.x, y = position.y, width = 0, height = 0}
         local size = ugui.standard_styler.compute_rich_text(text, control.plaintext,
-        ugui.standard_styler.params.font_name, ugui.standard_styler.params.font_size).size
+            ugui.standard_styler.params.font_name, ugui.standard_styler.params.font_size).size
         rectangle.width = size.x
         rectangle.height = math.max(size.y, ugui.standard_styler.params.menu_item.height)
         rectangle.y = rectangle.y + rectangle.height
@@ -842,8 +842,6 @@ ugui.standard_styler = {
         end
 
         ugui.standard_styler.draw_raised_frame(control, visual_state)
-        ugui.standard_styler.draw_rich_text(control.rectangle, nil, nil, control.text,
-            ugui.standard_styler.params.button.text[visual_state], visual_state, control.plaintext)
     end,
 
     ---Draws a ToggleButton with the specified parameters.
@@ -859,23 +857,6 @@ ugui.standard_styler = {
         local copy = ugui.internal.deep_clone(control)
         copy.text = control.items and control.items[control.selected_index] or ''
         ugui.standard_styler.draw_button(copy)
-
-        local visual_state = ugui.get_visual_state(control)
-
-        -- draw the arrows
-        ugui.standard_styler.draw_icon({
-            x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x,
-            y = control.rectangle.y,
-            width = ugui.standard_styler.params.icon_size,
-            height = control.rectangle.height,
-        }, ugui.standard_styler.params.button.text[visual_state], visual_state, 'arrow_left')
-        ugui.standard_styler.draw_icon({
-            x = control.rectangle.x + control.rectangle.width - ugui.standard_styler.params.textbox.padding.x -
-                ugui.standard_styler.params.icon_size,
-            y = control.rectangle.y,
-            width = ugui.standard_styler.params.icon_size,
-            height = control.rectangle.height,
-        }, ugui.standard_styler.params.button.text[visual_state], visual_state, 'arrow_right')
     end,
 
     ---Draws a TextBox with the specified parameters.
@@ -1092,32 +1073,12 @@ ugui.standard_styler = {
     draw_combobox = function(control)
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
-        local selected_item = data.selected_index == nil and '' or control.items[data.selected_index]
 
         if data.open and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
         end
 
         ugui.standard_styler.draw_raised_frame(control, visual_state)
-
-        local text_color = ugui.standard_styler.params.button.text[visual_state]
-
-        local text_rect = {
-            x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x * 2,
-            y = control.rectangle.y,
-            width = control.rectangle.width,
-            height = control.rectangle.height,
-        }
-
-        ugui.standard_styler.draw_rich_text(text_rect, BreitbandGraphics.alignment.start, nil, selected_item, text_color,
-            visual_state, control.plaintext)
-        ugui.standard_styler.draw_icon({
-            x = control.rectangle.x + control.rectangle.width - ugui.standard_styler.params.icon_size -
-                ugui.standard_styler.params.textbox.padding.x * 2,
-            y = control.rectangle.y,
-            width = ugui.standard_styler.params.icon_size,
-            height = control.rectangle.height,
-        }, text_color, visual_state, 'arrow_down')
     end,
 
     ---Draws a ListBox with the specified parameters.
