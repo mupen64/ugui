@@ -30,9 +30,9 @@
 ---
 ---Constraints can also be applied:
 ---
----    `min(auto, 5px)`
----    `max(auto, 5px)`
----    `clamp(auto, 5px, 10px)`
+---    `min(auto,5px)`
+---    `max(auto,5px)`
+---    `clamp(auto,5px,10px)`
 
 
 ---@alias SmartUnit2 string
