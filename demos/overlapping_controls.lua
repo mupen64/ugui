@@ -253,5 +253,15 @@ emu.atdrawd2d(function()
         end) then
         index = index + 1
     end
+    if ugui.button({
+            uid = 320,
+            margin = '650px 220px',
+            size = '200px',
+            text = '',
+        }, function()
+
+        end) then
+        index = index + 1
+    end
     end_frame()
 end)

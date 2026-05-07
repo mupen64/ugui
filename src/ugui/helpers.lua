@@ -325,3 +325,28 @@ ugui.internal.print_tree = function(node)
     print_tree_impl(node)
     print('')
 end
+
+
+---Resolves a SmartUnit2 to a Vector2.
+---@param unit SmartUnit2
+---@param node SceneNode
+---@return Vector2
+ugui.internal.resolve_unit2 = function(unit, node)
+    local function resolve_unit(unit)
+        local px = unit:match('^([%-%d%.]+)px$')
+        ugui.internal.assert(px, string.format('unsupported SmartUnit: %q', unit))
+        return tonumber(px)
+    end
+
+    local a, b = unit:match('^(%S+)%s+(%S+)$')
+
+    if not a then
+        a = unit
+        b = unit
+    end
+
+    return {
+        x = resolve_unit(a),
+        y = resolve_unit(b),
+    }
+end

@@ -4,7 +4,11 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
----@alias SceneNode { control: Control, type: ControlType, parent: SceneNode?, children: SceneNode[] }
+---@class SceneNode
+---@field public control Control
+---@field public type ControlType
+---@field public parent SceneNode?
+---@field public children SceneNode[]
 
 ugui.internal = {
     ---@type SceneNode

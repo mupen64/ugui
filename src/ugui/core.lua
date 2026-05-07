@@ -16,6 +16,22 @@
 ---@class Control
 ---@field public hittestable boolean? Whether this control instance participates in hit-testing. Overrides the registry-level `hittestable` function if specified. Defaults to `true` if neither this nor the registry function is set.
 
+---@alias SmartUnit string
+---A size unit specification that can be:
+---
+---    `"auto"` - natural size (CURRENTLY UNSUPPORTED)
+---    `"{}px"` - absolute pixels (e.g. `"100px"`)
+---    `"{}%"` - percentage of parent size (e.g. `"50%"`) (CURRENTLY UNSUPPORTED)
+
+---@alias SmartUnit2 string
+---A two-dimensional unit specification that is composed of two SmartUnits.
+---
+---Examples:
+---
+---    `100px 100px`
+---    `100px` (expands to `100px 100px`)
+---    `auto auto`
+
 ---@alias UID number
 ---Unique identifier for a control. Must be unique within a frame.
 
@@ -244,6 +260,29 @@ ugui.control = function(control, type, fn)
 
     local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
+    ---@type SceneNode
+    local this_node = {
+        control = control,
+        type = type,
+        parent = ugui.internal.current_parent,
+        children = {},
+    }
+
+    if not control.rectangle then
+        control.rectangle = {x = 0, y = 0, width = 0, height = 0}
+    end
+    if control.margin then
+        local pos = ugui.internal.resolve_unit2(control.margin, this_node)
+        control.rectangle.x = pos.x
+        control.rectangle.y = pos.y
+    end
+    if control.size then
+        local size = ugui.internal.resolve_unit2(control.size, this_node)
+        control.rectangle.width = size.x
+        control.rectangle.height = size.y
+    end
+
+
     -- If the control has only just been added, we run its setup.
     if ugui.internal.control_data[control.uid] == nil then
         init_control_data(control.uid)
@@ -258,13 +297,8 @@ ugui.control = function(control, type, fn)
         end
     end
 
-    ---@type SceneNode
-    local this_node = {
-        control = control,
-        type = type,
-        parent = ugui.internal.current_parent,
-        children = {},
-    }
+
+
 
     if has_root then
         -- Check for UID duplicates.
