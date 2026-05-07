@@ -14,6 +14,8 @@ for i = 1, 100, 1 do
     items[#items + 1] = 'Item ' .. i
 end
 
+ugui.DEBUG = true
+
 emu.atdrawd2d(function()
     begin_frame()
 
@@ -26,9 +28,15 @@ emu.atdrawd2d(function()
     end
     if ugui.button({
             uid = 15,
-            rectangle = {x = 80, y = 80, width = 100, height = 50},
+            rectangle = {x = 80 + math.sin(os.clock() * 5) * 10, y = 80 + math.cos(os.clock() * 5) * 10, width = 100, height = 50},
             text = tostring(index),
-        }) then
+        }, function()
+            ugui.button({
+                uid = 999999,
+                rectangle = {x = 10, y = 10, width = 20, height = 20},
+                text = '😀',
+            })
+        end) then
         index = index + 1
     end
     if ugui.button({
@@ -152,7 +160,7 @@ emu.atdrawd2d(function()
         color = BreitbandGraphics.colors.black,
         font_name = 'Consolas',
         font_size = 24,
-        hittestable = true
+        hittestable = true,
     })
     index = ugui.combobox({
         uid = 175,

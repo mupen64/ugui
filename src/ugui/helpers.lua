@@ -216,7 +216,20 @@ end
 ---Traverses a tree node depth-first and invokes a callback function for each node.
 ---@param node table The node to traverse.
 ---@param callback fun(node: SceneNode): boolean? The callback function to invoke for each node. If the callback returns `false`, the traversal is stopped early.
-ugui.internal.foreach_node = function(node, callback)
+---@param reverse boolean? Whether to traverse children in reverse order.
+ugui.internal.foreach_node = function(node, callback, reverse)
+    if reverse then
+        for i = #node.children, 1, -1 do
+            if ugui.internal.foreach_node(node.children[i], callback, reverse) == false then
+                return
+            end
+        end
+        if callback(node) == false then
+            return
+        end
+        return
+    end
+
     if callback(node) == false then
         return
     end
@@ -281,4 +294,34 @@ ugui.internal.find_control_by_uid = function(uid)
         end
     end)
     return result
+end
+
+
+---Prints the scene tree for debugging purposes.
+---@param node SceneNode
+ugui.internal.print_tree = function(node)
+    ---@param node SceneNode
+    local function print_tree_impl(node, prefix, is_last)
+        prefix = prefix or ''
+        local connector = is_last and '└─ ' or '├─ '
+
+        local label = ''
+        if node == ugui.internal.root then
+            label = '<root>'
+        end
+        label = label .. ' ' .. node.type .. ' ' .. tostring(node.control.uid)
+
+        print(prefix .. connector .. label)
+        print(prefix .. '      ' .. string.format('rect: (%.0f, %.0f) %.0f x %.0f', node.control.rectangle.x, node.control.rectangle.y, node.control.rectangle.width, node.control.rectangle.height))
+
+        local child_prefix = prefix .. (is_last and '   ' or '│  ')
+
+        local children = node.children or {}
+        for i, child in pairs(children) do
+            print_tree_impl(child, child_prefix, i == #children)
+        end
+    end
+
+    print_tree_impl(node)
+    print('')
 end

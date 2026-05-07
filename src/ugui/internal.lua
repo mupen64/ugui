@@ -4,11 +4,15 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
----@alias SceneNode { control: Control, type: ControlType, children: SceneNode[] }
+---@alias SceneNode { control: Control, type: ControlType, parent: SceneNode?, children: SceneNode[] }
 
 ugui.internal = {
     ---@type SceneNode
-    root = {},
+    root = nil,
+
+    ---@type SceneNode
+    ---The current parent node for controls being placed. Reset to the root node each frame.
+    current_parent = nil,
 
     ---@type table<UID, ControlType>
     control_types = {},
@@ -235,7 +239,6 @@ ugui.internal = {
             return
         end
 
-
         ugui.standard_styler.draw_tooltip(hovered_control, {
             x = ugui.internal.environment.mouse_position.x,
             y = ugui.internal.environment.mouse_position.y,
@@ -415,5 +418,20 @@ ugui.internal = {
         ugui.internal.mouse_captured_control = mouse_captured_control and mouse_captured_control.control.uid or nil
         ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
+    end,
+
+    ---Performs scene layout.
+    layout = function()
+        -- Our basic layout rules for now:
+        -- control.rectangle x/y are considered offsets from the parent's x/y
+
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            local parent = node.parent
+
+
+            control.rectangle.x = control.rectangle.x + (parent and parent.control.rectangle.x or 0)
+            control.rectangle.y = control.rectangle.y + (parent and parent.control.rectangle.y or 0)
+        end)
     end,
 }

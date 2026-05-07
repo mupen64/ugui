@@ -164,13 +164,16 @@ ugui.end_frame = function()
     -- 1. Z-Sorting pass
     ugui.internal.sort_scene()
 
-    -- 2. Input processing pass
+    -- 2. Layout pass
+    ugui.internal.layout()
+
+    -- 3. Input processing pass
     ugui.internal.do_input_processing()
 
-    -- 3. Event dispatching pass
+    -- 4. Event dispatching pass
     ugui.internal.dispatch_events()
 
-    -- 4. Rendering pass
+    -- 5. Rendering pass
     ugui.internal.foreach_node_from_root(function(node)
         local control = node.control
         local type = node.type
@@ -195,6 +198,14 @@ ugui.end_frame = function()
 
     ugui.internal.tooltip()
 
+    if ugui.DEBUG then
+        for _, e in pairs(ugui.internal.environment.key_events) do
+            if e.pressed and e.keycode == ugui.keycodes.VK_A then
+                ugui.internal.print_tree(ugui.internal.root)
+            end
+        end
+    end
+
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
     for i = 1, #ugui.internal.root, 1 do
@@ -209,8 +220,9 @@ end
 ---Places a Control of the specified type.
 ---@param control Control The control.
 ---@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
+---@param fn fun()? The function to immediately invoke upon placing the button. In the function's context, any placed controls will be parented to this control.
 ---@return ControlReturnValue # The control's return value, or `nil` if the type is `""`.
-ugui.control = function(control, type)
+ugui.control = function(control, type, fn)
     local function init_control_data(uid)
         ugui.internal.control_data[uid] = {
             signal_change = ugui.signal_change_states.none,
@@ -246,6 +258,14 @@ ugui.control = function(control, type)
         end
     end
 
+    ---@type SceneNode
+    local this_node = {
+        control = control,
+        type = type,
+        parent = ugui.internal.current_parent,
+        children = {},
+    }
+
     if has_root then
         -- Check for UID duplicates.
         ugui.internal.foreach_node_from_root(function(node)
@@ -258,11 +278,8 @@ ugui.control = function(control, type)
         ugui.internal.assert(stored_control_type == nil or stored_control_type == type,
             string.format('Attempted to reuse UID %d of %s for %s.', control.uid, stored_control_type, type))
     else
-        ugui.internal.root = {
-            control = control,
-            type = type,
-            children = {},
-        }
+        ugui.internal.root = this_node
+        ugui.internal.current_parent = this_node
     end
 
     if registry_entry.validate then
@@ -275,15 +292,18 @@ ugui.control = function(control, type)
     end
 
     if has_root then
-        ugui.internal.root.children[#ugui.internal.root.children + 1] = {
-            control = control,
-            type = type,
-            children = {},
-        }
+        ugui.internal.current_parent.children[#ugui.internal.current_parent.children + 1] = this_node
     end
     ugui.internal.control_types[control.uid] = type
 
     revert_styler_mixin()
+
+    if fn then
+        local prev_parent = ugui.internal.current_parent
+        ugui.internal.current_parent = this_node
+        fn()
+        ugui.internal.current_parent = prev_parent
+    end
 
     return return_value
 end
