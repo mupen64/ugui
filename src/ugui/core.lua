@@ -22,6 +22,18 @@
 ---    `"auto"` - natural size (CURRENTLY UNSUPPORTED)
 ---    `"{}px"` - absolute pixels (e.g. `"100px"`)
 ---    `"{}%"` - percentage of parent size (e.g. `"50%"`)
+---
+---Basic arithmetic operations are also supported: `+`, `-`, `*`, `/`.
+---
+---    `100px-3%`
+---    `auto*10px`
+---
+---Constraints can also be applied:
+---
+---    `min(auto, 5px)`
+---    `max(auto, 5px)`
+---    `clamp(auto, 5px, 10px)`
+
 
 ---@alias SmartUnit2 string
 ---A two-dimensional unit specification that is composed of two SmartUnits.
