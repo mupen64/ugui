@@ -189,9 +189,10 @@ ugui.registry.numberbox = {
 
 ---Places a NumberBox.
 ---@param control NumberBox The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new value.
-ugui.numberbox = function(control)
-    local _ = ugui.control(control, 'numberbox')
+ugui.numberbox = function(control, fn)
+    local _ = ugui.control(control, 'numberbox', fn)
     local data = ugui.internal.control_data[control.uid]
 
     if control.show_negative then

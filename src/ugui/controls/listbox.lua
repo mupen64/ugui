@@ -183,8 +183,9 @@ ugui.registry.listbox = {
 
 ---Places a ListBox.
 ---@param control ListBox The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
-ugui.listbox = function(control)
+ugui.listbox = function(control, fn)
     local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
     local x_overflow = content_bounds.width > control.rectangle.width
     local y_overflow = content_bounds.height > control.rectangle.height
@@ -197,7 +198,7 @@ ugui.listbox = function(control)
         control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
     end
 
-    local result = ugui.control(control, 'listbox')
+    local result = ugui.control(control, 'listbox', fn)
     local data = ugui.internal.control_data[control.uid]
 
     if x_overflow then

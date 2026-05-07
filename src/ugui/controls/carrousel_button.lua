@@ -57,8 +57,9 @@ ugui.registry.carrousel_button = {
 
 ---Places a CarrouselButton.
 ---@param control CarrouselButton The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
-ugui.carrousel_button = function(control)
-    local result = ugui.control(control, 'carrousel_button')
+ugui.carrousel_button = function(control, fn)
+    local result = ugui.control(control, 'carrousel_button', fn)
     return result.primary, result.meta
 end

@@ -35,7 +35,7 @@ ugui.registry.trackbar = {
 
         return {
             primary = data.value,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Trackbar
@@ -46,8 +46,9 @@ ugui.registry.trackbar = {
 
 ---Places a Trackbar.
 ---@param control Trackbar The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return number, Meta # The trackbar's new value.
-ugui.trackbar = function(control)
-    local result = ugui.control(control, 'trackbar')
+ugui.trackbar = function(control, fn)
+    local result = ugui.control(control, 'trackbar', fn)
     return result.primary, result.meta
 end

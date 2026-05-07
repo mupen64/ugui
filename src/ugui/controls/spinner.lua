@@ -14,9 +14,10 @@
 
 ---Places a Spinner.
 ---@param control Spinner The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return number, Meta # The new value.
-ugui.spinner = function(control)
-    local _ = ugui.control(control, '')
+ugui.spinner = function(control, fn)
+    local _ = ugui.control(control, '', fn)
     local data = ugui.internal.control_data[control.uid]
 
     local increment = control.increment or 1
@@ -134,5 +135,5 @@ ugui.spinner = function(control)
 
     data.signal_change = ugui.internal.process_signal_changes(data.signal_change, control.value ~= value)
 
-    return clamp_value(value), { signal_change = data.signal_change }
+    return clamp_value(value), {signal_change = data.signal_change}
 end

@@ -46,8 +46,9 @@ ugui.registry.label = {
 
 ---Places a Label.
 ---@param control Label The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return nil, Meta # Nothing.
-ugui.label = function(control)
-    local result = ugui.control(control, 'label')
+ugui.label = function(control, fn)
+    local result = ugui.control(control, 'label', fn)
     return result.primary, result.meta
 end

@@ -94,9 +94,10 @@ ugui.registry.scrollbar = {
 
 ---Places a ScrollBar.
 ---@param control ScrollBar The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return number, Meta # The new value.
-ugui.scrollbar = function(control)
-    local result = ugui.control(control, 'scrollbar')
+ugui.scrollbar = function(control, fn)
+    local result = ugui.control(control, 'scrollbar', fn)
     ---@cast result ControlReturnValue
     return result.primary, result.meta
 end

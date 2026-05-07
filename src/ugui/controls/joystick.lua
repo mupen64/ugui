@@ -55,7 +55,7 @@ ugui.registry.joystick = {
 
         return {
             primary = data.position,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Joystick
@@ -66,8 +66,9 @@ ugui.registry.joystick = {
 
 ---Places a Joystick.
 ---@param control Joystick The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return Vector2, Meta
-ugui.joystick = function(control)
-    local result = ugui.control(control, 'joystick')
+ugui.joystick = function(control, fn)
+    local result = ugui.control(control, 'joystick', fn)
     return result.primary, result.meta
 end

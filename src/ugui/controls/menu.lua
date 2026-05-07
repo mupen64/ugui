@@ -90,7 +90,7 @@ ugui.registry.menu = {
 
         return {
             primary = result,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Menu
@@ -101,8 +101,9 @@ ugui.registry.menu = {
 
 ---Places a Menu.
 ---@param control Menu The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return MenuResult, Meta # The menu result.
-ugui.menu = function(control)
+ugui.menu = function(control, fn)
     control.z_index = control.z_index or 1000
 
     -- We adjust the dimensions with what should fit the content
@@ -135,7 +136,7 @@ ugui.menu = function(control)
             (control.rectangle.y + control.rectangle.height - ugui.internal.environment.window_size.y)
     end
 
-    local result = ugui.control(control, 'menu')
+    local result = ugui.control(control, 'menu', fn)
     local data = ugui.internal.control_data[control.uid]
 
     -- Show child menu if there's any hovered one

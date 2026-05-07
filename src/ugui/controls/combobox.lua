@@ -66,9 +66,10 @@ ugui.registry.combobox = {
 
 ---Places a ComboBox.
 ---@param control ComboBox The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
-ugui.combobox = function(control)
-    local result = ugui.control(control, 'combobox')
+ugui.combobox = function(control, fn)
+    local result = ugui.control(control, 'combobox', fn)
     local data = ugui.internal.control_data[control.uid]
 
     local textbox_uid<const> = control.uid + 1
