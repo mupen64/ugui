@@ -11,5 +11,5 @@
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
----@field public z_index integer? The control's Z-index. If nil, `0` is assumed.
+---@field public z_index integer? The control's Z-index. If nil, `0` is assumed. This control will be drawn in front of siblings with a lower Z-index. To control the Z-index relative to all controls (including parents), parent the control to the scene root.
 ---The base class for all controls.
