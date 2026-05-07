@@ -224,19 +224,22 @@ ugui.internal = {
         if ugui.internal.hovered_control == nil then
             return
         end
+
         if (os.clock() - ugui.internal.hover_start_time) < ugui.standard_styler.params.tooltip.delay then
             return
         end
 
-        -- Find hovered control
-        for _, entry in pairs(ugui.internal.root) do
-            if entry.control.uid == ugui.internal.hovered_control then
-                ugui.standard_styler.draw_tooltip(entry.control, {
-                    x = ugui.internal.environment.mouse_position.x,
-                    y = ugui.internal.environment.mouse_position.y,
-                })
-            end
+        local hovered_control = ugui.internal.find_control_by_uid(ugui.internal.hovered_control)
+
+        if not hovered_control then
+            return
         end
+
+
+        ugui.standard_styler.draw_tooltip(hovered_control, {
+            x = ugui.internal.environment.mouse_position.x,
+            y = ugui.internal.environment.mouse_position.y,
+        })
     end,
 
     ---Parses rich text into content segments.

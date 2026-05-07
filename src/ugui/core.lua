@@ -193,7 +193,7 @@ ugui.end_frame = function()
         end
     end)
 
-    -- ugui.internal.tooltip()
+    ugui.internal.tooltip()
 
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
