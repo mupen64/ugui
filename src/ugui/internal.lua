@@ -422,16 +422,23 @@ ugui.internal = {
 
     ---Performs scene layout.
     layout = function()
-        -- Our basic layout rules for now:
-        -- control.rectangle x/y are considered offsets from the parent's x/y
-
         ugui.internal.foreach_node_from_root(function(node)
             local control = node.control
             local parent = node.parent
 
+            local parent_rect = parent and parent.control.rectangle or {x = 0, y = 0, width = 0, height = 0}
 
-            control.rectangle.x = control.rectangle.x + (parent and parent.control.rectangle.x or 0)
-            control.rectangle.y = control.rectangle.y + (parent and parent.control.rectangle.y or 0)
+            local min_x<const> = parent_rect.x
+            local max_x<const> = min_x + parent_rect.width - control.rectangle.width
+
+            local min_y<const> = parent_rect.y
+            local max_y<const> = min_y + parent_rect.height - control.rectangle.height
+
+            local x_offset<const> = ugui.internal.remap(control.x_align or 0, 0, 1, min_x, max_x)
+            local y_offset<const> = ugui.internal.remap(control.y_align or 0, 0, 1, min_y, max_y)
+
+            control.rectangle.x = control.rectangle.x + x_offset
+            control.rectangle.y = control.rectangle.y + y_offset
         end)
     end,
 }

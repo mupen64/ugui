@@ -181,5 +181,77 @@ emu.atdrawd2d(function()
         items = {'a'},
         selected_index = nil,
     })
+    if ugui.button({
+            uid = 210,
+            rectangle = {x = 620, y = 10, width = 200, height = 200},
+            text = '',
+        }, function()
+            ugui.button({
+                uid = 220,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'top left',
+            })
+            ugui.button({
+                uid = 230,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'top center',
+                x_align = 0.5,
+            })
+            ugui.button({
+                uid = 240,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'top right',
+                x_align = 1,
+            })
+            ugui.button({
+                uid = 250,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'bottom left',
+                y_align = 1,
+            })
+            ugui.button({
+                uid = 260,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'bottom center',
+                x_align = 0.5,
+                y_align = 1,
+            })
+            ugui.button({
+                uid = 270,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'bottom right',
+                x_align = 1,
+                y_align = 1,
+            })
+            ugui.button({
+                uid = 280,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'left center',
+                y_align = 0.5,
+            })
+            ugui.button({
+                uid = 290,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'right center',
+                x_align = 1,
+                y_align = 0.5,
+            })
+            ugui.button({
+                uid = 300,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'center',
+                x_align = 0.5,
+                y_align = 0.5,
+            })
+            ugui.button({
+                uid = 310,
+                rectangle = {x = 0, y = 0, width = 50, height = 23},
+                text = 'smooth',
+                x_align = (math.sin(os.clock() * 2) + 1) / 2,
+                y_align = (math.cos(os.clock() * 2) + 1) / 2,
+            })
+        end) then
+        index = index + 1
+    end
     end_frame()
 end)
