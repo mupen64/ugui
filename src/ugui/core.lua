@@ -5,11 +5,11 @@
 --
 
 ---@class ControlRegistryEntry
----@field public validate fun(control: Control) Verifies that a control instance matches the desired type.
+---@field public validate fun(control: Control)? Verifies that a control instance matches the desired type.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
----@field public logic fun(control: Control, data: any): ControlReturnValue Executes control logic.
----@field public draw fun(control: Control) Draws the control.
+---@field public logic (fun(control: Control, data: any): ControlReturnValue)? Executes control logic.
+---@field public draw (fun(control: Control))? Draws the control.
 ---@field public hittestable (fun(control: Control): boolean)? A function returning whether a control instance of this type should participate in hit-testing. If `nil`, the instance-level `hittestable` field is used. If both are `nil`, the control is hittestable.
 ---Represents an entry in the control registry.
 
@@ -43,7 +43,7 @@
 
 ---@alias ControlReturnValue { primary: any, meta: Meta }
 
----@alias ControlType "label" | "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
+---@alias ControlType "panel" | "label" | "button" | "toggle_button" | "carrousel_button" | "textbox" | "joystick" | "trackbar" | "listbox" | "scrollbar" | "combobox" | "menu" | "numberbox"
 
 ---@enum VisualState
 -- The possible states of a control, which are used by the styler for drawing.
@@ -146,6 +146,12 @@ ugui.begin_frame = function(environment)
     if ugui.internal.is_mouse_just_down() then
         ugui.internal.mouse_down_position = ugui.internal.environment.mouse_position
     end
+
+    ugui.internal.root = nil
+    ugui.panel({
+        uid = 0,
+        rectangle = {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y},
+    })
 end
 
 --- Ends the current frame.
@@ -165,17 +171,17 @@ ugui.end_frame = function()
     ugui.internal.dispatch_events()
 
     -- 4. Rendering pass
-    for i = 1, #ugui.internal.scene, 1 do
-        local control = ugui.internal.scene[i].control
-        local type = ugui.internal.scene[i].type
+    ugui.internal.foreach_node_from_root(function(node)
+        local control = node.control
+        local type = node.type
 
         local entry = ugui.registry[type]
 
-        local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
-
-        entry.draw(control)
-
-        revert_styler_mixin()
+        if entry.draw then
+            local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
+            entry.draw(control)
+            revert_styler_mixin()
+        end
 
         if ugui.DEBUG then
             if ugui.internal.keyboard_captured_control == control.uid then
@@ -185,18 +191,17 @@ ugui.end_frame = function()
                 BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
             end
         end
-    end
+    end)
 
-    ugui.internal.tooltip()
+    -- ugui.internal.tooltip()
 
     -- Store UIDs that were present in this frame
     ugui.internal.previous_uids = {}
-    for i = 1, #ugui.internal.scene, 1 do
-        local control = ugui.internal.scene[i].control
+    for i = 1, #ugui.internal.root, 1 do
+        local control = ugui.internal.root[i].control
         ugui.internal.previous_uids[control.uid] = true
     end
 
-    ugui.internal.scene = {}
     ugui.internal.last_control_rectangle = nil
     ugui.internal.frame_in_progress = false
 end
@@ -216,16 +221,14 @@ ugui.control = function(control, type)
         init_control_data(control.uid)
         return nil
     end
+
     ---@cast type ControlType
 
-    ---@type ControlRegistryEntry?
     local registry_entry = ugui.registry[type]
+    ugui.internal.assert(registry_entry ~= nil, string.format("Unknown control type '%s'", type))
 
-    if registry_entry == nil then
-        error(string.format("Unknown control type '%s'", type))
-    end
-
-    local return_value
+    local return_value = {primary = nil, meta = {signal_change = ugui.signal_change_states.none}}
+    local has_root<const> = ugui.internal.root ~= nil
 
     local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
@@ -237,36 +240,47 @@ ugui.control = function(control, type)
             registry_entry.setup(control, ugui.internal.control_data[control.uid])
         end
 
-        -- Run logic once to stabilize the return value for the first state
-        return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
-    end
-
-    -- Check for UID duplicates
-    for i = 1, #ugui.internal.scene, 1 do
-        local uid = ugui.internal.scene[i].control.uid
-        if control.uid == uid then
-            error(string.format(
-                'Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.',
-                control.uid))
+        -- Run logic once to stabilize the return value for the first state.
+        if registry_entry.logic then
+            return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
         end
     end
 
-    -- Check that any existing control with the same UID matches this control's type
-    local stored_control_type = ugui.internal.control_types[control.uid]
-    if stored_control_type ~= nil and stored_control_type ~= type then
-        error(string.format('Attempted to reuse UID %d of %s for %s.', control.uid,
-            ugui.internal.control_types[control.uid], type))
+    if has_root then
+        -- Check for UID duplicates.
+        ugui.internal.foreach_node_from_root(function(node)
+            local uid = node.control.uid
+            ugui.internal.assert(control.uid ~= uid, string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', uid))
+        end)
+
+        -- Check for cross-frame control type clobbering (e.g. button becoming a textbox)
+        local stored_control_type = ugui.internal.control_types[control.uid]
+        ugui.internal.assert(stored_control_type == nil or stored_control_type == type,
+            string.format('Attempted to reuse UID %d of %s for %s.', control.uid, stored_control_type, type))
+    else
+        ugui.internal.root = {
+            control = control,
+            type = type,
+            children = {},
+        }
     end
 
-    registry_entry.validate(control)
+    if registry_entry.validate then
+        registry_entry.validate(control)
+    end
 
     -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
-    return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
+    if registry_entry.logic then
+        return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
+    end
 
-    ugui.internal.scene[#ugui.internal.scene + 1] = {
-        control = control,
-        type = type,
-    }
+    if has_root then
+        ugui.internal.root.children[#ugui.internal.root.children + 1] = {
+            control = control,
+            type = type,
+            children = {},
+        }
+    end
     ugui.internal.control_types[control.uid] = type
 
     revert_styler_mixin()

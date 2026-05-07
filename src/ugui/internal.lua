@@ -4,11 +4,11 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
----@alias SceneEntry { control: Control, type: ControlType }
+---@alias SceneNode { control: Control, type: ControlType, children: SceneNode[] }
 
 ugui.internal = {
-    ---@type SceneEntry[]
-    scene = {},
+    ---@type SceneNode
+    root = {},
 
     ---@type table<UID, ControlType>
     control_types = {},
@@ -63,31 +63,26 @@ ugui.internal = {
     ---Cache of nineslice drawings. Only used after calling `ugui.apply_nineslice`.
     nineslice_draw_cache = {},
 
-    ---Sorts controls stably in the scene by their Z-index.
-    sort_scene = function()
-        ugui.internal.stable_sort(ugui.internal.scene, function(a, b)
-            return (a.control.z_index or 0) < (b.control.z_index or 0)
-        end)
-    end,
-
     ---Dispatches events related to controls in the scene.
     dispatch_events = function()
-        for _, value in pairs(ugui.internal.scene) do
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            local registry_entry = ugui.registry[node.type]
+
             local existed_in_previous_frame = false
             for uid, _ in pairs(ugui.internal.previous_uids) do
-                if value.control.uid == uid then
+                if control.uid == uid then
                     existed_in_previous_frame = true
                     break
                 end
             end
 
             if not existed_in_previous_frame then
-                local registry_entry = ugui.registry[value.type]
                 if registry_entry.added then
-                    registry_entry.added(value.control, ugui.internal.control_data[value.control.uid])
+                    registry_entry.added(control, ugui.internal.control_data[control.uid])
                 end
             end
-        end
+        end)
     end,
 
 
@@ -234,7 +229,7 @@ ugui.internal = {
         end
 
         -- Find hovered control
-        for _, entry in pairs(ugui.internal.scene) do
+        for _, entry in pairs(ugui.internal.root) do
             if entry.control.uid == ugui.internal.hovered_control then
                 ugui.standard_styler.draw_tooltip(entry.control, {
                     x = ugui.internal.environment.mouse_position.x,
@@ -309,35 +304,48 @@ ugui.internal = {
                 point.y <= rectangle.y + rectangle.height
         end
 
+        local function traverse_tree_reversed(node, callback)
+            for i = #node.children, 1, -1 do
+                traverse_tree_reversed(node.children[i], callback)
+            end
+
+            callback(node)
+        end
+
+        local function find_control_by_uid(node, uid)
+            if node.control.uid == uid then
+                return node
+            end
+            for _, child in ipairs(node.children) do
+                local found = find_control_by_uid(child, uid)
+                if found then
+                    return found
+                end
+            end
+            return nil
+        end
+
         ---@type Control?
         local clicked_control = nil
 
-        ---@type SceneEntry?
+        ---@type SceneNode?
         local mouse_captured_control = nil
-        for i = 1, #ugui.internal.scene, 1 do
-            local entry = ugui.internal.scene[i]
-            if entry.control.uid == ugui.internal.mouse_captured_control then
-                mouse_captured_control = entry
-            end
+        if ugui.internal.mouse_captured_control then
+            mouse_captured_control = find_control_by_uid(ugui.internal.root, ugui.internal.mouse_captured_control)
         end
 
-        ---@type SceneEntry?
+        ---@type SceneNode?
         local keyboard_captured_control = nil
-        for i = 1, #ugui.internal.scene, 1 do
-            local entry = ugui.internal.scene[i]
-            if entry.control.uid == ugui.internal.keyboard_captured_control then
-                keyboard_captured_control = entry
-            end
+        if ugui.internal.keyboard_captured_control then
+            keyboard_captured_control = find_control_by_uid(ugui.internal.root, ugui.internal.keyboard_captured_control)
         end
-
 
         local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
 
-        for i = #ugui.internal.scene, 1, -1 do
-            local entry = ugui.internal.scene[i]
-            local control = entry.control
-            local registry_entry = ugui.registry[entry.type]
+        traverse_tree_reversed(ugui.internal.root, function(node)
+            local control = node.control
+            local registry_entry = ugui.registry[node.type]
 
             local effective_hittestable = ugui.internal.compute_prop(control, registry_entry, 'hittestable', function() return true end)
 
@@ -346,8 +354,8 @@ ugui.internal = {
                 if ugui.internal.is_mouse_just_down() then
                     if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
-                        keyboard_captured_control = entry
-                        mouse_captured_control = entry
+                        keyboard_captured_control = node
+                        mouse_captured_control = node
                     end
                 end
             end
@@ -362,7 +370,7 @@ ugui.internal = {
                     end
                 end
             end
-        end
+        end)
 
         -- Clear the mouse captured control if we released the mouse
         if not ugui.internal.environment.is_primary_down then
@@ -386,12 +394,9 @@ ugui.internal = {
         end
 
         -- Clear hovered control if it's disabled
-        for i = 1, #ugui.internal.scene, 1 do
-            local control = ugui.internal.scene[i].control
-            if control.uid == ugui.internal.hovered_control
-                and control.is_enabled == false then
-                ugui.internal.hovered_control = nil
-            end
+        local hovered_node = ugui.internal.hovered_control and find_control_by_uid(ugui.internal.root, ugui.internal.hovered_control) or nil
+        if hovered_node and hovered_node.control.is_enabled == false then
+            ugui.internal.hovered_control = nil
         end
 
         -- Clear mouse captured control if it's disabled
@@ -405,8 +410,7 @@ ugui.internal = {
         end
 
         ugui.internal.mouse_captured_control = mouse_captured_control and mouse_captured_control.control.uid or nil
-        ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or
-            nil
+        ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 }
