@@ -258,6 +258,7 @@ emu.atdrawd2d(function()
             margin = '650px 220px',
             size = '200px',
             text = '',
+            is_enabled = false
         }, function()
             ugui.button({
                 uid = 330,

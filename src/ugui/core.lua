@@ -268,6 +268,16 @@ ugui.control = function(control, type, fn)
         children = {},
     }
 
+    -- Disable the control if any parent is disabled.
+    local node = ugui.internal.current_parent
+    while node do
+        if node.control.is_enabled == false then
+            control.is_enabled = false
+            break
+        end
+        node = node.parent
+    end
+
     if not control.rectangle then
         control.rectangle = {x = 0, y = 0, width = 0, height = 0}
     end
@@ -296,9 +306,6 @@ ugui.control = function(control, type, fn)
             return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
         end
     end
-
-
-
 
     if has_root then
         -- Check for UID duplicates.
