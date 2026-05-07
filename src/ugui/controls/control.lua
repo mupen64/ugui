@@ -7,7 +7,7 @@
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
----@field public rectangle Rectangle? **DEPRECATED - Use x/y/width/height instead.** A rectangle defining the control's position and size. The position is treated as an offset from the parent's position, while the size is treated as a forced value.
+---@field public rectangle Rectangle? **DEPRECATED - Use `margin`/`size` instead.** A rectangle defining the control's position and size. The position is treated as an offset from the parent's position, while the size is treated as a forced value.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public margin SmartUnit2? The control's margin. If nil, `rectangle` is used. If both are nil, `0px` is assumed.
 ---@field public size SmartUnit2? The control's size. If nil, `rectangle` is used. If both are nil, `auto` is assumed.
