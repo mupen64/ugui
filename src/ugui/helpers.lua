@@ -326,16 +326,30 @@ ugui.internal.print_tree = function(node)
     print('')
 end
 
-
 ---Resolves a SmartUnit2 to a Vector2.
 ---@param unit SmartUnit2
 ---@param node SceneNode
 ---@return Vector2
 ugui.internal.resolve_unit2 = function(unit, node)
-    local function resolve_unit(unit)
+    local function resolve_unit(unit, axis)
         local px = unit:match('^([%-%d%.]+)px$')
-        ugui.internal.assert(px, string.format('unsupported SmartUnit: %q', unit))
-        return tonumber(px)
+
+        if px then
+            return tonumber(px)
+        end
+
+        local percent = unit:match('^([%-%d%.]+)%%$')
+
+        if percent then
+            ugui.internal.assert(node.parent, 'percentage unit requires parent node')
+
+            local parent_rc = node.parent.control.rectangle
+            local basis = axis == 'x' and parent_rc.width or parent_rc.height
+
+            return basis * (tonumber(percent) / 100)
+        end
+
+        ugui.internal.assert(false, string.format('unsupported SmartUnit: %q', unit))
     end
 
     local a, b = unit:match('^(%S+)%s+(%S+)$')
@@ -346,7 +360,7 @@ ugui.internal.resolve_unit2 = function(unit, node)
     end
 
     return {
-        x = resolve_unit(a),
-        y = resolve_unit(b),
+        x = resolve_unit(a, 'x'),
+        y = resolve_unit(b, 'y'),
     }
 end

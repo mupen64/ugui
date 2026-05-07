@@ -259,7 +259,18 @@ emu.atdrawd2d(function()
             size = '200px',
             text = '',
         }, function()
-
+            ugui.button({
+                uid = 330,
+                text = 'half width',
+                size = '50% 23px',
+            })
+            ugui.button({
+                uid = 340,
+                text = 'half\nheight',
+                size = '23px 50%',
+                x_align = 0.5,
+                y_align = 1,
+            })
         end) then
         index = index + 1
     end

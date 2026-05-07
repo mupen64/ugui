@@ -21,7 +21,7 @@
 ---
 ---    `"auto"` - natural size (CURRENTLY UNSUPPORTED)
 ---    `"{}px"` - absolute pixels (e.g. `"100px"`)
----    `"{}%"` - percentage of parent size (e.g. `"50%"`) (CURRENTLY UNSUPPORTED)
+---    `"{}%"` - percentage of parent size (e.g. `"50%"`)
 
 ---@alias SmartUnit2 string
 ---A two-dimensional unit specification that is composed of two SmartUnits.
