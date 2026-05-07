@@ -19,7 +19,7 @@
 ---@alias SmartUnit string
 ---A size unit specification that can be:
 ---
----    `"auto"` - natural size (CURRENTLY UNSUPPORTED)
+---    `"auto"` - natural size (CURRENTLY UNSUPPORTED TODO: SUPPORT THIS ASAP, NEEDED FOR EVERY CONTROL!!!)
 ---    `"{}px"` - absolute pixels (e.g. `"100px"`)
 ---    `"{}%"` - percentage of parent size (e.g. `"50%"`)
 ---
