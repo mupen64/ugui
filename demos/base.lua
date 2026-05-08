@@ -18,7 +18,6 @@ ugui.STATIC_ENV = {
     },
 }
 
-d2d.set_target_fps(24)
 local frame_times = {}
 local last_frame_time = nil
 local key_events = {}

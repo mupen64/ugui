@@ -60,7 +60,7 @@ local pages = {
         end)
     end,
     function()
-        _sl = 1
+        _sl = _sl or 1
         _sl = ugui.listbox({
             uid = 110,
             align = 'center',
