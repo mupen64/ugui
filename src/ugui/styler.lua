@@ -630,35 +630,37 @@ ugui.standard_styler = {
     ---@param control ListBox The control table.
     ---@param rectangle Rectangle The list item's bounds.
     draw_list = function(control, rectangle)
+        local node = ugui.internal.find_node(control.uid)
+        ---@cast node SceneNode
+
+        local natural_size = node.natural_size
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
 
         ugui.standard_styler.draw_list_frame(rectangle, visual_state)
 
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-        -- item y position:
-        -- y = (20 * (i - 1)) - (scroll_y * ((20 * #control.items) - control.rectangle.height))
+
         local scroll_x = data.scroll_x and data.scroll_x or 0
         local scroll_y = data.scroll_y and data.scroll_y or 0
 
         local index_begin = (scroll_y *
-                (content_bounds.height - rectangle.height)) /
+                (natural_size.y - rectangle.height)) /
             ugui.standard_styler.params.listbox_item.height
 
         local index_end = (rectangle.height + (scroll_y *
-                (content_bounds.height - rectangle.height))) /
+                (natural_size.y - rectangle.height))) /
             ugui.standard_styler.params.listbox_item.height
 
         index_begin = ugui.internal.clamp(math.floor(index_begin), 1, #control.items)
         index_end = ugui.internal.clamp(math.ceil(index_end), 1, #control.items)
 
-        local x_offset = math.max((content_bounds.width - control.rectangle.width) * scroll_x, 0)
+        local x_offset = math.max((natural_size.x - control.rectangle.width) * scroll_x, 0)
 
         BreitbandGraphics.push_clip(BreitbandGraphics.inflate_rectangle(rectangle, -1))
 
         for i = index_begin, index_end, 1 do
             local y_offset = (ugui.standard_styler.params.listbox_item.height * (i - 1)) -
-                (scroll_y * (content_bounds.height - rectangle.height))
+                (scroll_y * (natural_size.y - rectangle.height))
 
             local item_visual_state = ugui.visual_states.normal
             if control.is_enabled == false then
@@ -672,7 +674,7 @@ ugui.standard_styler = {
             ugui.standard_styler.draw_list_item(control, control.items[i], {
                 x = rectangle.x - x_offset,
                 y = rectangle.y + y_offset,
-                width = math.max(content_bounds.width, control.rectangle.width),
+                width = math.max(natural_size.x, control.rectangle.width),
                 height = ugui.standard_styler.params.listbox_item.height,
             }, item_visual_state)
         end
@@ -1085,30 +1087,5 @@ ugui.standard_styler = {
     ---@param control ListBox The control table.
     draw_listbox = function(control)
         ugui.standard_styler.draw_list(control, control.rectangle)
-    end,
-
-    ---Gets the desired bounds of a listbox's content.
-    ---@param control table A table abiding by the ugui control contract
-    ---@return _ table A rectangle specifying the desired bounds of the content as `{x = 0, y = 0, width: number, height: number}`.
-    get_desired_listbox_content_bounds = function(control)
-        -- Since horizontal content bounds measuring is expensive, we only do this if explicitly enabled.
-        local max_width = 0
-        if control.horizontal_scroll == true then
-            for _, value in pairs(control.items) do
-                local width = BreitbandGraphics.get_text_size(value, ugui.standard_styler.params.font_size,
-                    ugui.standard_styler.params.font_name).width
-
-                if width > max_width then
-                    max_width = width
-                end
-            end
-        end
-
-        return {
-            x = 0,
-            y = 0,
-            width = max_width,
-            height = ugui.standard_styler.params.listbox_item.height * (control.items and #control.items or 0),
-        }
     end,
 }

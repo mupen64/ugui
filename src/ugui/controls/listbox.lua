@@ -37,20 +37,8 @@ ugui.registry.listbox = {
     logic = function(control, data)
         data.selected_index = control.selected_index
 
-        local prev_rect = ugui.internal.deep_clone(control.rectangle)
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-        local x_overflow = content_bounds.width > control.rectangle.width
-        local y_overflow = content_bounds.height > control.rectangle.height
-
-        if x_overflow then
-            control.rectangle.height = control.rectangle.height - ugui.standard_styler.params.scrollbar.thickness
-        end
-        if y_overflow then
-            control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
-        end
-
         local one_item_scroll_y<const> = 1 / #control.items
-        local items_per_page<const> = math.floor(control.rectangle.height / ugui.standard_styler.params.listbox_item.height)
+        local items_per_page<const> = math.floor(data.render_rect.height / ugui.standard_styler.params.listbox_item.height)
 
         -- FIXME: This is pretty weird... we should have a mechanism at the ugui core level for this
         local can_mouse_scroll = false
@@ -63,7 +51,7 @@ ugui.registry.listbox = {
 
         local function index_from_y(y)
             return math.ceil((y + (data.scroll_y *
-                    ((ugui.standard_styler.params.listbox_item.height * #control.items) - control.rectangle.height))) /
+                    ((ugui.standard_styler.params.listbox_item.height * #control.items) - data.render_rect.height))) /
                 ugui.standard_styler.params.listbox_item.height)
         end
 
@@ -73,7 +61,7 @@ ugui.registry.listbox = {
             end
 
             local item_height = ugui.standard_styler.params.listbox_item.height
-            local scroll_range = (item_height * #control.items) - control.rectangle.height
+            local scroll_range = (item_height * #control.items) - data.render_rect.height
 
             if scroll_range <= 0 then
                 return
@@ -81,23 +69,23 @@ ugui.registry.listbox = {
 
             local scroll_offset_px = data.scroll_y * scroll_range
             local first_visible = math.floor(scroll_offset_px / item_height) + 1
-            local last_visible = math.floor((scroll_offset_px + control.rectangle.height) / item_height)
+            local last_visible = math.floor((scroll_offset_px + data.render_rect.height) / item_height)
 
             if data.selected_index < first_visible then
                 data.scroll_y = (data.selected_index - 1) * item_height / scroll_range
             elseif data.selected_index > last_visible then
-                data.scroll_y = (data.selected_index * item_height - control.rectangle.height) / scroll_range
+                data.scroll_y = (data.selected_index * item_height - data.render_rect.height) / scroll_range
             end
         end
 
         if ugui.internal.mouse_captured_control == control.uid then
-            local relative_y = ugui.internal.environment.mouse_position.y - control.rectangle.y
+            local relative_y = ugui.internal.environment.mouse_position.y - data.render_rect.y
             local new_index = index_from_y(relative_y)
             data.selected_index = new_index
 
             local overshoot = nil
-            if relative_y > control.rectangle.height then
-                overshoot = relative_y - control.rectangle.height
+            if relative_y > data.render_rect.height then
+                overshoot = relative_y - data.render_rect.height
             end
             if relative_y < 0 then
                 overshoot = relative_y
@@ -165,8 +153,6 @@ ugui.registry.listbox = {
             data.selected_index = ugui.internal.clamp(data.selected_index, 1, #control.items)
         end
 
-        control.rectangle = prev_rect
-
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
             control.selected_index ~= data.selected_index)
 
@@ -179,6 +165,29 @@ ugui.registry.listbox = {
     draw = function(control)
         ugui.standard_styler.draw_listbox(control)
     end,
+    measure = function(node)
+        local control = node.control
+        ---@cast control ListBox
+
+        -- Since horizontal content bounds measuring is expensive, we only do this if explicitly enabled.
+        local max_width = 0
+        if control.horizontal_scroll == true then
+            for _, value in pairs(control.items) do
+                local size = ugui.standard_styler.compute_rich_text(value, control.plaintext, ugui.standard_styler.params.font_name, ugui.standard_styler.params.font_size).size
+
+                if size.x > max_width then
+                    max_width = size.x
+                end
+            end
+        else
+            max_width = 100
+        end
+
+        return {
+            x = max_width,
+            y = ugui.standard_styler.params.listbox_item.height * #control.items,
+        }
+    end,
 }
 
 ---Places a ListBox.
@@ -186,17 +195,17 @@ ugui.registry.listbox = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
 ugui.listbox = function(control, fn)
-    local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-    local x_overflow = content_bounds.width > control.rectangle.width
-    local y_overflow = content_bounds.height > control.rectangle.height
+    -- local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+    -- local x_overflow = content_bounds.width > control.rectangle.width
+    -- local y_overflow = content_bounds.height > control.rectangle.height
 
     -- If we need scrollbars, we shrink the control rectangle to accomodate them.
-    if x_overflow then
-        control.rectangle.height = control.rectangle.height - ugui.standard_styler.params.scrollbar.thickness
-    end
-    if y_overflow then
-        control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
-    end
+    -- if x_overflow then
+    --     control.rectangle.height = control.rectangle.height - ugui.standard_styler.params.scrollbar.thickness
+    -- end
+    -- if y_overflow then
+    --     control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
+    -- end
 
     local result = ugui.control(control, 'listbox', fn)
     local data = ugui.internal.control_data[control.uid]

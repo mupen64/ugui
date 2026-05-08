@@ -38,15 +38,15 @@ ugui.registry.combobox = {
         end
 
         if data.open and ugui.internal.is_mouse_just_down() and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control) then
-            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-            if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, {
-                    x = control.rectangle.x,
-                    y = control.rectangle.y + control.rectangle.height,
-                    width = control.rectangle.width,
-                    height = content_bounds.height,
-                }) then
-                data.open = false
-            end
+            -- fixme
+            -- if not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, {
+            --         x = control.rectangle.x,
+            --         y = control.rectangle.y + control.rectangle.height,
+            --         width = control.rectangle.width,
+            --         height = content_bounds.height,
+            --     }) then
+            --     data.open = false
+            -- end
         end
 
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
@@ -171,41 +171,42 @@ ugui.combobox = function(control, fn)
         end
 
         if data.open then
-            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+            -- fixme
+            -- local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
 
-            local width = control.rectangle.width
-            if control.rectangle.x + width > ugui.internal.environment.window_size.x then
-                width = ugui.internal.environment.window_size.x - control.rectangle.x
-            end
+            -- local width = control.rectangle.width
+            -- if control.rectangle.x + width > ugui.internal.environment.window_size.x then
+            --     width = ugui.internal.environment.window_size.x - control.rectangle.x
+            -- end
 
-            local height = content_bounds.height
-            if control.rectangle.y + height > ugui.internal.environment.window_size.y then
-                height = ugui.internal.environment.window_size.y - control.rectangle.y -
-                    ugui.standard_styler.params.listbox_item.height * 2
-            end
+            -- local height = content_bounds.height
+            -- if control.rectangle.y + height > ugui.internal.environment.window_size.y then
+            --     height = ugui.internal.environment.window_size.y - control.rectangle.y -
+            --         ugui.standard_styler.params.listbox_item.height * 2
+            -- end
 
-            local list_rect = {
-                x = control.rectangle.x,
-                y = control.rectangle.y + control.rectangle.height,
-                width = width,
-                height = height,
-            }
+            -- local list_rect = {
+            --     x = control.rectangle.x,
+            --     y = control.rectangle.y + control.rectangle.height,
+            --     width = width,
+            --     height = height,
+            -- }
 
-            local listbox_result, meta_listbox = ugui.listbox({
-                uid = listbox_uid,
-                rectangle = list_rect,
-                items = items_to_show,
-                selected_index = data.selected_index,
-                plaintext = control.plaintext,
-                z_index = math.maxinteger,
-            })
+            -- local listbox_result, meta_listbox = ugui.listbox({
+            --     uid = listbox_uid,
+            --     rectangle = list_rect,
+            --     items = items_to_show,
+            --     selected_index = data.selected_index,
+            --     plaintext = control.plaintext,
+            --     z_index = math.maxinteger,
+            -- })
 
-            if meta_listbox.signal_change == ugui.signal_change_states.started then
-                data.selected_index = filtered_to_original and filtered_to_original[listbox_result] or listbox_result
-                data.searching = false
-                data.search_text = ''
-                data.open = false
-            end
+            -- if meta_listbox.signal_change == ugui.signal_change_states.started then
+            --     data.selected_index = filtered_to_original and filtered_to_original[listbox_result] or listbox_result
+            --     data.searching = false
+            --     data.search_text = ''
+            --     data.open = false
+            -- end
         end
     end
 

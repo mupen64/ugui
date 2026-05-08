@@ -489,6 +489,11 @@ ugui.internal = {
             control.rectangle.x = control.rectangle.x + x_offset
             control.rectangle.y = control.rectangle.y + y_offset
         end)
+
+        ugui.internal.foreach_node_from_root(function(node)
+            local data = ugui.internal.control_data[node.control.uid]
+            data.render_rect = {x = node.control.rectangle.x, y = node.control.rectangle.y, width = node.control.rectangle.width, height = node.control.rectangle.height}
+        end)
     end,
 
     render = function()

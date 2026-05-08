@@ -303,6 +303,7 @@ ugui.control = function(control, type, fn)
     local function init_control_data(uid)
         ugui.internal.control_data[uid] = {
             signal_change = ugui.signal_change_states.none,
+            render_rect = {x = 0, y = 0, width = 0, height = 0},
         }
     end
 
@@ -380,15 +381,15 @@ ugui.control = function(control, type, fn)
         registry_entry.validate(control)
     end
 
-    -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
-    if registry_entry.logic then
-        return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
-    end
-
     if has_root then
         ugui.internal.current_parent.children[#ugui.internal.current_parent.children + 1] = this_node
     end
     ugui.internal.control_types[control.uid] = type
+
+    -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
+    if registry_entry.logic then
+        return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
+    end
 
     revert_styler_mixin()
 
