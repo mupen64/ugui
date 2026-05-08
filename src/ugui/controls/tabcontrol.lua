@@ -52,7 +52,7 @@ ugui.tabcontrol = function(control, fn)
         end
 
         local _, meta = ugui.toggle_button({
-            uid = control.uid + i,
+            uid = control.uid + i * 2,
             is_enabled = control.is_enabled,
             rectangle = {
                 x = control.rectangle.x + x,
