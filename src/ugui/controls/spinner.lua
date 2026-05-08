@@ -17,6 +17,12 @@
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return number, Meta # The new value.
 ugui.spinner = function(control, fn)
+    local textbox_uid<const> = control.uid + 1
+    local button_1_uid<const> = control.uid + 2
+    local button_2_uid<const> = control.uid + 4
+    local button_3_uid<const> = control.uid + 6
+    local button_4_uid<const> = control.uid + 8
+
     local _ = ugui.control(control, '', fn)
     local data = ugui.internal.control_data[control.uid]
 
@@ -47,7 +53,7 @@ ugui.spinner = function(control, fn)
     }
 
     local new_text = ugui.textbox({
-        uid = control.uid + 1,
+        uid = textbox_uid,
         rectangle = textbox_rect,
         text = tostring(value),
     })
@@ -69,7 +75,7 @@ ugui.spinner = function(control, fn)
 
     if control.is_horizontal then
         if (ugui.button({
-                uid = control.uid + 2,
+                uid = button_1_uid,
                 is_enabled = not (value == control.minimum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
@@ -85,7 +91,7 @@ ugui.spinner = function(control, fn)
         end
 
         if (ugui.button({
-                uid = control.uid + 3,
+                uid = button_2_uid,
                 is_enabled = not (value == control.maximum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
@@ -101,7 +107,7 @@ ugui.spinner = function(control, fn)
         end
     else
         if (ugui.button({
-                uid = control.uid + 2,
+                uid = button_3_uid,
                 is_enabled = not (value == control.maximum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
@@ -117,7 +123,7 @@ ugui.spinner = function(control, fn)
         end
 
         if (ugui.button({
-                uid = control.uid + 3,
+                uid = button_4_uid,
                 is_enabled = not (value == control.minimum_value),
                 rectangle = {
                     x = control.rectangle.x + control.rectangle.width -
