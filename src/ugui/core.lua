@@ -17,7 +17,11 @@
 ---@class Control
 ---@field public hittestable boolean? Whether this control instance participates in hit-testing. Overrides the registry-level `hittestable` function if specified. Defaults to `true` if neither this nor the registry function is set.
 
----@alias SmartUnit string
+---@alias SmartUnit
+---| "0"
+---| "auto"
+---| string
+---
 ---A size unit specification that can be:
 ---
 ---    `"auto"` - natural size
@@ -38,7 +42,13 @@
 ---    `clamp(auto,5px,10px)`
 
 
----@alias SmartUnit2 string
+---@alias SmartUnit2
+---| "0"
+---| "auto"
+---| "0 0"
+---| "auto auto"
+---| string
+---
 ---A two-dimensional unit that is composed of two SmartUnits.
 ---
 ---If one component is omitted, it's assumed to be equal to the other component.
@@ -47,14 +57,50 @@
 ---    `100px` (expands to `100px 100px`)
 ---    `auto 50%`
 
----@alias SmartAlignment string
+---@alias SmartAlignment
+---| "0"
+---| "0%"
+---| "0.5"
+---| "50%"
+---| "1"
+---| "100%"
+---| "left"
+---| "right"
+---| "top"
+---| "bottom"
+---| "center"
+---| string
 ---An alignment unit that specifies how a control is aligned within its parent.
 ---
 ---    `0`, `0%` - start of parent
 ---    `0.5`, `50%` - center of parent
 ---    `1`, `100%` - end of parent
 
----@alias SmartAlignment2 string
+---@alias SmartAlignment2
+---| "0"
+---| "0 0"
+---| "0%"
+---| "0% 0%"
+---| "0.5"
+---| "0.5 0.5"
+---| "50%"
+---| "50% 50%"
+---| "1"
+---| "1 1"
+---| "100%"
+---| "100% 100%"
+---| "left"
+---| "left left"
+---| "right"
+---| "right right"
+---| "top"
+---| "top top"
+---| "bottom"
+---| "bottom bottom"
+---| "center"
+---| "center center"
+---| string
+---
 ---A two-dimensional alignment unit that is composed of two SmartAlignments.
 ---
 ---If one component is omitted, it's assumed to be equal to the other component.
