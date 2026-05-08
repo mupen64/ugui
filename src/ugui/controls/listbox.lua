@@ -146,9 +146,6 @@ ugui.registry.listbox = {
 
 
         data.scroll_y = ugui.internal.clamp(data.scroll_y, 0, 1)
-        if not y_overflow then
-            data.scroll_y = 0
-        end
         if data.selected_index ~= nil then
             data.selected_index = ugui.internal.clamp(data.selected_index, 1, #control.items)
         end
