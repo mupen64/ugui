@@ -281,15 +281,15 @@ ugui.internal.control_from_point = function(pt)
     return result
 end
 
----Finds a control by its UID.
----@param uid UID? The UID of the control to find. If `nil`, returns `nil`.
----@return Control? The control with the given UID, or `nil` if no control is found.
-ugui.internal.find_control_by_uid = function(uid)
+---Finds a scene node by its control's UID.
+---@param uid UID?
+---@return SceneNode?
+ugui.internal.find_node = function(uid)
     if uid == nil then return nil end
     local result = nil
     ugui.internal.foreach_node_from_root(function(node)
         if node.control.uid == uid then
-            result = node.control
+            result = node
             return false
         end
     end)

@@ -238,13 +238,13 @@ ugui.internal = {
             return
         end
 
-        local hovered_control = ugui.internal.find_control_by_uid(ugui.internal.hovered_control)
+        local hovered_node = ugui.internal.find_node(ugui.internal.hovered_control)
 
-        if not hovered_control then
+        if not hovered_node then
             return
         end
 
-        ugui.standard_styler.draw_tooltip(hovered_control, {
+        ugui.standard_styler.draw_tooltip(hovered_node.control, {
             x = ugui.internal.environment.mouse_position.x,
             y = ugui.internal.environment.mouse_position.y,
         })
@@ -323,32 +323,19 @@ ugui.internal = {
             callback(node)
         end
 
-        local function find_control_by_uid(node, uid)
-            if node.control.uid == uid then
-                return node
-            end
-            for _, child in ipairs(node.children) do
-                local found = find_control_by_uid(child, uid)
-                if found then
-                    return found
-                end
-            end
-            return nil
-        end
-
         ---@type Control?
         local clicked_control = nil
 
         ---@type SceneNode?
         local mouse_captured_control = nil
         if ugui.internal.mouse_captured_control then
-            mouse_captured_control = find_control_by_uid(ugui.internal.root, ugui.internal.mouse_captured_control)
+            mouse_captured_control = ugui.internal.find_node(ugui.internal.mouse_captured_control)
         end
 
         ---@type SceneNode?
         local keyboard_captured_control = nil
         if ugui.internal.keyboard_captured_control then
-            keyboard_captured_control = find_control_by_uid(ugui.internal.root, ugui.internal.keyboard_captured_control)
+            keyboard_captured_control = ugui.internal.find_node(ugui.internal.keyboard_captured_control)
         end
 
         local prev_hovered_control = ugui.internal.hovered_control
@@ -405,7 +392,7 @@ ugui.internal = {
         end
 
         -- Clear hovered control if it's disabled
-        local hovered_node = ugui.internal.hovered_control and find_control_by_uid(ugui.internal.root, ugui.internal.hovered_control) or nil
+        local hovered_node = ugui.internal.hovered_control and ugui.internal.find_node(ugui.internal.hovered_control) or nil
         if hovered_node and hovered_node.control.is_enabled == false then
             ugui.internal.hovered_control = nil
         end
