@@ -519,6 +519,11 @@ local function resolve_unit(expr, node, axis)
             end
         end
 
+        -- zero literal
+        if s == '0' then
+            return 0
+        end
+
         -- raw number
         do
             local n = tonumber(s)

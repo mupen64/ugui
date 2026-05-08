@@ -20,9 +20,11 @@
 ---@alias SmartUnit string
 ---A size unit specification that can be:
 ---
----    `"auto"` - natural size (CURRENTLY UNSUPPORTED TODO: SUPPORT THIS ASAP, NEEDED FOR EVERY CONTROL!!!)
+---    `"auto"` - natural size
 ---    `"{}px"` - absolute pixels (e.g. `"100px"`)
 ---    `"{}%"` - percentage of parent size (e.g. `"50%"`)
+---
+---Zero literals are treated as `0px` (e.g. `0` => `0px`)
 ---
 ---Basic arithmetic operations are also supported: `+`, `-`, `*`, `/`.
 ---
