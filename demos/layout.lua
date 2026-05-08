@@ -75,8 +75,8 @@ local pages = {
         })
     end,
     function()
-        _sl = _sl or 1
-        _sl = ugui.listbox({
+        _sl2 = _sl2 or 1
+        _sl2 = ugui.listbox({
             uid = 120,
             align = 'center',
             size = '130px 130px',
@@ -97,7 +97,23 @@ local pages = {
                 'Item Item Item Item Item Item Item Item Item 10000000',
                 'Item Item Item Item Item Item Item Item Item 10000000',
             },
-            selected_index = _sl,
+            selected_index = _sl2,
+        })
+    end,
+    function()
+        _sl3 = _sl3 or 1
+        _sl3 = ugui.combobox({
+            uid = 130,
+            align = 'center',
+            padding = '40px 10px',
+            items = {
+                'Item 1',
+                'Item 2',
+                'Item 3',
+                'Item 4',
+                'Item 5',
+            },
+            selected_index = _sl3,
         })
     end,
 }
