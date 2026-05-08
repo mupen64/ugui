@@ -3,62 +3,100 @@ dofile(path_root .. 'base.lua')
 
 ugui.DEBUG = true
 
+local pages = {
+    function()
+        ugui.button({
+            uid = 10,
+            text = '',
+            size = '30% 30%',
+            align = 'center',
+            padding = '20px',
+        }, function()
+            ugui.button({
+                uid = 20,
+                text = 'top left',
+            })
+            ugui.button({
+                uid = 30,
+                text = 'top center',
+                align = 'center top',
+            })
+            ugui.button({
+                uid = 40,
+                text = 'top right',
+                align = 'right top',
+            })
+            ugui.button({
+                uid = 50,
+                text = 'center left',
+                align = 'left center',
+            })
+            ugui.button({
+                uid = 60,
+                text = 'center center',
+                align = 'center',
+                padding = '20px',
+            })
+            ugui.button({
+                uid = 70,
+                text = 'center right',
+                align = 'right center',
+            })
+            ugui.button({
+                uid = 80,
+                text = 'bottom left',
+                align = 'left bottom',
+            })
+            ugui.button({
+                uid = 90,
+                text = 'bottom center',
+                align = 'center bottom',
+            })
+            ugui.button({
+                uid = 100,
+                text = 'bottom right',
+                align = 'right bottom',
+            })
+        end)
+    end,
+    function()
+        ugui.listbox({
+            uid = 10,
+            items = {
+                'Item 1',
+                'Item 2',
+                'Item 3',
+                'Item 4',
+                'Item 5',
+            },
+        })
+    end,
+}
+
+local page = 1
+
 emu.atdrawd2d(function()
     begin_frame()
 
-    ugui.button({
-        uid = 10,
-        text = '',
-        size = '30% 30%',
-        align = 'center',
-        padding = '20px'
-    }, function()
-        ugui.button({
-            uid = 20,
-            text = 'top left',
-        })
-        ugui.button({
-            uid = 30,
-            text = 'top center',
-            align = 'center top',
-        })
-        ugui.button({
-            uid = 40,
-            text = 'top right',
-            align = 'right top',
-        })
-        ugui.button({
-            uid = 50,
-            text = 'center left',
-            align = 'left center',
-        })
-        ugui.button({
-            uid = 60,
-            text = 'center center',
-            align = 'center',
-            padding = '20px'
-        })
-        ugui.button({
-            uid = 70,
-            text = 'center right',
-            align = 'right center',
-        })
-        ugui.button({
-            uid = 80,
-            text = 'bottom left',
-            align = 'left bottom',
-        })
-        ugui.button({
-            uid = 90,
-            text = 'bottom center',
-            align = 'center bottom',
-        })
-        ugui.button({
-            uid = 100,
-            text = 'bottom right',
-            align = 'right bottom',
-        })
-    end)
+    ugui.label({
+        uid = 2,
+        size = '100% auto',
+        font_size = 24,
+        text = string.format('Press left/right arrows to switch pages (%d/%d)', page, #pages),
+        color = {r = 0, g = 0, b = 0},
+    })
+
+    pages[page]()
+
+    for _, e in ipairs(ugui.internal.environment.key_events) do
+        if e.pressed and e.keycode == ugui.keycodes.VK_LEFT then
+            page = page - 1
+            if page < 1 then page = #pages end
+        elseif e.pressed and e.keycode == ugui.keycodes.VK_RIGHT then
+            page = page + 1
+            if page > #pages then page = 1 end
+        end
+    end
 
     end_frame()
 end)
