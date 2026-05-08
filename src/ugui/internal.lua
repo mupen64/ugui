@@ -500,6 +500,9 @@ ugui.internal = {
             local control = node.control
             local type = node.type
 
+            local data = ugui.internal.control_data[node.control.uid]
+            local render_rect = data.render_rect
+
             local entry = ugui.registry[type]
 
             if entry.draw then
@@ -509,14 +512,14 @@ ugui.internal = {
             end
 
             if ugui.DEBUG then
-                -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 0), '#FF0000', 1)
-                -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({x = control.rectangle.x, y = control.rectangle.y, width = node.natural_size.x, height = node.natural_size.y}, 0), '#0000FF', 4)
+                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 0), '#FF0000', 1)
+                -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({x = render_rect.x, y = render_rect.y, width = data.natural_size.x, height = data.natural_size.y}, 0), '#0000FF', 4)
 
                 if ugui.internal.keyboard_captured_control == control.uid then
-                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 4), '#000000', 2)
                 end
                 if ugui.internal.mouse_captured_control == control.uid then
-                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 8), '#FF0000', 2)
                 end
             end
         end)

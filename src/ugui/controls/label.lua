@@ -39,8 +39,9 @@ ugui.registry.label = {
     end,
     ---@param control Label
     draw = function(control)
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
         local visual_state = ugui.get_visual_state(control)
-        ugui.standard_styler.draw_rich_text(control.rectangle, control.align_x, control.align_y, control.text, control.color, visual_state, control.plaintext, control.font_name, control.font_size)
+        ugui.standard_styler.draw_rich_text(render_rect, control.align_x, control.align_y, control.text, control.color, visual_state, control.plaintext, control.font_name, control.font_size)
     end,
     measure = function(node)
         local control = node.control
