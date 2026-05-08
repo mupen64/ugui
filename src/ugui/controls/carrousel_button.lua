@@ -60,25 +60,29 @@ ugui.registry.carrousel_button = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
 ugui.carrousel_button = function(control, fn)
+    local label_1_uid<const> = control.uid + 1
+    local label_2_uid<const> = control.uid + 2
+    local label_3_uid<const> = control.uid + 3
+
     local result = ugui.control(control, 'carrousel_button', function()
         local visual_state = ugui.get_visual_state(control)
         local text = control.selected_index and control.items[control.selected_index] or ''
 
         ugui.label({
-            uid = control.uid + 1,
+            uid = label_1_uid,
             text = '[icon:arrow_left]',
             margin = string.format('%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
             align = '0% 50%',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
         ugui.label({
-            uid = control.uid + 2,
+            uid = label_2_uid,
             text = text,
             align = '50%',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
         ugui.label({
-            uid = control.uid + 3,
+            uid = label_3_uid,
             text = '[icon:arrow_right]',
             margin = string.format('-%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
             align = '100% 50%',
