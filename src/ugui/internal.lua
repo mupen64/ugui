@@ -243,6 +243,18 @@ ugui.internal = {
             return
         end
 
+        if ugui.DEBUG and not hovered_node.control.tooltip then
+            local base_text = string.format('%s (%d)', hovered_node.type, hovered_node.control.uid)
+            local natural_size = ugui.internal.control_data[hovered_node.control.uid].natural_size
+            local render_rect = ugui.internal.control_data[hovered_node.control.uid].render_rect
+            local parent_text = hovered_node.parent and string.format('%s (%d)', hovered_node.parent.type, hovered_node.parent.control.uid) or 'none'
+            hovered_node.control.tooltip = string.format('%s\nnatural_size: %.0f x %.0f\nrender_rect: %.0f %.0f | %.0f x %.0f\nparent: %s',
+                base_text,
+                natural_size.x, natural_size.y,
+                render_rect.x, render_rect.y, render_rect.width, render_rect.height,
+                parent_text)
+        end
+
         ugui.standard_styler.draw_tooltip(hovered_node.control, {
             x = ugui.internal.environment.mouse_position.x,
             y = ugui.internal.environment.mouse_position.y,
