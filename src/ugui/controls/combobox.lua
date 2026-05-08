@@ -69,6 +69,12 @@ ugui.registry.combobox = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
 ugui.combobox = function(control, fn)
+    local textbox_uid<const> = control.uid + 1
+    local button_uid<const> = control.uid + 2
+    local listbox_uid<const> = control.uid + 4
+    local label_1_uid<const> = control.uid + 7
+    local label_2_uid<const> = control.uid + 8
+
     local result = ugui.control(control, 'combobox', function()
         local visual_state = ugui.get_visual_state(control)
 
@@ -76,14 +82,14 @@ ugui.combobox = function(control, fn)
         local text = control.selected_index and control.items[control.selected_index] or ''
 
         ugui.label({
-            uid = control.uid + 4,
+            uid = label_1_uid,
             text = text,
             margin = string.format('%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
             align = '0% 50%',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
         ugui.label({
-            uid = control.uid + 5,
+            uid = label_2_uid,
             text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
             margin = string.format('-%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
             align = '100% 50%',
@@ -94,10 +100,6 @@ ugui.combobox = function(control, fn)
         end
     end)
     local data = ugui.internal.control_data[control.uid]
-
-    local textbox_uid<const> = control.uid + 1
-    local button_uid<const> = control.uid + 2
-    local listbox_uid<const> = control.uid + 3
 
     local button_size<const> = 30
 
