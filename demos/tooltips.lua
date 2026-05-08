@@ -5,7 +5,7 @@ emu.atdrawd2d(function()
     begin_frame()
 
     ugui.combobox({
-        uid = 1,
+        uid = 10,
         rectangle = {x = 10, y = 10, width = 90, height = 20},
         items = {
             'Hello',
@@ -19,27 +19,27 @@ emu.atdrawd2d(function()
     })
 
     ugui.button({
-        uid = 3,
+        uid = 20,
         rectangle = {x = 0, y = 35, width = 800, height = 20},
         text = 'Hover Here',
         tooltip = 'Hello World!',
     })
 
     ugui.button({
-        uid = 4,
+        uid = 30,
         rectangle = {x = 10, y = 60, width = 90, height = 20},
         text = 'Hover Here',
         tooltip = 'Voluptas culpa officia consequatur eveniet. Sint fugiat culpa rerum debitis. Et ea cupiditate nulla eius saepe minima. Aspernatur omnis ut amet incidunt sequi doloremque corrupti. Corrupti vero quae rerum est recusandae perferendis.',
     })
 
     ugui.button({
-        uid = 76,
+        uid = 40,
         rectangle = {x = 10, y = 90, width = 90, height = 20},
         text = 'Im boring',
     })
 
     ugui.button({
-        uid = 80,
+        uid = 50,
         rectangle = {x = 10, y = 120, width = 90, height = 20},
         is_enabled = false,
         text = 'nope',
@@ -47,7 +47,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.button({
-        uid = 5,
+        uid = 60,
         rectangle = {x = 700, y = 540, width = 90, height = 50},
         text = 'Hover Here',
         tooltip = 'Wow.',

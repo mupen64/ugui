@@ -42,6 +42,14 @@ ugui.registry.label = {
         local visual_state = ugui.get_visual_state(control)
         ugui.standard_styler.draw_rich_text(control.rectangle, control.align_x, control.align_y, control.text, control.color, visual_state, control.plaintext, control.font_name, control.font_size)
     end,
+    measure = function(node)
+        local control = node.control
+        ---@cast control Label
+
+        local font_name = control.font_name or ugui.standard_styler.params.font_name
+        local font_size = control.font_size or ugui.standard_styler.params.font_size
+        return ugui.standard_styler.compute_rich_text(control.text, control.plaintext, font_name, font_size).size
+    end,
 }
 
 ---Places a Label.

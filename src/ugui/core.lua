@@ -10,6 +10,7 @@
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
 ---@field public logic (fun(control: Control, data: any): ControlReturnValue)? Executes control logic.
 ---@field public draw (fun(control: Control))? Draws the control.
+---@field public measure (fun(node: SceneNode): Vector2)? Measures the control's natural size.
 ---@field public hittestable (fun(control: Control): boolean)? A function returning whether a control instance of this type should participate in hit-testing. If `nil`, the instance-level `hittestable` field is used. If both are `nil`, the control is hittestable.
 ---Represents an entry in the control registry.
 
@@ -202,27 +203,7 @@ ugui.end_frame = function()
     ugui.internal.dispatch_events()
 
     -- 5. Rendering pass
-    ugui.internal.foreach_node_from_root(function(node)
-        local control = node.control
-        local type = node.type
-
-        local entry = ugui.registry[type]
-
-        if entry.draw then
-            local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
-            entry.draw(control)
-            revert_styler_mixin()
-        end
-
-        if ugui.DEBUG then
-            if ugui.internal.keyboard_captured_control == control.uid then
-                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
-            end
-            if ugui.internal.mouse_captured_control == control.uid then
-                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
-            end
-        end
-    end)
+    ugui.internal.render()
 
     ugui.internal.tooltip()
 
@@ -276,6 +257,7 @@ ugui.control = function(control, type, fn)
     local this_node = {
         control = control,
         type = type,
+        natural_size = {x = 0, y = 0},
         parent = ugui.internal.current_parent,
         children = {},
     }
@@ -292,18 +274,9 @@ ugui.control = function(control, type, fn)
 
     if not control.rectangle then
         control.rectangle = {x = 0, y = 0, width = 0, height = 0}
+        control.margin = control.margin or '0px'
+        control.size = control.size or 'auto'
     end
-    if control.margin then
-        local pos = ugui.internal.resolve_unit2(control.margin, this_node)
-        control.rectangle.x = pos.x
-        control.rectangle.y = pos.y
-    end
-    if control.size then
-        local size = ugui.internal.resolve_unit2(control.size, this_node)
-        control.rectangle.width = size.x
-        control.rectangle.height = size.y
-    end
-
 
     -- If the control has only just been added, we run its setup.
     if ugui.internal.control_data[control.uid] == nil then

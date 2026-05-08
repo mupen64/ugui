@@ -7,6 +7,7 @@
 ---@class SceneNode
 ---@field public control Control
 ---@field public type ControlType
+---@field public natural_size Vector2
 ---@field public parent SceneNode?
 ---@field public children SceneNode[]
 
@@ -424,8 +425,51 @@ ugui.internal = {
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
     end,
 
+    ---Measures the specified node.
+    ---@param node SceneNode
+    ---@return Vector2
+    measure = function(node)
+        local registry_entry = ugui.registry[node.type]
+        if registry_entry.measure then
+            return registry_entry.measure(node)
+        end
+        return ugui.internal.measure_fit_biggest_child(node)
+    end,
+
+    ---Default measure implementation that fits the biggest child node recursively.
+    ---@param node SceneNode
+    ---@return Vector2
+    measure_fit_biggest_child = function(node)
+        local biggest = {x = 0, y = 0}
+        for _, child in pairs(node.children) do
+            local size = ugui.internal.measure(child)
+            if size.x > biggest.x or size.y > biggest.y then
+                biggest = size
+            end
+        end
+        return biggest
+    end,
+
     ---Performs scene layout.
     layout = function()
+        ugui.internal.foreach_node_from_root(function(node)
+            node.natural_size = ugui.internal.measure(node)
+        end)
+
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            if control.margin then
+                local pos = ugui.internal.resolve_unit2(control.margin, node)
+                control.rectangle.x = pos.x
+                control.rectangle.y = pos.y
+            end
+            if control.size then
+                local size = ugui.internal.resolve_unit2(control.size, node)
+                control.rectangle.width = size.x
+                control.rectangle.height = size.y
+            end
+        end)
+
         ugui.internal.foreach_node_from_root(function(node)
             local control = node.control
             local parent = node.parent
@@ -443,6 +487,33 @@ ugui.internal = {
 
             control.rectangle.x = control.rectangle.x + x_offset
             control.rectangle.y = control.rectangle.y + y_offset
+        end)
+    end,
+
+    render = function()
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            local type = node.type
+
+            local entry = ugui.registry[type]
+
+            if entry.draw then
+                local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
+                entry.draw(control)
+                revert_styler_mixin()
+            end
+
+            if ugui.DEBUG then
+                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 0), '#FF0000', 1)
+                -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({x = control.rectangle.x, y = control.rectangle.y, width = node.natural_size.x, height = node.natural_size.y}, 0), '#0000FF', 4)
+
+                if ugui.internal.keyboard_captured_control == control.uid then
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 4), '#000000', 2)
+                end
+                if ugui.internal.mouse_captured_control == control.uid then
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 8), '#FF0000', 2)
+                end
+            end
         end)
     end,
 }

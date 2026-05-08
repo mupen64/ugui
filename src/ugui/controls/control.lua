@@ -7,10 +7,10 @@
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
----@field public rectangle Rectangle? **DEPRECATED - Use `margin`/`size` instead.** A rectangle defining the control's position and size. The position is treated as an offset from the parent's position, while the size is treated as a forced value.
+---@field public rectangle Rectangle? **DEPRECATED - Use `margin`/`size` instead. Note that `rectangle` overrides `margin`/`size` when both are set.** A rectangle defining the control's position and size. The position is treated as an offset from the parent's position, while the size is treated as a forced value.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
----@field public margin SmartUnit2? The control's margin. If nil, `rectangle` is used. If both are nil, `0px` is assumed.
----@field public size SmartUnit2? The control's size. If nil, `rectangle` is used. If both are nil, `auto` is assumed.
+---@field public margin SmartUnit2? The control's margin. If `nil`, `0px` is assumed.
+---@field public size SmartUnit2? The control's size. If `nil`, `auto` is assumed.
 ---@field public x_align number? The horizontal alignment of the control within its parent in range `0` to `1`, where `0` is left-aligned and `1` is right-aligned. If nil, `0` is assumed. The `rectangle` X offset is applied after alignment.
 ---@field public y_align number? The vertical alignment of the control within its parent in range `0` to `1`, where `0` is top-aligned and `1` is bottom-aligned. If nil, `0` is assumed. The `rectangle` Y offset is applied after alignment.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.

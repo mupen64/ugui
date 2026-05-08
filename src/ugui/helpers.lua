@@ -342,6 +342,16 @@ local function resolve_unit(expr, node, axis)
             or parent.height
     end
 
+    local function natural_basis()
+        local natural = node.natural_size
+
+        ugui.internal.assert(natural, 'auto unit requires node.natural_size')
+
+        return axis == 'x'
+            and natural.x
+            or natural.y
+    end
+
     local function trim(s)
         return (s:gsub('^%s+', ''):gsub('%s+$', ''))
     end
@@ -403,6 +413,11 @@ local function resolve_unit(expr, node, axis)
 
     local function eval(s)
         s = trim(s)
+
+        -- auto
+        if s == 'auto' then
+            return natural_basis()
+        end
 
         -- min(...)
         do
