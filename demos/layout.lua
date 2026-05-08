@@ -11,6 +11,7 @@ emu.atdrawd2d(function()
         text = '',
         size = '30% 30%',
         align = 'center',
+        padding = '20px'
     }, function()
         ugui.button({
             uid = 20,
@@ -35,6 +36,7 @@ emu.atdrawd2d(function()
             uid = 60,
             text = 'center center',
             align = 'center',
+            padding = '20px'
         })
         ugui.button({
             uid = 70,
