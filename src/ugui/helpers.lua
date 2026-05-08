@@ -556,3 +556,87 @@ ugui.internal.resolve_unit2 = function(unit, node)
         y = resolve_unit(b, node, 'y'),
     }
 end
+
+---Parses and resolves a SmartAlignment.
+---@param value string
+---@param axis '"x"'|'"y"'
+---@return number
+local function resolve_alignment(value, axis)
+    value = value:gsub('^%s+', ''):gsub('%s+$', '')
+
+    -- directional aliases
+    if value == 'left' then
+        ugui.internal.assert(axis == 'x', '`left` is only valid on the X axis')
+        return 0
+    end
+
+    if value == 'right' then
+        ugui.internal.assert(axis == 'x', '`right` is only valid on the X axis')
+        return 1
+    end
+
+    if value == 'top' then
+        ugui.internal.assert(axis == 'y', '`top` is only valid on the Y axis')
+        return 0
+    end
+
+    if value == 'bottom' then
+        ugui.internal.assert(axis == 'y', '`bottom` is only valid on the Y axis')
+        return 1
+    end
+
+    if value == 'center' then
+        return 0.5
+    end
+
+    -- percentage
+    do
+        local percent = value:match('^([%-%d%.]+)%%$')
+
+        if percent then
+            return tonumber(percent) / 100
+        end
+    end
+
+    -- raw normalized number
+    do
+        local n = tonumber(value)
+
+        if n then
+            return n
+        end
+    end
+
+    ugui.internal.assert(
+        false,
+        string.format('unsupported SmartAlignment: %q', value)
+    )
+end
+
+---Resolves a SmartAlignment2 to a Vector2.
+---@param value SmartAlignment2?
+---@return Vector2
+ugui.internal.resolve_alignment2 = function(value)
+    value = value or '0'
+
+    local a, b = value:match('^(%S+)%s+(%S+)$')
+
+    if not a then
+        a = value
+
+        -- directional single-value expansion
+        if value == 'left' or value == 'right' then
+            b = 'top'
+        elseif value == 'top' or value == 'bottom' then
+            b = value
+            a = 'left'
+        else
+            b = value
+        end
+    end
+
+    return {
+        x = resolve_alignment(a, 'x'),
+        y = resolve_alignment(b, 'y'),
+    }
+end

@@ -10,8 +10,7 @@ emu.atdrawd2d(function()
         uid = 10,
         text = '',
         size = '30% 30%',
-        x_align = 0.5,
-        y_align = 0.5,
+        align = 'center',
     }, function()
         ugui.button({
             uid = 20,
@@ -20,47 +19,42 @@ emu.atdrawd2d(function()
         ugui.button({
             uid = 30,
             text = 'top center',
-            x_align = 0.5,
+            align = 'center top',
         })
         ugui.button({
             uid = 40,
             text = 'top right',
-            x_align = 1,
+            align = 'right top',
         })
         ugui.button({
             uid = 50,
             text = 'center left',
-            y_align = 0.5,
+            align = 'left center',
         })
         ugui.button({
             uid = 60,
             text = 'center center',
-            x_align = 0.5,
-            y_align = 0.5,
+            align = 'center',
         })
         ugui.button({
             uid = 70,
             text = 'center right',
-            x_align = 1,
-            y_align = 0.5,
+            align = 'right center',
         })
         ugui.button({
             uid = 80,
             text = 'bottom left',
-            x_align = 0,
-            y_align = 1,
+            align = 'left bottom',
         })
         ugui.button({
             uid = 90,
             text = 'bottom center',
-            x_align = 0.5,
-            y_align = 1,
+            align = 'center bottom',
         })
         ugui.button({
             uid = 100,
             text = 'bottom right',
-            x_align = 1,
-            y_align = 1,
+            align = 'right bottom',
         })
     end)
 

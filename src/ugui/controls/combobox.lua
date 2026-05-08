@@ -79,16 +79,14 @@ ugui.combobox = function(control, fn)
             uid = control.uid + 4,
             text = text,
             margin = string.format('%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
-            x_align = 0,
-            y_align = 0.5,
+            align = '0% 50%',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
         ugui.label({
             uid = control.uid + 5,
             text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
             margin = string.format('-%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
-            x_align = 1,
-            y_align = 0.5,
+            align = '100% 50%',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
         if fn then

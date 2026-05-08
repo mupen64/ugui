@@ -482,8 +482,9 @@ ugui.internal = {
             local min_y<const> = parent_rect.y
             local max_y<const> = min_y + parent_rect.height - control.rectangle.height
 
-            local x_offset<const> = ugui.internal.remap(control.x_align or 0, 0, 1, min_x, max_x)
-            local y_offset<const> = ugui.internal.remap(control.y_align or 0, 0, 1, min_y, max_y)
+            local align = ugui.internal.resolve_alignment2(control.align)
+            local x_offset<const> = ugui.internal.remap(align.x, 0, 1, min_x, max_x)
+            local y_offset<const> = ugui.internal.remap(align.y, 0, 1, min_y, max_y)
 
             control.rectangle.x = control.rectangle.x + x_offset
             control.rectangle.y = control.rectangle.y + y_offset
@@ -504,7 +505,7 @@ ugui.internal = {
             end
 
             if ugui.DEBUG then
-                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 0), '#FF0000', 1)
+                -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, 0), '#FF0000', 1)
                 -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({x = control.rectangle.x, y = control.rectangle.y, width = node.natural_size.x, height = node.natural_size.y}, 0), '#0000FF', 4)
 
                 if ugui.internal.keyboard_captured_control == control.uid then

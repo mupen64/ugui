@@ -11,8 +11,7 @@
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
 ---@field public margin SmartUnit2? The control's margin. If `nil`, `0px` is assumed.
 ---@field public size SmartUnit2? The control's size. If `nil`, `auto` is assumed.
----@field public x_align number? The horizontal alignment of the control within its parent in range `0` to `1`, where `0` is left-aligned and `1` is right-aligned. If nil, `0` is assumed. The `rectangle` X offset is applied after alignment.
----@field public y_align number? The vertical alignment of the control within its parent in range `0` to `1`, where `0` is top-aligned and `1` is bottom-aligned. If nil, `0` is assumed. The `rectangle` Y offset is applied after alignment.
+---@field public align SmartAlignment2? The control's alignment within its parent. If `nil`, `0 0` is assumed.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed. This control will be drawn in front of siblings with a lower Z-index. To control the Z-index relative to all controls (including parents), parent the control to the scene root.
