@@ -60,8 +60,10 @@ local pages = {
         end)
     end,
     function()
-        ugui.listbox({
-            uid = 10,
+        _sl = 1
+        _sl = ugui.listbox({
+            uid = 110,
+            align = 'center',
             items = {
                 'Item 1',
                 'Item 2',
@@ -69,6 +71,7 @@ local pages = {
                 'Item 4',
                 'Item 5',
             },
+            selected_index = _sl,
         })
     end,
 }
