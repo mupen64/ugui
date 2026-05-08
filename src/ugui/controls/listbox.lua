@@ -204,6 +204,13 @@ ugui.listbox = function(control, fn)
     local x_overflow<const> = data.natural_size.x > data.render_rect.width
     local y_overflow<const> = data.natural_size.y > data.render_rect.height
 
+    if not x_overflow then
+        data.scroll_x = 0
+    end
+    if not y_overflow then
+        data.scroll_y = 0
+    end
+
     if x_overflow then
         data.scroll_x = ugui.scrollbar({
             uid = scrollbar_1_uid,
