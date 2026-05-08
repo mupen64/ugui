@@ -633,7 +633,7 @@ ugui.standard_styler = {
         local node = ugui.internal.find_node(control.uid)
         ---@cast node SceneNode
 
-        local natural_size = node.natural_size
+        local natural_size = ugui.internal.control_data[node.control.uid].natural_size
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
 

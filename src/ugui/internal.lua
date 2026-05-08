@@ -7,7 +7,6 @@
 ---@class SceneNode
 ---@field public control Control
 ---@field public type ControlType
----@field public natural_size Vector2
 ---@field public parent SceneNode?
 ---@field public children SceneNode[]
 
@@ -448,7 +447,7 @@ ugui.internal = {
     ---Performs scene layout.
     layout = function()
         ugui.internal.foreach_node_from_root(function(node)
-            node.natural_size = ugui.internal.measure(node)
+            ugui.internal.control_data[node.control.uid].natural_size = ugui.internal.measure(node)
         end)
 
         ugui.internal.foreach_node_from_root(function(node)

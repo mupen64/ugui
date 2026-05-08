@@ -303,6 +303,7 @@ ugui.control = function(control, type, fn)
     local function init_control_data(uid)
         ugui.internal.control_data[uid] = {
             signal_change = ugui.signal_change_states.none,
+            natural_size = {x = 0, y = 0},
             render_rect = {x = 0, y = 0, width = 0, height = 0},
         }
     end
@@ -326,7 +327,6 @@ ugui.control = function(control, type, fn)
     local this_node = {
         control = control,
         type = type,
-        natural_size = {x = 0, y = 0},
         parent = ugui.internal.current_parent,
         children = {},
     }

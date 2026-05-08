@@ -195,49 +195,46 @@ ugui.registry.listbox = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
 ugui.listbox = function(control, fn)
-    -- local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-    -- local x_overflow = content_bounds.width > control.rectangle.width
-    -- local y_overflow = content_bounds.height > control.rectangle.height
+    local scrollbar_1_uid<const> = control.uid + 1
+    local scrollbar_2_uid<const> = control.uid + 2
 
-    -- If we need scrollbars, we shrink the control rectangle to accomodate them.
-    -- if x_overflow then
-    --     control.rectangle.height = control.rectangle.height - ugui.standard_styler.params.scrollbar.thickness
-    -- end
-    -- if y_overflow then
-    --     control.rectangle.width = control.rectangle.width - ugui.standard_styler.params.scrollbar.thickness
-    -- end
+    -- FIXME: We need to shrink the listbox to fit the scrollbars without overflowing.
+    -- Requires flex support so we're blocked by that lol...
 
     local result = ugui.control(control, 'listbox', fn)
     local data = ugui.internal.control_data[control.uid]
 
+    local x_overflow<const> = data.natural_size.x > data.render_rect.width
+    local y_overflow<const> = data.natural_size.y > data.render_rect.height
+
     if x_overflow then
         data.scroll_x = ugui.scrollbar({
-            uid = control.uid + 1,
+            uid = scrollbar_1_uid,
             is_enabled = control.is_enabled,
             rectangle = {
-                x = control.rectangle.x,
-                y = control.rectangle.y + control.rectangle.height,
-                width = control.rectangle.width,
+                x = data.render_rect.x,
+                y = data.render_rect.y + data.render_rect.height,
+                width = data.render_rect.width,
                 height = ugui.standard_styler.params.scrollbar.thickness,
             },
             value = data.scroll_x,
-            ratio = 1 / (content_bounds.width / control.rectangle.width),
+            ratio = 1 / (data.natural_size.x / data.render_rect.width),
             z_index = control.z_index,
         })
     end
 
     if y_overflow then
         data.scroll_y = ugui.scrollbar({
-            uid = control.uid + 2,
+            uid = scrollbar_2_uid,
             is_enabled = control.is_enabled,
             rectangle = {
-                x = control.rectangle.x + control.rectangle.width,
-                y = control.rectangle.y,
+                x = data.render_rect.x + data.render_rect.width,
+                y = data.render_rect.y,
                 width = ugui.standard_styler.params.scrollbar.thickness,
-                height = control.rectangle.height,
+                height = data.render_rect.height,
             },
             value = data.scroll_y,
-            ratio = 1 / (content_bounds.height / control.rectangle.height),
+            ratio = 1 / (data.natural_size.y / data.render_rect.height),
             z_index = control.z_index,
         })
     end

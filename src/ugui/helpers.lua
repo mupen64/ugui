@@ -343,9 +343,9 @@ local function resolve_unit(expr, node, axis)
     end
 
     local function natural_basis()
-        local natural = node.natural_size
+        local natural = ugui.internal.control_data[node.control.uid].natural_size
 
-        ugui.internal.assert(natural, 'auto unit requires node.natural_size')
+        ugui.internal.assert(natural, 'auto unit requires natural_size')
 
         return axis == 'x'
             and natural.x

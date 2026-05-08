@@ -74,6 +74,32 @@ local pages = {
             selected_index = _sl,
         })
     end,
+    function()
+        _sl = _sl or 1
+        _sl = ugui.listbox({
+            uid = 120,
+            align = 'center',
+            size = '130px 130px',
+            horizontal_scroll = true,
+            items = {
+                'Item Item Item Item Item Item Item Item Item 1',
+                'Item Item Item Item Item Item Item Item Item 2',
+                'Item Item Item Item Item Item Item Item Item 3',
+                'Item Item Item Item Item Item Item Item Item 4',
+                'Item Item Item Item Item Item Item Item Item 5',
+                'Item Item Item Item Item Item Item Item Item 6',
+                'Item Item Item Item Item Item Item Item Item 7',
+                'Item Item Item Item Item Item Item Item Item 8',
+                'Item Item Item Item Item Item Item Item Item 9',
+                'Item Item Item Item Item Item Item Item Item 10000000',
+                'Item Item Item Item Item Item Item Item Item 10000000',
+                'Item Item Item Item Item Item Item Item Item 10000000',
+                'Item Item Item Item Item Item Item Item Item 10000000',
+                'Item Item Item Item Item Item Item Item Item 10000000',
+            },
+            selected_index = _sl,
+        })
+    end,
 }
 
 local page = 1
