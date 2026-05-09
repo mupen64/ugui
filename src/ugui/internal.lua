@@ -507,24 +507,18 @@ ugui.internal = {
                     local x = 0
                     local y = 0
 
-                    local new_line = true
-                    for i = 1, #node.control.items, 1 do
+                    for _, __ in pairs(node.control.items) do
                         local child_data = ugui.internal.control_data[child_uid]
                         local child_node = ugui.internal.find_node(child_uid)
 
-                        if new_line then
-                            new_line = false
-                        else
-                            x = x + child_data.natural_size.x + ugui.standard_styler.params.tabcontrol.gap_x
-                        end
-
-                        if x + child_data.natural_size.x > node.control.rectangle.x + node.control.rectangle.width then
-                            x = node.control.rectangle.x
+                        if x + child_data.natural_size.x > node.control.rectangle.width then
+                            x = 0
                             y = y + ugui.standard_styler.params.tabcontrol.rail_size + ugui.standard_styler.params.tabcontrol.gap_y
-                            new_line = true
                         end
 
                         child_node.control.margin = string.format('%fpx %fpx', x, y)
+
+                        x = x + child_data.natural_size.x + ugui.standard_styler.params.tabcontrol.gap_x
 
                         child_uid = child_uid + 2
                     end
