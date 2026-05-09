@@ -504,8 +504,8 @@ ugui.internal = {
 
                 if node.type == 'panel' and data.is_tab_control then
                     local child_uid = node.control.uid + 1
-                    local x = node.control.rectangle.x
-                    local y = node.control.rectangle.y
+                    local x = 0
+                    local y = 0
 
                     local new_line = true
                     for i = 1, #node.control.items, 1 do
@@ -624,7 +624,6 @@ ugui.internal = {
 
             if node.type == 'panel' and data.is_tab_control then
                 data.content_rect = {x = data.render_rect.x, y = data.render_rect.y + data.rail_height, width = data.render_rect.width, height = data.render_rect.height - data.rail_height}
-                print(data.content_rect, data.render_rect)
             end
         end)
     end,
