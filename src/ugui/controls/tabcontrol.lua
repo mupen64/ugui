@@ -18,16 +18,32 @@
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return TabControlResult, Meta # The result.
 ugui.tabcontrol = function(control, fn)
-    local _ = ugui.control(control, '', fn)
+    local button_uid = control.uid + 1
+
+    ugui.control(control, 'panel', function()
+        local data = ugui.internal.control_data[control.uid]
+        if not data.is_tab_control then
+            data.is_tab_control = true
+            data.rail_render_rect = {x = 0, y = 0, width = 0, height = 0}
+        end
+
+        for i = 1, #control.items do
+            local _, meta = ugui.toggle_button({
+                uid = button_uid,
+                size = string.format('auto %fpx', ugui.standard_styler.params.tabcontrol.rail_size),
+                text = control.items[i],
+                is_checked = selected_index == i,
+            })
+
+            if meta.signal_change == ugui.signal_change_states.started then
+                selected_index = i
+            end
+
+            button_uid = button_uid + 2
+        end
+    end)
+
     local data = ugui.internal.control_data[control.uid]
-
-    if data.scroll_x == nil then
-        data.scroll_x = 0
-    end
-
-    if data.scroll_y == nil then
-        data.scroll_y = 0
-    end
 
     if ugui.standard_styler.params.tabcontrol.draw_frame then
         local clone = ugui.internal.deep_clone(control)
@@ -35,52 +51,11 @@ ugui.tabcontrol = function(control, fn)
         ugui.standard_styler.draw_list(clone, clone.rectangle)
     end
 
-    local x = 0
-    local y = 0
-    local selected_index = control.selected_index
-
-    local num_items = control.items and #control.items or 0
-    for i = 1, num_items, 1 do
-        local item = control.items[i]
-
-        local width = ugui.standard_styler.compute_rich_text(item, control.plaintext, ugui.standard_styler.params.font_name, ugui.standard_styler.params.font_size).size.x + 10
-
-        -- if it would overflow, we wrap onto a new line
-        if x + width > control.rectangle.width then
-            x = 0
-            y = y + ugui.standard_styler.params.tabcontrol.rail_size + ugui.standard_styler.params.tabcontrol.gap_y
-        end
-
-        local _, meta = ugui.toggle_button({
-            uid = control.uid + i * 2,
-            is_enabled = control.is_enabled,
-            rectangle = {
-                x = control.rectangle.x + x,
-                y = control.rectangle.y + y,
-                width = width,
-                height = ugui.standard_styler.params.tabcontrol.rail_size,
-            },
-            text = control.items[i],
-            is_checked = selected_index == i,
-        })
-
-        if meta.signal_change == ugui.signal_change_states.started then
-            selected_index = i
-        end
-
-        x = x + width + ugui.standard_styler.params.tabcontrol.gap_x
-    end
-
     data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
         control.selected_index ~= selected_index)
 
     return {
         selected_index = selected_index,
-        rectangle = {
-            x = control.rectangle.x,
-            y = control.rectangle.y + ugui.standard_styler.params.tabcontrol.rail_size + y,
-            width = control.rectangle.width,
-            height = control.rectangle.height - y - ugui.standard_styler.params.tabcontrol.rail_size,
-        },
+        rectangle = data.rail_render_rect,
     }, {signal_change = data.signal_change}
 end

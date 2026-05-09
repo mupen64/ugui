@@ -168,6 +168,34 @@ local pages = {
             end
         end
     end,
+    function()
+        _sl4 = _sl4 or 1
+        _tab_count = _tab_count or 5
+
+        local items = {}
+        for i = 1, _tab_count do
+            items[i] = 'Tab ' .. i
+        end
+
+        local result = ugui.tabcontrol({
+            uid = 160,
+            align = 'center',
+            size = '200px 400px',
+            items = items,
+            selected_index = _sl4,
+            styler_mixin = {tabcontrol = {gap_y = 10}},
+        })
+        if result.selected_index then
+            _sl4 = result.selected_index
+        end
+        if ugui.button({
+                uid = 300,
+                rectangle = result.rectangle,
+                text = items[_sl4] .. ' - click to add more items',
+            }) then
+            _tab_count = _tab_count + 5
+        end
+    end,
 }
 
 local page = 1

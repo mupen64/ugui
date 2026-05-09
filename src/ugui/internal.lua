@@ -493,6 +493,63 @@ ugui.internal = {
             end
         end)
 
+        -- This one is nuts: we have to emulate a flex-col with wrapping before we have an actual implementation for it...
+        -- And even better that we have to feed rail_render_rect back to it so it can return that...
+        -- Absolutely NUTS design, this control's needs to be EXECUTED before 4.0.0
+        --
+        -- oh we also need to re-run the margin/size computation pass...
+        local function tabcontrol_hack_1()
+            ugui.internal.foreach_node_from_root(function(node)
+                local data = ugui.internal.control_data[node.control.uid]
+
+                if node.type == 'panel' and data.is_tab_control then
+                    local child_uid = node.control.uid + 1
+                    local x = node.control.rectangle.x
+                    local y = node.control.rectangle.y
+
+                    local new_line = true
+                    for i = 1, #node.control.items, 1 do
+                        local child_data = ugui.internal.control_data[child_uid]
+                        local child_node = ugui.internal.find_node(child_uid)
+
+                        if new_line then
+                            new_line = false
+                        else
+                            x = x + child_data.natural_size.x + ugui.standard_styler.params.tabcontrol.gap_x
+                        end
+
+                        if x > node.control.rectangle.x + node.control.rectangle.width then
+                            x = node.control.rectangle.x
+                            y = y + ugui.standard_styler.params.tabcontrol.rail_size + ugui.standard_styler.params.tabcontrol.gap_y
+                            new_line = true
+                        end
+
+                        child_node.control.margin = string.format('%fpx %fpx', x, y)
+
+                        child_uid = child_uid + 2
+                    end
+
+                    data.rail_height = y + ugui.standard_styler.params.tabcontrol.rail_size - node.control.rectangle.y
+                end
+            end)
+
+            ugui.internal.foreach_node_from_root(function(node)
+                local control = node.control
+                if control.margin then
+                    local pos = ugui.internal.resolve_unit2(control.margin, node)
+                    control.rectangle.x = pos.x
+                    control.rectangle.y = pos.y
+                end
+                if control.size then
+                    local size = ugui.internal.resolve_unit2(control.size, node)
+                    control.rectangle.width = size.x
+                    control.rectangle.height = size.y
+                end
+            end)
+        end
+
+        tabcontrol_hack_1()
+
         ugui.internal.foreach_node_from_root(function(node)
             local control = node.control
             local parent = node.parent
@@ -563,6 +620,10 @@ ugui.internal = {
                     data.render_rect.y = data.render_rect.y -
                         (data.render_rect.y + data.render_rect.height - ugui.internal.environment.window_size.y)
                 end
+            end
+
+            if node.type == 'panel' and data.is_tab_control then
+                data.rail_render_rect = {x = data.render_rect.x, y = data.render_rect.y + data.rail_height, width = data.render_rect.width, height = data.render_rect.height - data.rail_height}
             end
         end)
     end,
