@@ -61,7 +61,13 @@ emu.atdrawd2d(function()
     text = ugui.textbox({
         uid = 45,
         margin = '20px 20px',
-        size = '100px 20px',
+        padding = '8px 4px',
+        text = text,
+    })
+    text = ugui.textbox({
+        uid = 47,
+        margin = '20px 60px',
+        size = '100px auto+8px',
         text = text,
     })
     position = ugui.joystick({

@@ -283,6 +283,13 @@ ugui.registry.textbox = {
     draw = function(control)
         ugui.standard_styler.draw_textbox(control)
     end,
+    measure = function(node)
+        local control = node.control
+        ---@cast control TextBox
+
+        local size = BreitbandGraphics.get_text_size(control.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
+        return {x = size.width, y = size.height}
+    end,
 }
 
 ---Places a TextBox.
