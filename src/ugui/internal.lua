@@ -454,9 +454,8 @@ ugui.internal = {
         local biggest = {x = 0, y = 0}
         for _, child in pairs(node.children) do
             local size = ugui.internal.measure(child)
-            if size.x > biggest.x or size.y > biggest.y then
-                biggest = size
-            end
+            biggest.x = math.max(biggest.x, size.x)
+            biggest.y = math.max(biggest.y, size.y)
         end
         return biggest
     end,
