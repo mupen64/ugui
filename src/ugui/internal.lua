@@ -445,14 +445,6 @@ ugui.internal = {
                 biggest = size
             end
         end
-
-        local control = node.control
-        if control.padding then
-            local padding = ugui.internal.resolve_unit2(control.padding, node)
-            biggest.x = biggest.x + padding.x * 2
-            biggest.y = biggest.y + padding.y * 2
-        end
-
         return biggest
     end,
 
