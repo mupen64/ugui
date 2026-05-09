@@ -429,7 +429,10 @@ ugui.internal = {
     measure = function(node)
         local registry_entry = ugui.registry[node.type]
         if registry_entry.measure then
-            return registry_entry.measure(node)
+            local revert_styler_mixin = ugui.internal.apply_styler_mixin(node.control)
+            local size = registry_entry.measure(node)
+            revert_styler_mixin()
+            return size
         end
         return ugui.internal.measure_fit_biggest_child(node)
     end,
