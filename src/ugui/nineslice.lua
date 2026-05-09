@@ -123,9 +123,10 @@ ugui.apply_nineslice = function(style)
     end
 
     ugui.standard_styler.draw_raised_frame = function(control, visual_state)
-        local key = ugui.internal.params_to_key('raised_frame', control.rectangle, visual_state)
+        local data = ugui.internal.control_data[control.uid]
+        local key = ugui.internal.params_to_key('raised_frame', data.render_rect, visual_state)
 
-        ugui.internal.cached_draw(key, control.rectangle, function(eff_rectangle)
+        ugui.internal.cached_draw(key, data.render_rect, function(eff_rectangle)
             BreitbandGraphics.draw_image_nineslice(eff_rectangle,
                 style.button.states[visual_state].source,
                 style.button.states[visual_state].center,
@@ -134,7 +135,7 @@ ugui.apply_nineslice = function(style)
     end
 
     ugui.standard_styler.draw_edit_frame = function(control, rectangle,
-                                                    visual_state)
+        visual_state)
         local key = ugui.internal.params_to_key('edit_frame', rectangle, visual_state)
 
         ugui.internal.cached_draw(key, rectangle, function(eff_rectangle)
@@ -181,9 +182,10 @@ ugui.apply_nineslice = function(style)
     end
 
     ugui.standard_styler.draw_scrollbar = function(control, thumb_rectangle)
+        local data = ugui.internal.control_data[control.uid]
         local visual_state = ugui.get_visual_state(control)
 
-        BreitbandGraphics.draw_image(control.rectangle,
+        BreitbandGraphics.draw_image(data.render_rect,
             style.scrollbar_rail,
             style.path, ugui.standard_styler.params.color_filter, 'nearest')
 
