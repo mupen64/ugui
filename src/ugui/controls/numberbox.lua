@@ -185,6 +185,16 @@ ugui.registry.numberbox = {
             BreitbandGraphics.pop_clip()
         end
     end,
+    measure = function(node)
+        local control = node.control
+        ---@cast control NumberBox
+
+        local text = string.format('%0' .. tostring(control.places) .. 'd', math.abs(control.value))
+        local font_size = ugui.standard_styler.params.font_size * ugui.standard_styler.params.numberbox.font_scale
+        local font_name = ugui.standard_styler.params.monospace_font_name
+        local size = BreitbandGraphics.get_text_size(text, font_size, font_name)
+        return {x = size.width, y = size.height}
+    end,
 }
 
 ---Places a NumberBox.

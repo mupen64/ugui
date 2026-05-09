@@ -138,10 +138,11 @@ emu.atdrawd2d(function()
 
     num = ugui.numberbox({
         uid = 135,
-        margin = '350px 50px',
-        size = '160px 23px',
+        margin = '350px 40px',
+        size = '160px auto',
         value = num,
         places = 4,
+        styler_mixin = {font_size = 20},
     })
     BreitbandGraphics.draw_text2({
         rectangle = {x = 515, y = 50, width = 999, height = 23},
@@ -154,7 +155,7 @@ emu.atdrawd2d(function()
     num2 = ugui.numberbox({
         uid = 145,
         margin = '350px 75px',
-        size = '160px 23px',
+        size = '160px auto',
         value = num2,
         places = 4,
         show_negative = true,
