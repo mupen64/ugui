@@ -518,7 +518,7 @@ ugui.internal = {
                             x = x + child_data.natural_size.x + ugui.standard_styler.params.tabcontrol.gap_x
                         end
 
-                        if x > node.control.rectangle.x + node.control.rectangle.width then
+                        if x + child_data.natural_size.x > node.control.rectangle.x + node.control.rectangle.width then
                             x = node.control.rectangle.x
                             y = y + ugui.standard_styler.params.tabcontrol.rail_size + ugui.standard_styler.params.tabcontrol.gap_y
                             new_line = true
