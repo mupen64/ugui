@@ -116,6 +116,55 @@ local pages = {
             selected_index = _sl3,
         })
     end,
+    function()
+        _open = _open or false
+
+        if ugui.button({
+                uid = 140,
+                align = 'center',
+                text = 'Open Menu...',
+            }) then
+            _open = true
+        end
+
+        if _open then
+            local result = ugui.menu({
+                uid = 150,
+                align = 'center',
+                padding = '10px',
+                items = {
+                    {text = 'Item 1', checked = true},
+                    {text = 'Item 2', enabled = false},
+                    {
+                        text = 'Item 3',
+                        items = {
+                            {text = 'Item 3.1'},
+                            {text = 'Item 3.2'},
+                            {text = 'Item 3.3'},
+                        },
+                    },
+                    {text = 'Item 4'},
+                    {
+                        text = 'Item 5',
+                        enabled = false,
+                        items = {
+                            {text = 'Item 5.1'},
+                            {text = 'Item 5.2'},
+                            {text = 'Item 5.3'},
+                        },
+                    },
+                },
+            }).primary
+
+            if result.dismissed or result.item then
+                _open = false
+            end
+
+            if result.item then
+                print(result.item)
+            end
+        end
+    end,
 }
 
 local page = 1

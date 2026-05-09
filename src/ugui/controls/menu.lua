@@ -27,45 +27,17 @@ ugui.registry.menu = {
     end,
     ---@param control Menu
     setup = function(control, data)
-        data.dismissed = 0
+        data.hovered_index = nil
     end,
     ---@param control Menu
     ---@return ControlReturnValue
     logic = function(control, data)
-        local function reset_hovered_index_for_all_child_menus(uid, items)
-            if ugui.internal.control_data[uid] then
-                ugui.internal.control_data[uid].hovered_index = nil
-            end
-            for _, item in pairs(items) do
-                if item.items then
-                    reset_hovered_index_for_all_child_menus(uid + 1, item.items)
-                end
-            end
-        end
-
         local result = {
             item = nil,
             dismissed = false,
         }
 
-        -- We want to delay returning the dismissed state by a frame because we don't get to handle inputs otherwise,
-        -- so we turn the dismissed flag into a tristate.
-        if data.dismissed == 2 then
-            data.dismissed = 0
-            result.dismissed = true
-        end
-
-        if data.dismissed == 1 then
-            data.dismissed = 2
-        end
-
-        if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, data.render_rect) then
-            data.dismissed = 1
-        end
-
         if ugui.internal.hovered_control == control.uid then
-            reset_hovered_index_for_all_child_menus(control.uid, control.items)
-
             local i = math.floor((ugui.internal.environment.mouse_position.y - data.render_rect.y) /
                 ugui.standard_styler.params.menu_item.height) + 1
             data.hovered_index = ugui.internal.clamp(i, 1, #control.items)
@@ -80,13 +52,13 @@ ugui.registry.menu = {
             end
         end
 
-        if result.dismissed or result.item then
-            reset_hovered_index_for_all_child_menus(control.uid, control.items)
-        end
-
         -- FIXME: Cursed flag... does this make sense?
         data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
             result.item ~= nil or result.dismissed)
+
+        if result.item then
+            result.dismissed = true
+        end
 
         return {
             primary = result,
@@ -98,73 +70,73 @@ ugui.registry.menu = {
         local data = ugui.internal.control_data[control.uid]
         ugui.standard_styler.draw_menu(control, data.render_rect)
     end,
+    measure = function(node)
+        local control = node.control
+        ---@cast control Menu
+
+        local biggest_x = 0
+        for _, item in pairs(control.items) do
+            local size = BreitbandGraphics.get_text_size(item.text, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name)
+            biggest_x = math.max(biggest_x, size.width)
+        end
+
+        local x = biggest_x + ugui.standard_styler.params.menu_item.left_padding + ugui.standard_styler.params.menu_item.right_padding
+        local y = (#control.items - 1) * ugui.standard_styler.params.menu_item.height
+
+        return {x = x, y = y}
+    end,
 }
 
 ---Places a Menu.
+---**COMPATIBILITY**: For compatibility reasons, the menu will be, by default, parented to scene root and auto-sized unless `z_index` and `size` are non-nil respectively.
 ---@param control Menu The control table.
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return MenuResult, Meta # The menu result.
 ugui.menu = function(control, fn)
+    local has_z_index<const> = control.z_index ~= nil
     control.z_index = control.z_index or 1000
+    control.size = control.size or 'auto'
 
-    -- We adjust the dimensions with what should fit the content
-    local max_text_width = 0
-    for _, item in pairs(control.items) do
-        local size = BreitbandGraphics.get_text_size(item.text, ugui.standard_styler.params.font_size,
-            ugui.standard_styler.params.font_name)
-        if size.width > max_text_width then
-            max_text_width = size.width
-        end
-    end
+    local parent = has_z_index and ugui.internal.current_parent or ugui.internal.root
+    local prev_parent = ugui.internal.current_parent
+    ugui.internal.current_parent = parent
 
-    data.render_rect.width = max_text_width + ugui.standard_styler.params.menu_item.left_padding +
-        ugui.standard_styler.params.menu_item.right_padding
-    data.render_rect.height = #control.items * ugui.standard_styler.params.menu_item.height
+    local inner_result = {dismissed = false, item = nil}
+    local result = ugui.control(control, 'menu', function()
+        local data = ugui.internal.control_data[control.uid]
 
-    -- Overflow avoidance: shift the X/Y position to avoid going out of bounds
-    if data.render_rect.x + data.render_rect.width > ugui.internal.environment.window_size.x then
-        -- If the menu has a parent and there's an overflow on the X axis, try snaking out of the situation by moving left of the menu
-        if control.parent_rectangle then
-            data.render_rect.x = control.parent_rectangle.x - data.render_rect.width +
-                ugui.standard_styler.params.menu.overlap_size
-        else
-            data.render_rect.x = data.render_rect.x -
-                (data.render_rect.x + data.render_rect.width - ugui.internal.environment.window_size.x)
-        end
-    end
-    if data.render_rect.y + data.render_rect.height > ugui.internal.environment.window_size.y then
-        data.render_rect.y = data.render_rect.y -
-            (data.render_rect.y + data.render_rect.height - ugui.internal.environment.window_size.y)
-    end
+        if data.hovered_index ~= nil then
+            local i = data.hovered_index
+            local item = control.items[i]
 
-    local result = ugui.control(control, 'menu', fn)
-    local data = ugui.internal.control_data[control.uid]
+            if item.items and item.enabled ~= false then
+                local y = (i - 1) * ugui.standard_styler.params.menu_item.height
+                local submenu_result = ugui.menu({
+                    uid = control.uid + 1,
+                    margin = string.format('100%%-%fpx %fpx', ugui.standard_styler.params.menu.overlap_size, y),
+                    items = item.items,
+                    z_index = 0,
+                }).primary
 
-    -- Show child menu if there's any hovered one
-    if data.hovered_index ~= nil then
-        local i = data.hovered_index
-        local item = control.items[i]
-
-        if item.items and item.enabled ~= false then
-            local submenu_result = ugui.menu({
-                uid = control.uid + 1,
-                rectangle = {
-                    x = data.render_rect.x + data.render_rect.width - ugui.standard_styler.params.menu.overlap_size,
-                    y = data.render_rect.y + ((i - 1) * ugui.standard_styler.params.menu_item.height),
-                    width = 0,
-                    height = 0,
-                },
-                items = item.items,
-                z_index = (control.z_index or 0) + 1,
-                parent_rectangle = ugui.internal.deep_clone(data.render_rect),
-            })
-
-            if submenu_result.item then
-                result.dismissed = false
-                result.item = submenu_result.item
+                if submenu_result.item then
+                    inner_result.dismissed = false
+                    inner_result.item = submenu_result.item
+                end
             end
         end
+
+        if fn then fn() end
+    end)
+
+    ugui.internal.current_parent = prev_parent
+
+    if inner_result.dismissed then
+        result.primary.dismissed = true
+    end
+    if inner_result.item then
+        result.primary.item = inner_result.item
     end
 
+    -- COMPAT: BUG: We return the result wrapped in primary. This is to avoid breaking existing code, but it's just totally wrong.
     return result, result.meta
 end
