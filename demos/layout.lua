@@ -117,50 +117,77 @@ local pages = {
         })
     end,
     function()
-        _open = _open or false
+        _menu_1_open = _menu_1_open or false
+        _menu_2_open = _menu_2_open or false
+        local items = {
+            {text = 'Item 1', checked = true},
+            {text = 'Item 2', enabled = false},
+            {text = 'Item 3'},
+            {text = 'Item 4'},
+            {text = 'Item 5'},
+            {
+                text = 'Item 6',
+                items = {
+                    {text = 'Item 6.1'},
+                    {text = 'Item 6.2'},
+                    {text = 'Item 6.3'},
+                },
+            },
+            {text = 'Item 7'},
+            {
+                text = 'Item 8',
+                enabled = false,
+                items = {
+                    {text = 'Item 8.1'},
+                    {text = 'Item 8.2'},
+                    {text = 'Item 8.3'},
+                },
+            },
+        }
 
         if ugui.button({
                 uid = 140,
                 align = '90% 90%',
-                text = 'Open Menu...',
+                text = 'Open menu...',
                 padding = '20px',
             }) then
-            _open = true
+            _menu_1_open = true
         end
 
-        if _open then
+        if _menu_1_open then
             local result = ugui.menu({
                 uid = 150,
                 align = '90% 90%',
-                items = {
-                    {text = 'Item 1', checked = true},
-                    {text = 'Item 2', enabled = false},
-                    {text = 'Item 3'},
-                    {text = 'Item 4'},
-                    {text = 'Item 5'},
-                    {
-                        text = 'Item 6',
-                        items = {
-                            {text = 'Item 6.1'},
-                            {text = 'Item 6.2'},
-                            {text = 'Item 6.3'},
-                        },
-                    },
-                    {text = 'Item 7'},
-                    {
-                        text = 'Item 8',
-                        enabled = false,
-                        items = {
-                            {text = 'Item 8.1'},
-                            {text = 'Item 8.2'},
-                            {text = 'Item 8.3'},
-                        },
-                    },
-                },
+                items = items,
             }).primary
 
             if result.dismissed or result.item then
-                _open = false
+                _menu_1_open = false
+            end
+
+            if result.item then
+                print(result.item)
+            end
+        end
+
+        if ugui.button({
+                uid = 160,
+                align = '10% 10%',
+                text = 'Open legacy menu...',
+                padding = '20px',
+            }) then
+            _menu_2_open = true
+        end
+
+        if _menu_2_open then
+            local result = ugui.menu({
+                uid = 170,
+                rectangle = {x = 20, y = 20},
+                items = items,
+            }).primary
+
+            if result.dismissed or result.item then
+                _menu_2_open = false
             end
 
             if result.item then
@@ -178,7 +205,7 @@ local pages = {
         end
 
         local result = ugui.tabcontrol({
-            uid = 160,
+            uid = 180,
             align = 'center',
             size = '200px 400px',
             items = items,

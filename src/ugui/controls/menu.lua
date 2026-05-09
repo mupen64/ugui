@@ -97,6 +97,12 @@ ugui.menu = function(control, fn)
     local has_z_index<const> = control.z_index ~= nil
     control.z_index = control.z_index or 1000
 
+    -- Some scripts pass `rectangle` without `width`/`height`. We just deal with this by preemptively fixing this crap to use `margin` and `size`.
+    if control.rectangle then
+        control.margin = string.format('%fpx %fpx', control.rectangle.x, control.rectangle.y)
+        control.rectangle = nil
+    end
+
     local parent = has_z_index and ugui.internal.current_parent or ugui.internal.root
     local prev_parent = ugui.internal.current_parent
     ugui.internal.current_parent = parent
