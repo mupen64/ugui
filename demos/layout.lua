@@ -105,7 +105,7 @@ local pages = {
         _sl3 = ugui.combobox({
             uid = 130,
             align = 'center',
-            padding = '40px 10px',
+            padding = '100px 10px',
             items = {
                 'Item 1',
                 'Item 2',
