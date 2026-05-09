@@ -78,7 +78,7 @@ ugui.registry.textbox = {
     logic = function(control, data)
         data.text = control.text
 
-        local index_at_mouse = ugui.internal.get_caret_index(data.text, data.scroll_offset, ugui.internal.environment.mouse_position.x - control.rectangle.x)
+        local index_at_mouse = ugui.internal.get_caret_index(data.text, data.scroll_offset, ugui.internal.environment.mouse_position.x - data.render_rect.x)
 
         -- If the control was just clicked, start a new selection or create/extend one with shift held.
         if ugui.internal.clicked_control == control.uid then
@@ -231,7 +231,7 @@ ugui.registry.textbox = {
         data.selection_end = ugui.internal.clamp(data.selection_end, 1, #data.text + 1)
 
         local padding_x = ugui.standard_styler.params.textbox.padding.x
-        local visible_width = control.rectangle.width - padding_x
+        local visible_width = data.render_rect.width - padding_x
 
         local function width_from_offset(offset, target_index)
             if target_index <= offset then
