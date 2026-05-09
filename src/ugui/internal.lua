@@ -454,6 +454,15 @@ ugui.internal = {
             ugui.internal.control_data[node.control.uid].natural_size = ugui.internal.measure(node)
         end)
 
+        -- Apply padding to natural size...
+        ugui.internal.foreach_node_from_root(function(node)
+            local data = ugui.internal.control_data[node.control.uid]
+            local padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, node) or {x = 0, y = 0}
+
+            data.natural_size.x = data.natural_size.x + padding.x * 2
+            data.natural_size.y = data.natural_size.y + padding.y * 2
+        end)
+
         ugui.internal.foreach_node_from_root(function(node)
             local control = node.control
             if control.margin then
