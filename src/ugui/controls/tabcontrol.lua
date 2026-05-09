@@ -24,7 +24,7 @@ ugui.tabcontrol = function(control, fn)
         local data = ugui.internal.control_data[control.uid]
         if not data.is_tab_control then
             data.is_tab_control = true
-            data.contect_rect = {x = 0, y = 0, width = 0, height = 0}
+            data.content_rect = {x = 0, y = 0, width = 0, height = 0}
             data.selected_index = 1
         end
 
@@ -61,6 +61,6 @@ ugui.tabcontrol = function(control, fn)
 
     return {
         selected_index = data.selected_index,
-        rectangle = data.contect_rect,
+        rectangle = data.content_rect,
     }, {signal_change = data.signal_change}
 end
