@@ -502,23 +502,31 @@ ugui.internal = {
             data.render_rect = {x = node.control.rectangle.x, y = node.control.rectangle.y, width = node.control.rectangle.width, height = node.control.rectangle.height}
         end)
 
-        -- HACK: We need to shrink listboxes with scrollbars to fit them... We'd use flex supoport for this but it's only coming in a future pr lol
+        -- HACK: We need to manipulate various controls to emulate a flex layout... it's only coming in a future pr lol
         ugui.internal.foreach_node_from_root(function(node)
-            if node.type ~= 'listbox' then return true end
-
             local data = ugui.internal.control_data[node.control.uid]
-            local x_overflow<const> = data.natural_size.x > data.render_rect.width
-            local y_overflow<const> = data.natural_size.y > data.render_rect.height
-            local scrollbar_1_uid<const> = node.control.uid + 1
-            local scrollbar_2_uid<const> = node.control.uid + 2
-            local scrollbar_1_data = ugui.internal.control_data[scrollbar_1_uid]
-            local scrollbar_2_data = ugui.internal.control_data[scrollbar_2_uid]
 
-            if x_overflow and scrollbar_1_data then
-                data.render_rect.width = data.render_rect.width - ugui.standard_styler.params.scrollbar.thickness
+            if node.type == 'listbox' then
+                local x_overflow<const> = data.natural_size.x > data.render_rect.width
+                local y_overflow<const> = data.natural_size.y > data.render_rect.height
+                local scrollbar_1_uid<const> = node.control.uid + 1
+                local scrollbar_2_uid<const> = node.control.uid + 2
+                local scrollbar_1_data = ugui.internal.control_data[scrollbar_1_uid]
+                local scrollbar_2_data = ugui.internal.control_data[scrollbar_2_uid]
+
+                if x_overflow and scrollbar_1_data then
+                    data.render_rect.width = data.render_rect.width - ugui.standard_styler.params.scrollbar.thickness
+                end
+                if y_overflow and scrollbar_2_data then
+                    data.render_rect.height = data.render_rect.height - ugui.standard_styler.params.scrollbar.thickness
+                end
             end
-            if y_overflow and scrollbar_2_data then
-                data.render_rect.height = data.render_rect.height - ugui.standard_styler.params.scrollbar.thickness
+
+            if node.type == 'numberbox' and node.control.show_negative then
+                local button_uid<const> = node.control.uid + 1
+                local button_data<const> = ugui.internal.control_data[button_uid]
+                data.render_rect.x = data.render_rect.x + button_data.render_rect.width
+                data.render_rect.width = data.render_rect.width - button_data.render_rect.width
             end
         end)
     end,

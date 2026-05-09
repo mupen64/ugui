@@ -97,10 +97,10 @@ ugui.combobox = function(control, fn)
         local search_text = ugui.textbox({
             uid = textbox_uid,
             rectangle = {
-                x = control.rectangle.x,
-                y = control.rectangle.y,
-                width = control.rectangle.width - button_size,
-                height = control.rectangle.height,
+                x = data.render_rect.x,
+                y = data.render_rect.y,
+                width = data.render_rect.width - button_size,
+                height = data.render_rect.height,
             },
             is_enabled = control.is_enabled,
             text = current_text,
@@ -115,10 +115,10 @@ ugui.combobox = function(control, fn)
         if ugui.button({
                 uid = button_uid,
                 rectangle = {
-                    x = control.rectangle.x + control.rectangle.width - button_size,
-                    y = control.rectangle.y,
+                    x = data.render_rect.x + data.render_rect.width - button_size,
+                    y = data.render_rect.y,
                     width = button_size,
-                    height = control.rectangle.height,
+                    height = data.render_rect.height,
                 },
                 is_enabled = control.is_enabled,
                 text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',

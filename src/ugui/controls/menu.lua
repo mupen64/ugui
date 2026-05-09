@@ -59,14 +59,14 @@ ugui.registry.menu = {
             data.dismissed = 2
         end
 
-        if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+        if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, data.render_rect) then
             data.dismissed = 1
         end
 
         if ugui.internal.hovered_control == control.uid then
             reset_hovered_index_for_all_child_menus(control.uid, control.items)
 
-            local i = math.floor((ugui.internal.environment.mouse_position.y - control.rectangle.y) /
+            local i = math.floor((ugui.internal.environment.mouse_position.y - data.render_rect.y) /
                 ugui.standard_styler.params.menu_item.height) + 1
             data.hovered_index = ugui.internal.clamp(i, 1, #control.items)
         end
@@ -95,7 +95,8 @@ ugui.registry.menu = {
     end,
     ---@param control Menu
     draw = function(control)
-        ugui.standard_styler.draw_menu(control, control.rectangle)
+        local data = ugui.internal.control_data[control.uid]
+        ugui.standard_styler.draw_menu(control, data.render_rect)
     end,
 }
 
@@ -116,24 +117,24 @@ ugui.menu = function(control, fn)
         end
     end
 
-    control.rectangle.width = max_text_width + ugui.standard_styler.params.menu_item.left_padding +
+    data.render_rect.width = max_text_width + ugui.standard_styler.params.menu_item.left_padding +
         ugui.standard_styler.params.menu_item.right_padding
-    control.rectangle.height = #control.items * ugui.standard_styler.params.menu_item.height
+    data.render_rect.height = #control.items * ugui.standard_styler.params.menu_item.height
 
     -- Overflow avoidance: shift the X/Y position to avoid going out of bounds
-    if control.rectangle.x + control.rectangle.width > ugui.internal.environment.window_size.x then
+    if data.render_rect.x + data.render_rect.width > ugui.internal.environment.window_size.x then
         -- If the menu has a parent and there's an overflow on the X axis, try snaking out of the situation by moving left of the menu
         if control.parent_rectangle then
-            control.rectangle.x = control.parent_rectangle.x - control.rectangle.width +
+            data.render_rect.x = control.parent_rectangle.x - data.render_rect.width +
                 ugui.standard_styler.params.menu.overlap_size
         else
-            control.rectangle.x = control.rectangle.x -
-                (control.rectangle.x + control.rectangle.width - ugui.internal.environment.window_size.x)
+            data.render_rect.x = data.render_rect.x -
+                (data.render_rect.x + data.render_rect.width - ugui.internal.environment.window_size.x)
         end
     end
-    if control.rectangle.y + control.rectangle.height > ugui.internal.environment.window_size.y then
-        control.rectangle.y = control.rectangle.y -
-            (control.rectangle.y + control.rectangle.height - ugui.internal.environment.window_size.y)
+    if data.render_rect.y + data.render_rect.height > ugui.internal.environment.window_size.y then
+        data.render_rect.y = data.render_rect.y -
+            (data.render_rect.y + data.render_rect.height - ugui.internal.environment.window_size.y)
     end
 
     local result = ugui.control(control, 'menu', fn)
@@ -148,14 +149,14 @@ ugui.menu = function(control, fn)
             local submenu_result = ugui.menu({
                 uid = control.uid + 1,
                 rectangle = {
-                    x = control.rectangle.x + control.rectangle.width - ugui.standard_styler.params.menu.overlap_size,
-                    y = control.rectangle.y + ((i - 1) * ugui.standard_styler.params.menu_item.height),
+                    x = data.render_rect.x + data.render_rect.width - ugui.standard_styler.params.menu.overlap_size,
+                    y = data.render_rect.y + ((i - 1) * ugui.standard_styler.params.menu_item.height),
                     width = 0,
                     height = 0,
                 },
                 items = item.items,
                 z_index = (control.z_index or 0) + 1,
-                parent_rectangle = ugui.internal.deep_clone(control.rectangle),
+                parent_rectangle = ugui.internal.deep_clone(data.render_rect),
             })
 
             if submenu_result.item then
