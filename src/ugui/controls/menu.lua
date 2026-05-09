@@ -52,13 +52,13 @@ ugui.registry.menu = {
             end
         end
 
-        -- FIXME: Cursed flag... does this make sense?
-        data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
-            result.item ~= nil or result.dismissed)
-
         if result.item then
             result.dismissed = true
         end
+
+        -- FIXME: Cursed flag... does this make sense?
+        data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
+            result.item ~= nil or result.dismissed)
 
         return {
             primary = result,
@@ -81,21 +81,21 @@ ugui.registry.menu = {
         end
 
         local x = biggest_x + ugui.standard_styler.params.menu_item.left_padding + ugui.standard_styler.params.menu_item.right_padding
-        local y = (#control.items - 1) * ugui.standard_styler.params.menu_item.height
+        local y = #control.items * ugui.standard_styler.params.menu_item.height
 
         return {x = x, y = y}
     end,
 }
 
 ---Places a Menu.
----**COMPATIBILITY**: For compatibility reasons, the menu will be, by default, parented to scene root and auto-sized unless `z_index` and `size` are non-nil respectively.
+---**COMPATIBILITY**: For compatibility reasons, the menu will be, by default, parented to scene root unless `z_index` is non-nil.
+---Child menus will be parented to their expected menu parent.
 ---@param control Menu The control table.
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return MenuResult, Meta # The menu result.
 ugui.menu = function(control, fn)
     local has_z_index<const> = control.z_index ~= nil
     control.z_index = control.z_index or 1000
-    control.size = control.size or 'auto'
 
     local parent = has_z_index and ugui.internal.current_parent or ugui.internal.root
     local prev_parent = ugui.internal.current_parent
@@ -127,6 +127,7 @@ ugui.menu = function(control, fn)
 
         if fn then fn() end
     end)
+    local data = ugui.internal.control_data[control.uid]
 
     ugui.internal.current_parent = prev_parent
 
@@ -135,6 +136,10 @@ ugui.menu = function(control, fn)
     end
     if inner_result.item then
         result.primary.item = inner_result.item
+    end
+
+    if result.primary.item or result.primary.dismissed then
+        data.hovered_index = nil
     end
 
     -- COMPAT: BUG: We return the result wrapped in primary. This is to avoid breaking existing code, but it's just totally wrong.
