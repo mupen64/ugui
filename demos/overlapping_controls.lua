@@ -138,8 +138,7 @@ emu.atdrawd2d(function()
         places = 4,
     })
     BreitbandGraphics.draw_text2({
-        margin = '515px 50px',
-        size = '999px 23px',
+        rectangle = {x = 515, y = 50, width = 999, height = 23},
         align_x = BreitbandGraphics.alignment.start,
         text = tostring(num),
         color = BreitbandGraphics.colors.black,
@@ -155,8 +154,7 @@ emu.atdrawd2d(function()
         show_negative = true,
     })
     BreitbandGraphics.draw_text2({
-        margin = '515px 75px',
-        size = '999px 23px',
+        rectangle = {x = 515, y = 75, width = 999, height = 23},
         align_x = BreitbandGraphics.alignment.start,
         text = tostring(num2),
         color = BreitbandGraphics.colors.black,
