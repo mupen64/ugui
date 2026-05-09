@@ -25,6 +25,7 @@ ugui.tabcontrol = function(control, fn)
         if not data.is_tab_control then
             data.is_tab_control = true
             data.rail_render_rect = {x = 0, y = 0, width = 0, height = 0}
+            data.selected_index = 1
         end
 
         for i = 1, #control.items do
@@ -32,11 +33,11 @@ ugui.tabcontrol = function(control, fn)
                 uid = button_uid,
                 size = string.format('auto %fpx', ugui.standard_styler.params.tabcontrol.rail_size),
                 text = control.items[i],
-                is_checked = selected_index == i,
+                is_checked = data.selected_index == i,
             })
 
             if meta.signal_change == ugui.signal_change_states.started then
-                selected_index = i
+                data.selected_index = i
             end
 
             button_uid = button_uid + 2
@@ -52,10 +53,10 @@ ugui.tabcontrol = function(control, fn)
     end
 
     data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
-        control.selected_index ~= selected_index)
+        control.selected_index ~= data.selected_index)
 
     return {
-        selected_index = selected_index,
+        selected_index = data.selected_index,
         rectangle = data.rail_render_rect,
     }, {signal_change = data.signal_change}
 end
