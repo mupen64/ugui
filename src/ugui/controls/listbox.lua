@@ -195,9 +195,6 @@ ugui.listbox = function(control, fn)
     local scrollbar_1_uid<const> = control.uid + 1
     local scrollbar_2_uid<const> = control.uid + 2
 
-    -- FIXME: We need to shrink the listbox to fit the scrollbars without overflowing.
-    -- Requires flex support so we're blocked by that lol...
-
     local result = ugui.control(control, 'listbox', fn)
     local data = ugui.internal.control_data[control.uid]
 
