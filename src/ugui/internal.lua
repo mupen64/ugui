@@ -427,14 +427,24 @@ ugui.internal = {
     ---@param node SceneNode
     ---@return Vector2
     measure = function(node)
-        local registry_entry = ugui.registry[node.type]
-        if registry_entry.measure then
-            local revert_styler_mixin = ugui.internal.apply_styler_mixin(node.control)
-            local size = registry_entry.measure(node)
-            revert_styler_mixin()
-            return size
+        -- We cache the natural sizes per-frame because they can be REALLY expensive to compute and we'd churn through these up to like 5 times depending on depth.
+        if ugui.internal.control_data[node.control.uid].natural_size then
+            return ugui.internal.control_data[node.control.uid].natural_size
         end
-        return ugui.internal.measure_fit_biggest_child(node)
+
+        local registry_entry = ugui.registry[node.type]
+
+        local revert_styler_mixin = ugui.internal.apply_styler_mixin(node.control)
+        local size
+        if registry_entry.measure then
+            size = registry_entry.measure(node)
+        else
+            size = ugui.internal.measure_fit_biggest_child(node)
+        end
+        revert_styler_mixin()
+
+        ugui.internal.control_data[node.control.uid].natural_size = size
+        return size
     end,
 
     ---Default measure implementation that fits the biggest child node recursively.
@@ -453,6 +463,10 @@ ugui.internal = {
 
     ---Performs scene layout.
     layout = function()
+        ugui.internal.foreach_node_from_root(function(node)
+            ugui.internal.control_data[node.control.uid].natural_size = nil
+        end)
+
         ugui.internal.foreach_node_from_root(function(node)
             ugui.internal.control_data[node.control.uid].natural_size = ugui.internal.measure(node)
         end)
