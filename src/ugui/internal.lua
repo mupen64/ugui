@@ -484,7 +484,8 @@ ugui.internal = {
             local parent_padding = {x = 0, y = 0}
 
             if parent and parent.control.padding then
-                parent_padding = ugui.internal.resolve_unit2(parent.control.padding, parent)
+                -- fixme: this is broken
+                -- parent_padding = ugui.internal.resolve_unit2(parent.control.padding, parent)
             end
 
             local min_x<const> = parent_rect.x + parent_padding.x
