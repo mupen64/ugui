@@ -545,22 +545,24 @@ ugui.internal = {
                 data.render_rect.width = data.render_rect.width - button_data.render_rect.width
             end
 
+            -- Overflow avoidance: shift the X/Y position to avoid going out of bounds
             if node.type == 'menu' then
-                -- -- Overflow avoidance: shift the X/Y position to avoid going out of bounds
-                -- if data.render_rect.x + data.render_rect.width > ugui.internal.environment.window_size.x then
-                --     -- If the menu has a parent and there's an overflow on the X axis, try snaking out of the situation by moving left of the menu
-                --     if control.parent_rectangle then
-                --         data.render_rect.x = control.parent_rectangle.x - data.render_rect.width +
-                --             ugui.standard_styler.params.menu.overlap_size
-                --     else
-                --         data.render_rect.x = data.render_rect.x -
-                --             (data.render_rect.x + data.render_rect.width - ugui.internal.environment.window_size.x)
-                --     end
-                -- end
-                -- if data.render_rect.y + data.render_rect.height > ugui.internal.environment.window_size.y then
-                --     data.render_rect.y = data.render_rect.y -
-                --         (data.render_rect.y + data.render_rect.height - ugui.internal.environment.window_size.y)
-                -- end
+                local parent_is_menu = node.parent.control.type == 'menu'
+                local parent_render_rect = ugui.internal.control_data[node.parent.control.uid].render_rect
+
+                if data.render_rect.x + data.render_rect.width > ugui.internal.environment.window_size.x then
+                    if parent_is_menu then
+                        data.render_rect.x = parent_render_rect.x - data.render_rect.width +
+                            ugui.standard_styler.params.menu.overlap_size
+                    else
+                        data.render_rect.x = data.render_rect.x -
+                            (data.render_rect.x + data.render_rect.width - ugui.internal.environment.window_size.x)
+                    end
+                end
+                if data.render_rect.y + data.render_rect.height > ugui.internal.environment.window_size.y then
+                    data.render_rect.y = data.render_rect.y -
+                        (data.render_rect.y + data.render_rect.height - ugui.internal.environment.window_size.y)
+                end
             end
         end)
     end,
