@@ -23,10 +23,7 @@ ugui.spinner = function(control, fn)
     local button_3_uid<const> = control.uid + 6
     local button_4_uid<const> = control.uid + 8
 
-    local _ = ugui.control(control, '', fn)
-    local data = ugui.internal.control_data[control.uid]
-
-    local increment = control.increment or 1
+    local increment<const> = control.increment or 1
     local value = control.value or 0
 
     local function clamp_value(value)
@@ -45,96 +42,74 @@ ugui.spinner = function(control, fn)
         return value
     end
 
-    local textbox_rect = {
-        x = control.rectangle.x,
-        y = control.rectangle.y,
-        width = control.rectangle.width - ugui.standard_styler.params.spinner.button_size * 2,
-        height = control.rectangle.height,
-    }
+    ugui.control(control, 'panel', function()
+        local data = ugui.internal.control_data[control.uid]
 
-    local new_text = ugui.textbox({
-        uid = textbox_uid,
-        rectangle = textbox_rect,
-        text = tostring(value),
-    })
+        if control.is_horizontal then
+            if ugui.button({
+                    uid = button_1_uid,
+                    is_enabled = not (value == control.minimum_value),
+                    size = string.format('%fpx 100%%', ugui.standard_styler.params.spinner.button_size),
+                    text = '-',
+                })
+            then
+                value = clamp_value(value - increment)
+            end
 
-    if tonumber(new_text) then
-        value = clamp_value(tonumber(new_text))
-    end
+            if ugui.button({
+                    uid = button_2_uid,
+                    is_enabled = not (value == control.maximum_value),
+                    size = string.format('%fpx 100%%', ugui.standard_styler.params.spinner.button_size),
+                    margin = string.format('%fpx 0', ugui.standard_styler.params.spinner.button_size),
+                    text = '+',
+                })
+            then
+                value = clamp_value(value + increment)
+            end
+        else
+            if ugui.button({
+                    uid = button_1_uid,
+                    is_enabled = not (value == control.minimum_value),
+                    size = string.format('%fpx 50%%', ugui.standard_styler.params.spinner.button_size),
+                    text = '-',
+                })
+            then
+                value = clamp_value(value - increment)
+            end
 
-    if control.is_enabled ~= false
-        and (BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, textbox_rect) or ugui.internal.mouse_captured_control == control.uid)
-    then
+            if ugui.button({
+                    uid = button_2_uid,
+                    is_enabled = not (value == control.maximum_value),
+                    size = string.format('%fpx 50%%', ugui.standard_styler.params.spinner.button_size),
+                    margin = '0 50%',
+                    text = '+',
+                })
+            then
+                value = clamp_value(value + increment)
+            end
+        end
+
+        local new_text = ugui.textbox({
+            uid = textbox_uid,
+            size = '100% 100%',
+            margin = string.format('%fpx 0', ugui.standard_styler.params.spinner.button_size * (control.is_horizontal and 2 or 1)),
+            text = tostring(value),
+        })
+
+        if tonumber(new_text) then
+            value = clamp_value(tonumber(new_text))
+        end
+
+        if fn then fn() end
+    end)
+
+    local data = ugui.internal.control_data[control.uid]
+
+    if control.is_enabled ~= false and (BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, data.render_rect) or ugui.internal.mouse_captured_control == control.uid) then
         if ugui.internal.is_mouse_wheel_up() then
             value = clamp_value(value + increment)
         end
         if ugui.internal.is_mouse_wheel_down() then
-            value = clamp_value(value - increment)
-        end
-    end
-
-    if control.is_horizontal then
-        if (ugui.button({
-                uid = button_1_uid,
-                is_enabled = not (value == control.minimum_value),
-                rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
-                        ugui.standard_styler.params.spinner.button_size * 2,
-                    y = control.rectangle.y,
-                    width = ugui.standard_styler.params.spinner.button_size,
-                    height = control.rectangle.height,
-                },
-                text = '-',
-            }))
-        then
-            value = clamp_value(value - increment)
-        end
-
-        if (ugui.button({
-                uid = button_2_uid,
-                is_enabled = not (value == control.maximum_value),
-                rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
-                        ugui.standard_styler.params.spinner.button_size,
-                    y = control.rectangle.y,
-                    width = ugui.standard_styler.params.spinner.button_size,
-                    height = control.rectangle.height,
-                },
-                text = '+',
-            }))
-        then
-            value = clamp_value(value + increment)
-        end
-    else
-        if (ugui.button({
-                uid = button_3_uid,
-                is_enabled = not (value == control.maximum_value),
-                rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
-                        ugui.standard_styler.params.spinner.button_size * 2,
-                    y = control.rectangle.y,
-                    width = ugui.standard_styler.params.spinner.button_size * 2,
-                    height = control.rectangle.height / 2,
-                },
-                text = '+',
-            }))
-        then
-            value = clamp_value(value + increment)
-        end
-
-        if (ugui.button({
-                uid = button_4_uid,
-                is_enabled = not (value == control.minimum_value),
-                rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
-                        ugui.standard_styler.params.spinner.button_size * 2,
-                    y = control.rectangle.y + control.rectangle.height / 2,
-                    width = ugui.standard_styler.params.spinner.button_size * 2,
-                    height = control.rectangle.height / 2,
-                },
-                text = '-',
-            }))
-        then
             value = clamp_value(value - increment)
         end
     end

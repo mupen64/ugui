@@ -14,7 +14,7 @@ for i = 1, 100, 1 do
     items[#items + 1] = 'Item ' .. i
 end
 
-ugui.DEBUG = true
+-- ugui.DEBUG = true
 
 emu.atdrawd2d(function()
     begin_frame()
@@ -301,5 +301,11 @@ emu.atdrawd2d(function()
         end) then
         index = index + 1
     end
+    num2 = ugui.spinner({
+        uid = 350,
+        margin = '100px 500px',
+        size = '160px 23px',
+        value = num2,
+    })
     end_frame()
 end)
