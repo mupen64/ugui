@@ -482,18 +482,12 @@ ugui.internal = {
             local parent = node.parent
 
             local parent_rect = parent and parent.control.rectangle or {x = 0, y = 0, width = 0, height = 0}
-            local parent_padding = {x = 0, y = 0}
 
-            if parent and parent.control.padding then
-                -- fixme: this is broken
-                -- parent_padding = ugui.internal.resolve_unit2(parent.control.padding, parent)
-            end
+            local min_x<const> = parent_rect.x
+            local max_x<const> = min_x + parent_rect.width - control.rectangle.width
 
-            local min_x<const> = parent_rect.x + parent_padding.x
-            local max_x<const> = min_x + parent_rect.width - parent_padding.x * 2 - control.rectangle.width
-
-            local min_y<const> = parent_rect.y + parent_padding.y
-            local max_y<const> = min_y + parent_rect.height - parent_padding.y * 2 - control.rectangle.height
+            local min_y<const> = parent_rect.y
+            local max_y<const> = min_y + parent_rect.height - control.rectangle.height
 
             local align = ugui.internal.resolve_alignment2(control.align)
             local x_offset<const> = ugui.internal.remap(align.x, 0, 1, min_x, max_x)
