@@ -24,7 +24,7 @@ ugui.tabcontrol = function(control, fn)
         local data = ugui.internal.control_data[control.uid]
         if not data.is_tab_control then
             data.is_tab_control = true
-            data.rail_render_rect = {x = 0, y = 0, width = 0, height = 0}
+            data.contect_rect = {x = 0, y = 0, width = 0, height = 0}
             data.selected_index = 1
         end
 
@@ -42,6 +42,10 @@ ugui.tabcontrol = function(control, fn)
 
             button_uid = button_uid + 2
         end
+
+        if fn then
+            fn()
+        end
     end)
 
     local data = ugui.internal.control_data[control.uid]
@@ -49,7 +53,7 @@ ugui.tabcontrol = function(control, fn)
     if ugui.standard_styler.params.tabcontrol.draw_frame then
         local clone = ugui.internal.deep_clone(control)
         clone.items = {}
-        ugui.standard_styler.draw_list(clone, clone.rectangle)
+        ugui.standard_styler.draw_list(clone, data.render_rect)
     end
 
     data.signal_change = ugui.internal.process_signal_changes(data.signal_change,
@@ -57,6 +61,6 @@ ugui.tabcontrol = function(control, fn)
 
     return {
         selected_index = data.selected_index,
-        rectangle = data.rail_render_rect,
+        rectangle = data.contect_rect,
     }, {signal_change = data.signal_change}
 end

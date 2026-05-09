@@ -494,7 +494,7 @@ ugui.internal = {
         end)
 
         -- This one is nuts: we have to emulate a flex-col with wrapping before we have an actual implementation for it...
-        -- And even better that we have to feed rail_render_rect back to it so it can return that...
+        -- And even better that we have to feed contect_rect back to it so it can return that...
         -- Absolutely NUTS design, this control's needs to be EXECUTED before 4.0.0
         --
         -- oh we also need to re-run the margin/size computation pass...
@@ -623,7 +623,8 @@ ugui.internal = {
             end
 
             if node.type == 'panel' and data.is_tab_control then
-                data.rail_render_rect = {x = data.render_rect.x, y = data.render_rect.y + data.rail_height, width = data.render_rect.width, height = data.render_rect.height - data.rail_height}
+                data.contect_rect = {x = data.render_rect.x, y = data.render_rect.y + data.rail_height, width = data.render_rect.width, height = data.render_rect.height - data.rail_height}
+                print(data.contect_rect, data.render_rect)
             end
         end)
     end,
