@@ -121,8 +121,9 @@ local pages = {
 
         if ugui.button({
                 uid = 140,
-                align = 'center',
+                align = '90% 90%',
                 text = 'Open Menu...',
+                padding = '20px',
             }) then
             _open = true
         end
@@ -130,27 +131,29 @@ local pages = {
         if _open then
             local result = ugui.menu({
                 uid = 150,
-                align = 'center',
-                padding = '10px',
+                align = '90% 90%',
                 items = {
                     {text = 'Item 1', checked = true},
                     {text = 'Item 2', enabled = false},
+                    {text = 'Item 3'},
+                    {text = 'Item 4'},
+                    {text = 'Item 5'},
                     {
-                        text = 'Item 3',
+                        text = 'Item 6',
                         items = {
-                            {text = 'Item 3.1'},
-                            {text = 'Item 3.2'},
-                            {text = 'Item 3.3'},
+                            {text = 'Item 6.1'},
+                            {text = 'Item 6.2'},
+                            {text = 'Item 6.3'},
                         },
                     },
-                    {text = 'Item 4'},
+                    {text = 'Item 7'},
                     {
-                        text = 'Item 5',
+                        text = 'Item 8',
                         enabled = false,
                         items = {
-                            {text = 'Item 5.1'},
-                            {text = 'Item 5.2'},
-                            {text = 'Item 5.3'},
+                            {text = 'Item 8.1'},
+                            {text = 'Item 8.2'},
+                            {text = 'Item 8.3'},
                         },
                     },
                 },
