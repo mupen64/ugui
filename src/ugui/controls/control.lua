@@ -9,10 +9,10 @@
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
 ---@field public rectangle Rectangle? **DEPRECATED - Use `margin`/`size` instead. Note that `rectangle` overrides `margin`/`size` when both are set.** A rectangle defining the control's position and size. The position is treated as an offset from the parent's position, while the size is treated as a forced value.
 ---@field public is_enabled boolean? Whether the control is enabled. If nil or true, the control is enabled.
----@field public margin SmartUnit2? The control's margin. If `nil`, `0` is assumed.
+---@field public margin SmartUnit2? The control's offset from its parent. If `nil`, `0` is assumed.
 ---@field public size SmartUnit2? The control's size. If `nil`, `auto` is assumed.
 ---@field public padding SmartUnit2? Padding around the control's content. If `nil`, the control default padding is used.
----@field public align SmartAlignment2? The control's alignment within its parent. If `nil`, `0` is assumed.
+---@field public align SmartAlignment2? The control's alignment within its parent. Note that margins are applied after alignment. If `nil`, `0` is assumed.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed. This control will be drawn in front of siblings with a lower Z-index. To control the Z-index relative to all controls (including parents), parent the control to the scene root.
