@@ -1,7 +1,7 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
 dofile(path_root .. 'base.lua')
 
-ugui.DEBUG = true
+-- ugui.DEBUG = true
 
 local pages = {
     function()
@@ -223,6 +223,23 @@ local pages = {
             _tab_count = _tab_count + 5
         end
     end,
+    function ()
+        ugui.button({
+            uid = 310,
+            text = '😀 1',
+            padding = '100px',
+            align = 'center',
+        }, function ()
+            ugui.button({
+                uid = 320,
+                text = '😀 2',
+                padding = '100px',
+                align = 'center',
+            }, function ()
+
+            end)
+        end)
+    end
 }
 
 local page = 1
