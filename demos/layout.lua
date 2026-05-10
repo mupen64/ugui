@@ -210,7 +210,7 @@ local pages = {
             size = '200px 400px',
             items = items,
             selected_index = _sl4,
-            styler_mixin = {tabcontrol = {gap_y = 10}},
+            styler_mixin = {tabcontrol = {gap_x = 4, gap_y = 10}},
         })
         if result.selected_index then
             _sl4 = result.selected_index

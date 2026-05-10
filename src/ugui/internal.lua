@@ -503,6 +503,8 @@ ugui.internal = {
                 local data = ugui.internal.control_data[node.control.uid]
 
                 if node.type == 'panel' and data.is_tab_control then
+                    local revert_styler_mixin = ugui.internal.apply_styler_mixin(node.control)
+
                     local child_uid = node.control.uid + 1
                     local x = 0
                     local y = 0
@@ -524,6 +526,8 @@ ugui.internal = {
                     end
 
                     data.rail_height = y + ugui.standard_styler.params.tabcontrol.rail_size - node.control.rectangle.y
+
+                    revert_styler_mixin()
                 end
             end)
 
