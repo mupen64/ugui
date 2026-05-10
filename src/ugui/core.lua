@@ -296,9 +296,9 @@ end
 
 ---Places a Control of the specified type.
 ---@param control Control The control.
----@param type ControlType | "" The control's type. If the type is `""`, no control will be placed, but the control data entry will be initialized.
+---@param type ControlType | "" The control's type. **Passing "" here is deprecated. Don't use it.**
 ---@param fn fun()? The function to immediately invoke upon placing the button. In the function's context, any placed controls will be parented to this control.
----@return ControlReturnValue # The control's return value, or `nil` if the type is `""`.
+---@return ControlReturnValue # The control's return value.
 ugui.control = function(control, type, fn)
     local function init_control_data(uid)
         ugui.internal.control_data[uid] = {
