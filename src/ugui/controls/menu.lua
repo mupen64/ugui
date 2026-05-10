@@ -146,7 +146,7 @@ ugui.registry.menu = {
 ---**COMPATIBILITY**: For compatibility reasons, the menu will be, by default, parented to scene root unless `z_index` is non-nil.
 ---Child menus will be parented to their expected menu parent.
 ---@param control Menu The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return MenuResult, Meta # The menu result.
 ugui.menu = function(control, fn)
     local result = ugui.control(control, 'menu', fn)

@@ -66,7 +66,7 @@ ugui.registry.joystick = {
 
 ---Places a Joystick.
 ---@param control Joystick The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return Vector2, Meta
 ugui.joystick = function(control, fn)
     local result = ugui.control(control, 'joystick', fn)

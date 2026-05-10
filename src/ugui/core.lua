@@ -18,6 +18,10 @@
 ---@class Control
 ---@field public hittestable boolean? Whether this control instance participates in hit-testing. Overrides the registry-level `hittestable` function if specified. Defaults to `true` if neither this nor the registry function is set.
 
+---@alias ContentSlotCallback fun()
+---A callback invoked after a control has been placed.
+---Controls placed inside this callback will be parented to whatever the control decides is appropriate (though it usually is just the control itself).
+
 ---@alias SmartUnit
 ---| "0"
 ---| "auto"
@@ -298,7 +302,7 @@ end
 ---Places a Control of the specified type.
 ---@param control Control The control.
 ---@param type ControlType | "" The control's type. **`""` is deprecated as a value - don't pass it.**
----@param fn fun()? The function to immediately invoke upon placing the button. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return ControlReturnValue # The control's return value.
 ugui.control = function(control, type, fn)
     local function init_control_data(uid)

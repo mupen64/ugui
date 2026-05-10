@@ -663,7 +663,7 @@ ugui.internal = {
     ---Places a control into the scene.
     ---@param control Control
     ---@param type ControlType
-    ---@param fn fun()?
+    ---@param fn ContentSlotCallback?
     ---@return ControlReturnValue
     place_control = function(control, type, fn)
         local registry_entry = ugui.registry[type]

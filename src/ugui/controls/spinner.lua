@@ -14,7 +14,7 @@
 
 ---Places a Spinner.
 ---@param control Spinner The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return number, Meta # The new value.
 ugui.spinner = function(control, fn)
     local textbox_uid<const> = control.uid + 1

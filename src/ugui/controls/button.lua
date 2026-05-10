@@ -51,7 +51,7 @@ ugui.registry.button = {
 
 ---Places a Button.
 ---@param control Button The control table.
----@param fn fun()? The function to immediately invoke upon placing the button. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return boolean, Meta # Whether the button has been pressed.
 ugui.button = function(control, fn)
     local result = ugui.control(control, 'button', fn)

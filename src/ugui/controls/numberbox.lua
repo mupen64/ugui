@@ -228,7 +228,7 @@ ugui.registry.numberbox = {
 
 ---Places a NumberBox.
 ---@param control NumberBox The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return integer, Meta # The new value.
 ugui.numberbox = function(control, fn)
     local result = ugui.control(control, 'numberbox', fn)

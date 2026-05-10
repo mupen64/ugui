@@ -241,7 +241,7 @@ ugui.registry.listbox = {
 
 ---Places a ListBox.
 ---@param control ListBox The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return integer, Meta # The new selected index.
 ugui.listbox = function(control, fn)
     local result = ugui.control(control, 'listbox', fn)

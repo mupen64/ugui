@@ -15,7 +15,7 @@
 
 ---Places a TabControl.
 ---@param control TabControl The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return TabControlResult, Meta # The result.
 ugui.tabcontrol = function(control, fn)
     local button_uid = control.uid + 1

@@ -294,7 +294,7 @@ ugui.registry.textbox = {
 
 ---Places a TextBox.
 ---@param control TextBox The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return string, Meta # The new text.
 ugui.textbox = function(control, fn)
     local result = ugui.control(control, 'textbox', fn)

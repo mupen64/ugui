@@ -46,7 +46,7 @@ ugui.registry.trackbar = {
 
 ---Places a Trackbar.
 ---@param control Trackbar The control table.
----@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@param fn ContentSlotCallback? The content slot callback.
 ---@return number, Meta # The trackbar's new value.
 ugui.trackbar = function(control, fn)
     local result = ugui.control(control, 'trackbar', fn)
