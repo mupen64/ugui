@@ -10,9 +10,6 @@
 
 ---@type ControlRegistryEntry
 ugui.registry.trackbar = {
-    place = function(control, fn)
-        return ugui.internal.place_control(control, 'trackbar', fn)
-    end,
     ---@param control Trackbar
     validate = function(control)
         ugui.internal.assert(type(control.value) == 'number', 'expected position to be number')

@@ -5,7 +5,7 @@
 --
 
 ---@class ControlRegistryEntry
----@field public place fun(control: Control, fn: fun()?): ControlReturnValue Places the control in the scene.
+---@field public place (fun(control: Control, fn: fun()?): ControlReturnValue)? Places the control in the scene. Useful for templated controls. If `nil`, the control will be placed directly.
 ---@field public validate fun(control: Control)? Verifies that a control instance matches the desired type.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
@@ -316,7 +316,12 @@ ugui.control = function(control, type, fn)
 
     local registry_entry = ugui.registry[type]
     ugui.internal.assert(registry_entry ~= nil, string.format("Unknown control type '%s'", type))
-    local result = registry_entry.place(control, fn)
+    local result
+    if registry_entry.place then
+        result = registry_entry.place(control, fn)
+    else
+        result = ugui.internal.place_control(control, type, fn)
+    end
 
     return result
 end

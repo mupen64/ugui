@@ -8,11 +8,7 @@
 ---An inert control used mostly as a container for other controls.
 
 ---@type ControlRegistryEntry
-ugui.registry.panel = {
-    place = function(control, fn)
-        return ugui.internal.place_control(control, 'panel', fn)
-    end,
-}
+ugui.registry.panel = {}
 
 ---Places a Panel.
 ---@param control Panel The control table.

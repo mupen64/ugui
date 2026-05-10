@@ -51,9 +51,6 @@ end
 
 ---@type ControlRegistryEntry
 ugui.registry.textbox = {
-    place = function(control, fn)
-        return ugui.internal.place_control(control, 'textbox', fn)
-    end,
     ---@param control TextBox
     validate = function(control)
         ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
