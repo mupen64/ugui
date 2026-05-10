@@ -198,7 +198,7 @@ ugui.listbox = function(control, fn)
     local result = ugui.control(control, 'listbox', fn)
     local data = ugui.internal.control_data[control.uid]
 
-    local x_overflow<const> = data.natural_size.x > data.render_rect.width
+    local x_overflow<const> = data.natural_size.x > data.render_rect.width and control.horizontal_scroll
     local y_overflow<const> = data.natural_size.y > data.render_rect.height
 
     if not x_overflow then
