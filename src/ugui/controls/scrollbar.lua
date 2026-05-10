@@ -11,6 +11,9 @@
 
 ---@type ControlRegistryEntry
 ugui.registry.scrollbar = {
+    place = function(control, fn)
+        return ugui.internal.place_control(control, 'scrollbar', fn)
+    end,
     ---@param control ScrollBar
     validate = function(control)
         ugui.internal.assert(type(control.value) == 'number', 'expected value to be number')
@@ -98,6 +101,5 @@ ugui.registry.scrollbar = {
 ---@return number, Meta # The new value.
 ugui.scrollbar = function(control, fn)
     local result = ugui.control(control, 'scrollbar', fn)
-    ---@cast result ControlReturnValue
     return result.primary, result.meta
 end

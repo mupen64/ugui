@@ -19,27 +19,27 @@ end
 emu.atdrawd2d(function()
     begin_frame()
 
-    if ugui.button({
+    if ugui.control({
             uid = 5,
             margin = '10px 10px',
             size = '600px 400px',
             text = 'Hello, world!',
-        }) then
+        }, 'button').primary then
         print('1')
     end
-    if ugui.button({
+    if ugui.control({
             uid = 15,
             margin = (80 + math.sin(os.clock() * 5) * 10) .. 'px ' .. (80 + math.cos(os.clock() * 5) * 10) .. 'px',
             size = '100px 50px',
             text = tostring(index),
-        }, function()
-            ugui.button({
+        }, 'button', function()
+            ugui.control({
                 uid = 999999,
                 margin = '10px 10px',
                 size = '20px 20px',
                 text = '😀',
-            })
-        end) then
+            }, 'button')
+        end).primary then
         index = index + 1
     end
     if ugui.button({

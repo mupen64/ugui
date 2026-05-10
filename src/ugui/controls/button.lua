@@ -11,6 +11,21 @@
 ---@type ControlRegistryEntry
 ugui.registry.button = {
     ---@param control Button
+    place = function(control, fn)
+        return ugui.internal.place_control(control, 'button', function()
+            local visual_state = ugui.get_visual_state(control)
+            ugui.label({
+                uid = control.uid + 1,
+                text = control.text,
+                align = '50%',
+                color = ugui.standard_styler.params.button.text[visual_state],
+            })
+            if fn then
+                fn()
+            end
+        end)
+    end,
+    ---@param control Button
     validate = function(control)
         ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
     end,
@@ -39,17 +54,6 @@ ugui.registry.button = {
 ---@param fn fun()? The function to immediately invoke upon placing the button. In the function's context, any placed controls will be parented to this control.
 ---@return boolean, Meta # Whether the button has been pressed.
 ugui.button = function(control, fn)
-    local result = ugui.control(control, 'button', function()
-        local visual_state = ugui.get_visual_state(control)
-        ugui.label({
-            uid = control.uid + 1,
-            text = control.text,
-            align = '50%',
-            color = ugui.standard_styler.params.button.text[visual_state],
-        })
-        if fn then
-            fn()
-        end
-    end)
+    local result = ugui.control(control, 'button', fn)
     return result.primary, result.meta
 end

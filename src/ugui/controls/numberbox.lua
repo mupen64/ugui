@@ -13,6 +13,35 @@
 ---@type ControlRegistryEntry
 ugui.registry.numberbox = {
     ---@param control NumberBox
+    place = function(control, fn)
+        local button_uid<const> = control.uid + 1
+
+        ugui.internal.place_control(control, 'numberbox', function()
+            local data = ugui.internal.control_data[control.uid]
+
+            if control.show_negative then
+                if ugui.button({
+                        uid = button_uid,
+                        is_enabled = true,
+                        size = '24px 100%',
+                        text = data.value >= 0 and '+' or '-',
+                    }) then
+                    data.value = -data.value
+                end
+            end
+
+            if fn then
+                fn()
+            end
+        end)
+
+        local data = ugui.internal.control_data[control.uid]
+        return {
+            primary = math.floor(data.value),
+            meta = data.meta,
+        }
+    end,
+    ---@param control NumberBox
     validate = function(control)
         ugui.internal.assert(type(control.value) == 'number', 'expected value to be number')
         ugui.internal.assert(type(control.places) == 'number', 'expected places to be number')
@@ -202,27 +231,6 @@ ugui.registry.numberbox = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new value.
 ugui.numberbox = function(control, fn)
-    local button_uid<const> = control.uid + 1
-
-    ugui.control(control, 'numberbox', function()
-        local data = ugui.internal.control_data[control.uid]
-
-        if control.show_negative then
-            if ugui.button({
-                    uid = button_uid,
-                    is_enabled = true,
-                    size = '24px 100%',
-                    text = data.value >= 0 and '+' or '-',
-                }) then
-                data.value = -data.value
-            end
-        end
-
-        if fn then
-            fn()
-        end
-    end)
-
-    local data = ugui.internal.control_data[control.uid]
-    return math.floor(data.value), data.meta
+    local result = ugui.control(control, 'numberbox', fn)
+    return result.primary, result.meta
 end

@@ -5,6 +5,7 @@
 --
 
 ---@class ControlRegistryEntry
+---@field public place fun(control: Control, fn: fun()?): ControlReturnValue Places the control in the scene.
 ---@field public validate fun(control: Control)? Verifies that a control instance matches the desired type.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
@@ -296,7 +297,7 @@ end
 
 ---Places a Control of the specified type.
 ---@param control Control The control.
----@param type ControlType | "" The control's type. **Passing "" here is deprecated. Don't use it.**
+---@param type ControlType | "" The control's type. **`""` is deprecated as a value - don't pass it.**
 ---@param fn fun()? The function to immediately invoke upon placing the button. In the function's context, any placed controls will be parented to this control.
 ---@return ControlReturnValue # The control's return value.
 ugui.control = function(control, type, fn)
@@ -313,92 +314,9 @@ ugui.control = function(control, type, fn)
         return nil
     end
 
-    ---@cast type ControlType
-
     local registry_entry = ugui.registry[type]
     ugui.internal.assert(registry_entry ~= nil, string.format("Unknown control type '%s'", type))
+    local result = registry_entry.place(control, fn)
 
-    local return_value = {primary = nil, meta = {signal_change = ugui.signal_change_states.none}}
-    local has_root<const> = ugui.internal.root ~= nil
-
-    local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
-
-    ---@type SceneNode
-    local this_node = {
-        control = control,
-        type = type,
-        parent = ugui.internal.current_parent,
-        children = {},
-    }
-
-    -- Disable the control if any parent is disabled.
-    local node = ugui.internal.current_parent
-    while node do
-        if node.control.is_enabled == false then
-            control.is_enabled = false
-            break
-        end
-        node = node.parent
-    end
-
-    if not control.rectangle then
-        control.rectangle = {x = 0, y = 0, width = 0, height = 0}
-        control.margin = control.margin or '0px'
-        control.size = control.size or 'auto'
-    end
-
-    -- If the control has only just been added, we run its setup.
-    if ugui.internal.control_data[control.uid] == nil then
-        init_control_data(control.uid)
-
-        if registry_entry.setup then
-            registry_entry.setup(control, ugui.internal.control_data[control.uid])
-        end
-
-        -- Run logic once to stabilize the return value for the first state.
-        if registry_entry.logic then
-            return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
-        end
-    end
-
-    if has_root then
-        -- Check for UID duplicates.
-        ugui.internal.foreach_node_from_root(function(node)
-            local uid = node.control.uid
-            ugui.internal.assert(control.uid ~= uid, string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', uid))
-        end)
-
-        -- Check for cross-frame control type clobbering (e.g. button becoming a textbox)
-        local stored_control_type = ugui.internal.control_types[control.uid]
-        ugui.internal.assert(stored_control_type == nil or stored_control_type == type,
-            string.format('Attempted to reuse UID %d of %s for %s.', control.uid, stored_control_type, type))
-    else
-        ugui.internal.root = this_node
-        ugui.internal.current_parent = this_node
-    end
-
-    if registry_entry.validate then
-        registry_entry.validate(control)
-    end
-
-    if has_root then
-        ugui.internal.current_parent.children[#ugui.internal.current_parent.children + 1] = this_node
-    end
-    ugui.internal.control_types[control.uid] = type
-
-    -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
-    if registry_entry.logic then
-        return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
-    end
-
-    revert_styler_mixin()
-
-    if fn then
-        local prev_parent = ugui.internal.current_parent
-        ugui.internal.current_parent = this_node
-        fn()
-        ugui.internal.current_parent = prev_parent
-    end
-
-    return return_value
+    return result
 end

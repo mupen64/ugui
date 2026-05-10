@@ -13,6 +13,9 @@
 
 ---@type ControlRegistryEntry
 ugui.registry.joystick = {
+    place = function(control, fn)
+        return ugui.internal.place_control(control, 'joystick', fn)
+    end,
     ---@param control Joystick
     validate = function(control)
         ugui.internal.assert(type(control.position) == 'table', 'expected position to be table')

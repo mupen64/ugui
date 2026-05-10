@@ -12,6 +12,138 @@
 ---@type ControlRegistryEntry
 ugui.registry.combobox = {
     ---@param control ComboBox
+    place = function(control, fn)
+        local textbox_uid<const> = control.uid + 1
+        local button_uid<const> = control.uid + 2
+        local listbox_uid<const> = control.uid + 4
+        local label_1_uid<const> = control.uid + 7
+        local label_2_uid<const> = control.uid + 8
+
+        local result = ugui.internal.place_control(control, 'combobox', function()
+            local visual_state = ugui.get_visual_state(control)
+
+            local data = ugui.internal.control_data[control.uid]
+            local text = control.selected_index and control.items[control.selected_index] or ''
+
+            ugui.label({
+                uid = label_1_uid,
+                text = text,
+                margin = string.format('%fpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
+                align = '0% 50%',
+                color = ugui.standard_styler.params.button.text[visual_state],
+            })
+            ugui.label({
+                uid = label_2_uid,
+                text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
+                margin = string.format('-%fpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
+                align = '100% 50%',
+                color = ugui.standard_styler.params.button.text[visual_state],
+            })
+            if fn then
+                fn()
+            end
+        end)
+        local data = ugui.internal.control_data[control.uid]
+
+        local button_size<const> = 30
+
+        if control.editable then
+            local current_text = (data.searching and data.search_text or control.items[data.selected_index]) or ''
+            local search_text = ugui.textbox({
+                uid = textbox_uid,
+                rectangle = {
+                    x = data.render_rect.x,
+                    y = data.render_rect.y,
+                    width = data.render_rect.width - button_size,
+                    height = data.render_rect.height,
+                },
+                is_enabled = control.is_enabled,
+                text = current_text,
+            })
+
+            if search_text ~= current_text then
+                data.searching = true
+                data.open = true
+                data.search_text = search_text
+            end
+
+            if ugui.button({
+                    uid = button_uid,
+                    rectangle = {
+                        x = data.render_rect.x + data.render_rect.width - button_size,
+                        y = data.render_rect.y,
+                        width = button_size,
+                        height = data.render_rect.height,
+                    },
+                    is_enabled = control.is_enabled,
+                    text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
+                }) then
+                data.open = not data.open
+            end
+        end
+
+        if data.open then
+            local items_to_show = control.items
+            local filtered_to_original = nil
+
+            if control.editable and data.searching then
+                ---@type RichText[]
+                local filtered_items = {}
+
+                ---@type integer[]
+                filtered_to_original = {}
+
+                for i, item in ipairs(control.items) do
+                    if item:lower():find(data.search_text:lower(), 1, true) then
+                        table.insert(filtered_items, item)
+                        local filtered_index = #filtered_items
+                        filtered_to_original[filtered_index] = i
+                    end
+                end
+
+                if #filtered_items == 1 then
+                    data.selected_index = filtered_to_original[1]
+                    data.open = false
+                end
+
+                if #filtered_items == 0 then
+                    data.open = false
+                end
+
+                items_to_show = filtered_items
+                control.items = filtered_items
+            end
+
+            if data.open then
+                local dropdown_x<const> = data.render_rect.x
+                local dropdown_y<const> = data.render_rect.y + data.render_rect.height
+                local dropdown_width<const> = data.render_rect.width
+
+                local prev_parent = ugui.internal.current_parent
+                ugui.internal.current_parent = ugui.internal.root
+                local listbox_result, meta_listbox = ugui.listbox({
+                    uid = listbox_uid,
+                    margin = string.format('%fpx %fpx', dropdown_x, dropdown_y),
+                    size = string.format('%fpx auto', dropdown_width),
+                    items = items_to_show,
+                    selected_index = data.selected_index,
+                    plaintext = control.plaintext,
+                    z_index = math.maxinteger,
+                })
+                ugui.internal.current_parent = prev_parent
+
+                if meta_listbox.signal_change == ugui.signal_change_states.started then
+                    data.selected_index = filtered_to_original and filtered_to_original[listbox_result] or listbox_result
+                    data.searching = false
+                    data.search_text = ''
+                    data.open = false
+                end
+            end
+        end
+
+        return {primary = data.selected_index, meta = result.meta}
+    end,
+    ---@param control ComboBox
     validate = function(control)
         ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
         ugui.internal.assert(type(control.selected_index) == 'number', 'expected selected_index to be number')
@@ -58,133 +190,6 @@ ugui.registry.combobox = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
 ugui.combobox = function(control, fn)
-    local textbox_uid<const> = control.uid + 1
-    local button_uid<const> = control.uid + 2
-    local listbox_uid<const> = control.uid + 4
-    local label_1_uid<const> = control.uid + 7
-    local label_2_uid<const> = control.uid + 8
-
-    local result = ugui.control(control, 'combobox', function()
-        local visual_state = ugui.get_visual_state(control)
-
-        local data = ugui.internal.control_data[control.uid]
-        local text = control.selected_index and control.items[control.selected_index] or ''
-
-        ugui.label({
-            uid = label_1_uid,
-            text = text,
-            margin = string.format('%fpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
-            align = '0% 50%',
-            color = ugui.standard_styler.params.button.text[visual_state],
-        })
-        ugui.label({
-            uid = label_2_uid,
-            text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
-            margin = string.format('-%fpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
-            align = '100% 50%',
-            color = ugui.standard_styler.params.button.text[visual_state],
-        })
-        if fn then
-            fn()
-        end
-    end)
-    local data = ugui.internal.control_data[control.uid]
-
-    local button_size<const> = 30
-
-    if control.editable then
-        local current_text = (data.searching and data.search_text or control.items[data.selected_index]) or ''
-        local search_text = ugui.textbox({
-            uid = textbox_uid,
-            rectangle = {
-                x = data.render_rect.x,
-                y = data.render_rect.y,
-                width = data.render_rect.width - button_size,
-                height = data.render_rect.height,
-            },
-            is_enabled = control.is_enabled,
-            text = current_text,
-        })
-
-        if search_text ~= current_text then
-            data.searching = true
-            data.open = true
-            data.search_text = search_text
-        end
-
-        if ugui.button({
-                uid = button_uid,
-                rectangle = {
-                    x = data.render_rect.x + data.render_rect.width - button_size,
-                    y = data.render_rect.y,
-                    width = button_size,
-                    height = data.render_rect.height,
-                },
-                is_enabled = control.is_enabled,
-                text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
-            }) then
-            data.open = not data.open
-        end
-    end
-
-    if data.open then
-        local items_to_show = control.items
-        local filtered_to_original = nil
-
-        if control.editable and data.searching then
-            ---@type RichText[]
-            local filtered_items = {}
-
-            ---@type integer[]
-            filtered_to_original = {}
-
-            for i, item in ipairs(control.items) do
-                if item:lower():find(data.search_text:lower(), 1, true) then
-                    table.insert(filtered_items, item)
-                    local filtered_index = #filtered_items
-                    filtered_to_original[filtered_index] = i
-                end
-            end
-
-            if #filtered_items == 1 then
-                data.selected_index = filtered_to_original[1]
-                data.open = false
-            end
-
-            if #filtered_items == 0 then
-                data.open = false
-            end
-
-            items_to_show = filtered_items
-            control.items = filtered_items
-        end
-
-        if data.open then
-            local dropdown_x<const> = data.render_rect.x
-            local dropdown_y<const> = data.render_rect.y + data.render_rect.height
-            local dropdown_width<const> = data.render_rect.width
-
-            local prev_parent = ugui.internal.current_parent
-            ugui.internal.current_parent = ugui.internal.root
-            local listbox_result, meta_listbox = ugui.listbox({
-                uid = listbox_uid,
-                margin = string.format('%fpx %fpx', dropdown_x, dropdown_y),
-                size = string.format('%fpx auto', dropdown_width),
-                items = items_to_show,
-                selected_index = data.selected_index,
-                plaintext = control.plaintext,
-                z_index = math.maxinteger,
-            })
-            ugui.internal.current_parent = prev_parent
-
-            if meta_listbox.signal_change == ugui.signal_change_states.started then
-                data.selected_index = filtered_to_original and filtered_to_original[listbox_result] or listbox_result
-                data.searching = false
-                data.search_text = ''
-                data.open = false
-            end
-        end
-    end
-
-    return data.selected_index, result.meta
+    local result = ugui.control(control, 'combobox', fn)
+    return result.primary, result.meta
 end

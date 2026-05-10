@@ -15,6 +15,9 @@
 
 ---@type ControlRegistryEntry
 ugui.registry.label = {
+    place = function(control, fn)
+        return ugui.internal.place_control(control, 'label', fn)
+    end,
     hittestable = function(control)
         return false
     end,

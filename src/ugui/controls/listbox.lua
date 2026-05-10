@@ -16,6 +16,58 @@
 ---@type ControlRegistryEntry
 ugui.registry.listbox = {
     ---@param control ListBox
+    place = function(control, fn)
+        local scrollbar_1_uid<const> = control.uid + 1
+        local scrollbar_2_uid<const> = control.uid + 2
+
+        local result = ugui.internal.place_control(control, 'listbox', fn)
+        local data = ugui.internal.control_data[control.uid]
+
+        local x_overflow<const> = data.natural_size.x > data.render_rect.width and control.horizontal_scroll
+        local y_overflow<const> = data.natural_size.y > data.render_rect.height
+
+        if not x_overflow then
+            data.scroll_x = 0
+        end
+        if not y_overflow then
+            data.scroll_y = 0
+        end
+
+        if x_overflow then
+            data.scroll_x = ugui.scrollbar({
+                uid = scrollbar_1_uid,
+                is_enabled = control.is_enabled,
+                rectangle = {
+                    x = data.render_rect.x,
+                    y = data.render_rect.y + data.render_rect.height,
+                    width = data.render_rect.width,
+                    height = ugui.standard_styler.params.scrollbar.thickness,
+                },
+                value = data.scroll_x,
+                ratio = 1 / (data.natural_size.x / data.render_rect.width),
+                z_index = control.z_index,
+            })
+        end
+
+        if y_overflow then
+            data.scroll_y = ugui.scrollbar({
+                uid = scrollbar_2_uid,
+                is_enabled = control.is_enabled,
+                rectangle = {
+                    x = data.render_rect.x + data.render_rect.width,
+                    y = data.render_rect.y,
+                    width = ugui.standard_styler.params.scrollbar.thickness,
+                    height = data.render_rect.height,
+                },
+                value = data.scroll_y,
+                ratio = 1 / (data.natural_size.y / data.render_rect.height),
+                z_index = control.z_index,
+            })
+        end
+
+        return result
+    end,
+    ---@param control ListBox
     validate = function(control)
         ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
         ugui.internal.assert(type(control.selected_index) == 'number' or type(control.selected_index) == 'nil',
@@ -192,53 +244,6 @@ ugui.registry.listbox = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
 ugui.listbox = function(control, fn)
-    local scrollbar_1_uid<const> = control.uid + 1
-    local scrollbar_2_uid<const> = control.uid + 2
-
     local result = ugui.control(control, 'listbox', fn)
-    local data = ugui.internal.control_data[control.uid]
-
-    local x_overflow<const> = data.natural_size.x > data.render_rect.width and control.horizontal_scroll
-    local y_overflow<const> = data.natural_size.y > data.render_rect.height
-
-    if not x_overflow then
-        data.scroll_x = 0
-    end
-    if not y_overflow then
-        data.scroll_y = 0
-    end
-
-    if x_overflow then
-        data.scroll_x = ugui.scrollbar({
-            uid = scrollbar_1_uid,
-            is_enabled = control.is_enabled,
-            rectangle = {
-                x = data.render_rect.x,
-                y = data.render_rect.y + data.render_rect.height,
-                width = data.render_rect.width,
-                height = ugui.standard_styler.params.scrollbar.thickness,
-            },
-            value = data.scroll_x,
-            ratio = 1 / (data.natural_size.x / data.render_rect.width),
-            z_index = control.z_index,
-        })
-    end
-
-    if y_overflow then
-        data.scroll_y = ugui.scrollbar({
-            uid = scrollbar_2_uid,
-            is_enabled = control.is_enabled,
-            rectangle = {
-                x = data.render_rect.x + data.render_rect.width,
-                y = data.render_rect.y,
-                width = ugui.standard_styler.params.scrollbar.thickness,
-                height = data.render_rect.height,
-            },
-            value = data.scroll_y,
-            ratio = 1 / (data.natural_size.y / data.render_rect.height),
-            z_index = control.z_index,
-        })
-    end
-
     return result.primary, result.meta
 end

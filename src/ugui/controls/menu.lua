@@ -22,6 +22,64 @@
 ---@type ControlRegistryEntry
 ugui.registry.menu = {
     ---@param control Menu
+    place = function(control, fn)
+        local has_z_index<const> = control.z_index ~= nil
+        control.z_index = control.z_index or 1000
+
+        -- Some scripts pass `rectangle` without `width`/`height`. We just deal with this by preemptively fixing this crap to use `margin` and `size`.
+        if control.rectangle then
+            control.margin = string.format('%fpx %fpx', control.rectangle.x, control.rectangle.y)
+            control.rectangle = nil
+        end
+
+        local parent = has_z_index and ugui.internal.current_parent or ugui.internal.root
+        local prev_parent = ugui.internal.current_parent
+        ugui.internal.current_parent = parent
+
+        local inner_result = {dismissed = false, item = nil}
+        local result = ugui.control(control, 'menu', function()
+            local data = ugui.internal.control_data[control.uid]
+
+            if data.hovered_index ~= nil then
+                local i = data.hovered_index
+                local item = control.items[i]
+
+                if item.items and item.enabled ~= false then
+                    local y = (i - 1) * ugui.standard_styler.params.menu_item.height
+                    local submenu_result = ugui.menu({
+                        uid = control.uid + 1,
+                        margin = string.format('100%%-%fpx %fpx', ugui.standard_styler.params.menu.overlap_size, y),
+                        items = item.items,
+                        z_index = 0,
+                    }).primary
+
+                    if submenu_result.item then
+                        inner_result.dismissed = false
+                        inner_result.item = submenu_result.item
+                    end
+                end
+            end
+
+            if fn then fn() end
+        end)
+        local data = ugui.internal.control_data[control.uid]
+
+        ugui.internal.current_parent = prev_parent
+
+        if inner_result.dismissed then
+            result.primary.dismissed = true
+        end
+        if inner_result.item then
+            result.primary.item = inner_result.item
+        end
+
+        if result.primary.item or result.primary.dismissed then
+            data.hovered_index = nil
+        end
+
+        return result
+    end,
+    ---@param control Menu
     validate = function(control)
         ugui.internal.assert(type(control.items) == 'table', 'expected items to be table')
     end,
@@ -94,60 +152,7 @@ ugui.registry.menu = {
 ---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return MenuResult, Meta # The menu result.
 ugui.menu = function(control, fn)
-    local has_z_index<const> = control.z_index ~= nil
-    control.z_index = control.z_index or 1000
-
-    -- Some scripts pass `rectangle` without `width`/`height`. We just deal with this by preemptively fixing this crap to use `margin` and `size`.
-    if control.rectangle then
-        control.margin = string.format('%fpx %fpx', control.rectangle.x, control.rectangle.y)
-        control.rectangle = nil
-    end
-
-    local parent = has_z_index and ugui.internal.current_parent or ugui.internal.root
-    local prev_parent = ugui.internal.current_parent
-    ugui.internal.current_parent = parent
-
-    local inner_result = {dismissed = false, item = nil}
-    local result = ugui.control(control, 'menu', function()
-        local data = ugui.internal.control_data[control.uid]
-
-        if data.hovered_index ~= nil then
-            local i = data.hovered_index
-            local item = control.items[i]
-
-            if item.items and item.enabled ~= false then
-                local y = (i - 1) * ugui.standard_styler.params.menu_item.height
-                local submenu_result = ugui.menu({
-                    uid = control.uid + 1,
-                    margin = string.format('100%%-%fpx %fpx', ugui.standard_styler.params.menu.overlap_size, y),
-                    items = item.items,
-                    z_index = 0,
-                }).primary
-
-                if submenu_result.item then
-                    inner_result.dismissed = false
-                    inner_result.item = submenu_result.item
-                end
-            end
-        end
-
-        if fn then fn() end
-    end)
-    local data = ugui.internal.control_data[control.uid]
-
-    ugui.internal.current_parent = prev_parent
-
-    if inner_result.dismissed then
-        result.primary.dismissed = true
-    end
-    if inner_result.item then
-        result.primary.item = inner_result.item
-    end
-
-    if result.primary.item or result.primary.dismissed then
-        data.hovered_index = nil
-    end
-
+    local result = ugui.control(control, 'menu', fn)
     -- COMPAT: BUG: We return the result wrapped in primary. This is to avoid breaking existing code, but it's just totally wrong.
-    return result, result.meta
+    return result.primary, result.meta
 end
