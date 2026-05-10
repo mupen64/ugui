@@ -126,9 +126,12 @@ ugui.internal = {
         if control.is_enabled == false then
             return false
         end
-        if not BreitbandGraphics.is_point_inside_rectangle(point, control.rectangle) then
+
+        local data = ugui.internal.control_data[control.uid]
+        if not BreitbandGraphics.is_point_inside_rectangle(point, data.render_rect) then
             return false
         end
+
         if point.x < 0 or point.x > ugui.internal.environment.window_size.x
             or point.y < 0 or point.y > ugui.internal.environment.window_size.y then
             return false
@@ -354,6 +357,7 @@ ugui.internal = {
 
         traverse_tree_reversed(ugui.internal.root, function(node)
             local control = node.control
+            local data = ugui.internal.control_data[control.uid]
             local registry_entry = ugui.registry[node.type]
 
             local effective_hittestable = ugui.internal.compute_prop(control, registry_entry, 'hittestable', function() return true end)
@@ -361,7 +365,7 @@ ugui.internal = {
             -- Determine the clicked control if we haven't already
             if clicked_control == nil and effective_hittestable then
                 if ugui.internal.is_mouse_just_down() then
-                    if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+                    if is_point_inside_rectangle(ugui.internal.mouse_down_position, data.render_rect) then
                         clicked_control = control
                         keyboard_captured_control = node
                         mouse_captured_control = node
@@ -371,7 +375,7 @@ ugui.internal = {
 
             -- Determine the hovered control if we haven't already
             if ugui.internal.hovered_control == nil and effective_hittestable then
-                if is_point_inside_rectangle(ugui.internal.environment.mouse_position, control.rectangle) then
+                if is_point_inside_rectangle(ugui.internal.environment.mouse_position, data.render_rect) then
                     ugui.internal.hovered_control = control.uid
 
                     if ugui.internal.hovered_control ~= prev_hovered_control then
