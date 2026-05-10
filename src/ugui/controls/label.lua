@@ -39,17 +39,22 @@ ugui.registry.label = {
     end,
     ---@param control Label
     draw = function(control)
-        local render_rect = ugui.internal.control_data[control.uid].render_rect
         local visual_state = ugui.get_visual_state(control)
-        ugui.standard_styler.draw_rich_text(render_rect, control.align_x, control.align_y, control.text, control.color, visual_state, control.plaintext, control.font_name, control.font_size)
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
+        local rich_text_data = ugui.internal.control_data[control.uid].rich_text_data
+        ugui.standard_styler.draw_rich_text(render_rect, control.align_x, control.align_y, control.text, control.color, visual_state, control.plaintext, control.font_name, control.font_size, rich_text_data)
     end,
     measure = function(node)
         local control = node.control
+        local data = ugui.internal.control_data[control.uid]
         ---@cast control Label
 
         local font_name = control.font_name or ugui.standard_styler.params.font_name
         local font_size = control.font_size or ugui.standard_styler.params.font_size
-        return ugui.standard_styler.compute_rich_text(control.text, control.plaintext, font_name, font_size).size
+        local rich_text_data = ugui.standard_styler.compute_rich_text(control.text, control.plaintext, font_name, font_size)
+
+        data.rich_text_data = rich_text_data
+        return rich_text_data.size
     end,
 }
 
