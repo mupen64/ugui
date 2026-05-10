@@ -36,8 +36,8 @@ ugui.registry.menu = {
         local prev_parent = ugui.internal.current_parent
         ugui.internal.current_parent = parent
 
-        local inner_result = {dismissed = false, item = nil}
-        local result = ugui.control(control, 'menu', function()
+        local inner_result
+        local result = ugui.internal.place_control(control, 'menu', function()
             local data = ugui.internal.control_data[control.uid]
 
             if data.hovered_index ~= nil then
@@ -46,17 +46,12 @@ ugui.registry.menu = {
 
                 if item.items and item.enabled ~= false then
                     local y = (i - 1) * ugui.standard_styler.params.menu_item.height
-                    local submenu_result = ugui.menu({
+                    inner_result = ugui.internal.place_control({
                         uid = control.uid + 1,
                         margin = string.format('100%%-%fpx %fpx', ugui.standard_styler.params.menu.overlap_size, y),
                         items = item.items,
                         z_index = 0,
-                    }).primary
-
-                    if submenu_result.item then
-                        inner_result.dismissed = false
-                        inner_result.item = submenu_result.item
-                    end
+                    }, 'menu')
                 end
             end
 
@@ -66,11 +61,13 @@ ugui.registry.menu = {
 
         ugui.internal.current_parent = prev_parent
 
-        if inner_result.dismissed then
-            result.primary.dismissed = true
-        end
-        if inner_result.item then
-            result.primary.item = inner_result.item
+        if inner_result then
+            if inner_result.primary.dismissed then
+                result.primary.dismissed = true
+            end
+            if inner_result.primary.item then
+                result.primary.item = inner_result.primary.item
+            end
         end
 
         if result.primary.item or result.primary.dismissed then
@@ -154,5 +151,5 @@ ugui.registry.menu = {
 ugui.menu = function(control, fn)
     local result = ugui.control(control, 'menu', fn)
     -- COMPAT: BUG: We return the result wrapped in primary. This is to avoid breaking existing code, but it's just totally wrong.
-    return result.primary, result.meta
+    return {primary = result.primary}, result.meta
 end
