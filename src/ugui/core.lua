@@ -249,6 +249,7 @@ ugui.begin_frame = function(environment)
     end
 
     ugui.internal.root = nil
+    ugui.internal.current_parent = nil
     ugui.panel({
         uid = math.mininteger,
         rectangle = {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y},
