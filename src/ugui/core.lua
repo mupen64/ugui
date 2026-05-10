@@ -8,7 +8,6 @@
 ---@field public place (fun(control: Control, fn: fun()?): ControlReturnValue)? Places the control in the scene. Useful for templated controls. If `nil`, the control will be placed directly.
 ---@field public validate fun(control: Control)? Verifies that a control instance matches the desired type.
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
----@field public added fun(control: Control, data: any)? Notifies about a control being added to a scene.
 ---@field public logic (fun(control: Control, data: any): ControlReturnValue)? Executes control logic.
 ---@field public draw (fun(control: Control))? Draws the control.
 ---@field public measure (fun(node: SceneNode): Vector2)? Measures the control's natural size.
@@ -288,15 +287,9 @@ ugui.end_frame = function()
         end
     end
 
-    -- Store UIDs that were present in this frame
-    ugui.internal.previous_uids = {}
-    for i = 1, #ugui.internal.root, 1 do
-        local control = ugui.internal.root[i].control
-        ugui.internal.previous_uids[control.uid] = true
-    end
-
     ugui.internal.last_control_rectangle = nil
     ugui.internal.frame_in_progress = false
+    ugui.internal.node_by_uid = {}
 end
 
 ---Places a Control of the specified type.

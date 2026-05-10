@@ -18,16 +18,16 @@ ugui.internal = {
     ---The current parent node for controls being placed. Reset to the root node each frame.
     current_parent = nil,
 
+    ---@type table<UID, SceneNode>
+    ---Cache of UID->SceneNode for the current frame.
+    node_by_uid = {},
+
     ---@type table<UID, ControlType>
     control_types = {},
 
     ---@type table<UID, any>
     ---Map of control UIDs to their data.
     control_data = {},
-
-    ---@type { [UID]: boolean }
-    ---Dictionary of all UIDs that were present in the previous frame. Used for dispatching events related to control lifecycles via `dispatch_events`.
-    previous_uids = {},
 
     ---@type Environment
     ---The environment for the current frame.
@@ -71,28 +71,16 @@ ugui.internal = {
     ---Cache of nineslice drawings. Only used after calling `ugui.apply_nineslice`.
     nineslice_draw_cache = {},
 
+    ---@type fun()[]
+    events = {},
+
     ---Dispatches events related to controls in the scene.
     dispatch_events = function()
-        ugui.internal.foreach_node_from_root(function(node)
-            local control = node.control
-            local registry_entry = ugui.registry[node.type]
-
-            local existed_in_previous_frame = false
-            for uid, _ in pairs(ugui.internal.previous_uids) do
-                if control.uid == uid then
-                    existed_in_previous_frame = true
-                    break
-                end
-            end
-
-            if not existed_in_previous_frame then
-                if registry_entry.added then
-                    registry_entry.added(control, ugui.internal.control_data[control.uid])
-                end
-            end
-        end)
+        for _, event in ipairs(ugui.internal.events) do
+            event()
+        end
+        ugui.internal.events = {}
     end,
-
 
     ---@return boolean # Whether LMB was just pressed.
     is_mouse_just_down = function()
@@ -669,10 +657,20 @@ ugui.internal = {
         local registry_entry = ugui.registry[type]
         ugui.internal.assert(registry_entry ~= nil, string.format("Unknown control type '%s'", type))
 
+        -- Check for UID reuse.
+        if ugui.internal.node_by_uid[control.uid] then
+            ugui.internal.assert(false, string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', control.uid))
+        end
+
+        -- Check for cross-frame control type clobbering (e.g. button becoming a textbox)
+        local stored_control_type = ugui.internal.control_types[control.uid]
+        if stored_control_type then
+            ugui.internal.assert(stored_control_type == type,
+                string.format('Attempted to reuse UID %d of %s for %s.', control.uid, stored_control_type, type))
+        end
+
         local return_value = {primary = nil, meta = {signal_change = ugui.signal_change_states.none}}
         local has_root<const> = ugui.internal.root ~= nil
-
-        local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
         ---@type SceneNode
         local this_node = {
@@ -681,6 +679,8 @@ ugui.internal = {
             parent = ugui.internal.current_parent,
             children = {},
         }
+
+        ugui.internal.node_by_uid[control.uid] = this_node
 
         -- Disable the control if any parent is disabled.
         local node = ugui.internal.current_parent
@@ -697,6 +697,8 @@ ugui.internal = {
             control.margin = control.margin or '0px'
             control.size = control.size or 'auto'
         end
+
+        local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
 
         -- If the control has only just been added, we run its setup.
         if ugui.internal.control_data[control.uid] == nil then
@@ -716,18 +718,7 @@ ugui.internal = {
             end
         end
 
-        if has_root then
-            -- Check for UID duplicates.
-            ugui.internal.foreach_node_from_root(function(node)
-                local uid = node.control.uid
-                ugui.internal.assert(control.uid ~= uid, string.format('Attempted to show a control with uid %d, which is already in use! Note that some controls reserve more than one uid slot after them.', uid))
-            end)
-
-            -- Check for cross-frame control type clobbering (e.g. button becoming a textbox)
-            local stored_control_type = ugui.internal.control_types[control.uid]
-            ugui.internal.assert(stored_control_type == nil or stored_control_type == type,
-                string.format('Attempted to reuse UID %d of %s for %s.', control.uid, stored_control_type, type))
-        else
+        if not has_root then
             ugui.internal.root = this_node
             ugui.internal.current_parent = this_node
         end
@@ -741,7 +732,6 @@ ugui.internal = {
         end
         ugui.internal.control_types[control.uid] = type
 
-        -- Run logic pass immediately for the current frame so callers receive an up-to-date value instead of the previous frame's result.
         if registry_entry.logic then
             return_value = registry_entry.logic(control, ugui.internal.control_data[control.uid])
         end

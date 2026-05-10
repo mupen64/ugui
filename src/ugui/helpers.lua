@@ -286,16 +286,8 @@ end
 ---@return SceneNode?
 ugui.internal.find_node = function(uid)
     if uid == nil then return nil end
-    local result = nil
-    ugui.internal.foreach_node_from_root(function(node)
-        if node.control.uid == uid then
-            result = node
-            return false
-        end
-    end)
-    return result
+    return ugui.internal.node_by_uid[uid]
 end
-
 
 ---Prints the scene tree for debugging purposes.
 ---@param node SceneNode
