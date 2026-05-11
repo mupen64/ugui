@@ -4,6 +4,9 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
+---@alias LayoutMode
+---|"stack" # The control's children are laid out in a stack.
+
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
 ---@field public styler_mixin any? An optional styler mixin table which can override specific styler parameters for this control.
@@ -13,6 +16,9 @@
 ---@field public size SmartUnit2? The control's size. If `nil`, `auto` is assumed.
 ---@field public padding SmartUnit2? Padding around the control's content. If `nil`, the control default padding is used.
 ---@field public align SmartAlignment2? The control's alignment within its parent. Note that margins are applied after alignment. If `nil`, `0` is assumed.
+---@field public layout LayoutMode? The way the control's children are laid out. If `nil`, `stack` is assumed.
+---@field public gap SmartUnit? The gap between child controls when using `stack` layout. If `nil`, `0` is assumed.
+---@field public direction number? The direction of the layout in the range `[0, 1]`. If `nil`, `0` is assumed.
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed. This control will be drawn in front of siblings with a lower Z-index. To control the Z-index relative to all controls (including parents), parent the control to the scene root.

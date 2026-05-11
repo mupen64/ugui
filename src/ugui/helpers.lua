@@ -213,6 +213,14 @@ ugui.internal.clamp = function(value, min, max)
     return math.max(math.min(value, max), min)
 end
 
+---Linearly interpolates between two values.
+---@param a number
+---@param b number
+---@param t number
+ugui.internal.lerp = function(a, b, t)
+    return a + (b - a) * t
+end
+
 ---Traverses a tree node depth-first and invokes a callback function for each node.
 ---@param node table The node to traverse.
 ---@param callback fun(node: SceneNode): boolean? The callback function to invoke for each node. If the callback returns `false`, the traversal is stopped early.
