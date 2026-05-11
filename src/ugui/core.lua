@@ -14,9 +14,6 @@
 ---@field public hittestable (fun(control: Control): boolean)? A function returning whether a control instance of this type should participate in hit-testing. If `nil`, the instance-level `hittestable` field is used. If both are `nil`, the control is hittestable.
 ---Represents an entry in the control registry.
 
----@class Control
----@field public hittestable boolean? Whether this control instance participates in hit-testing. Overrides the registry-level `hittestable` function if specified. Defaults to `true` if neither this nor the registry function is set.
-
 ---@alias ContentSlotCallback fun()
 ---A callback invoked after a control has been placed.
 ---Controls placed inside this callback will be parented to whatever the control decides is appropriate (though it usually is just the control itself).

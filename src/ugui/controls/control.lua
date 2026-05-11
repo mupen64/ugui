@@ -16,4 +16,5 @@
 ---@field public tooltip string? The control's tooltip. If nil, no tooltip will be shown.
 ---@field public plaintext boolean? Whether the control's text content is drawn as plain text without rich rendering.
 ---@field public z_index integer? The control's Z-index. If nil, `0` is assumed. This control will be drawn in front of siblings with a lower Z-index. To control the Z-index relative to all controls (including parents), parent the control to the scene root.
+---@field public hittestable boolean? Whether this control instance participates in hit-testing. Overrides the registry-level `hittestable` function if specified. Defaults to `true` if neither this nor the registry function is set.
 ---The base class for all controls.
