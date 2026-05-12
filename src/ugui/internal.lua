@@ -186,6 +186,15 @@ ugui.internal = {
         end
     end,
 
+    ---Applies a control's styler mixin for the duration of a call.
+    ---@param control Control
+    ---@param fn fun()
+    with_styler_mixin = function(control, fn)
+        local rollback = ugui.internal.apply_styler_mixin(control)
+        fn()
+        rollback()
+    end,
+
     ---Handles transitions between signal change state.
     ---@param signal_change_state SignalChangeState The control's current signal change state.
     ---@param signal_changing boolean Whether the control's signal is changing.

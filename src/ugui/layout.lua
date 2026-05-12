@@ -5,38 +5,38 @@
 --
 
 ---@class LayoutStrategy
----@field public measure fun(node: SceneNode): Vector2 Measures the node's size.
----@field public arrange fun(node: SceneNode, size: Vector2): Rectangle[] Computes slots for the node's children.
+---@field public measure fun(node: SceneNode, available_size: Vector2): Vector2 Measures the node's size.
+---@field public arrange fun(node: SceneNode, available_size: Vector2): Rectangle[] Computes slots for the node's children.
 
 ---@type table<string, LayoutStrategy>
 ugui.internal.layout_strategies = {
     biggest = {
         ---Fit the biggest child.
-        measure = function(node)
+        measure = function(node, available_size)
             local biggest = {x = 0, y = 0}
             for _, child in pairs(node.children) do
-                local size = ugui.internal.measure(child)
+                local size = ugui.internal.measure(child, available_size)
                 biggest.x = math.max(biggest.x, size.x)
                 biggest.y = math.max(biggest.y, size.y)
             end
             return biggest
         end,
         ---All children get all the space as a slot.
-        arrange = function(node, size)
+        arrange = function(node, available_size)
             local slots = {}
             for _, child in pairs(node.children) do
-                slots[#slots + 1] = {x = 0, y = 0, width = size.x, height = size.y}
+                slots[#slots + 1] = {x = 0, y = 0, width = available_size.x, height = available_size.y}
             end
             return slots
         end,
     },
     stack = {
-        measure = function(node)
+        measure = function(node, available_size)
             -- FIXME: Consider wrapping!
             local accumulator = {x = 0, y = 0}
             local biggest = {x = 0, y = 0}
             for _, child in pairs(node.children) do
-                local size = ugui.internal.measure(child)
+                local size = ugui.internal.measure(child, available_size)
                 accumulator.x = accumulator.x + size.x
                 accumulator.y = accumulator.y + size.y
                 biggest.x = math.max(biggest.x, size.x)
@@ -52,7 +52,7 @@ ugui.internal.layout_strategies = {
 
             return {x = x, y = y}
         end,
-        arrange = function(node, size)
+        arrange = function(node, available_size)
             local direction<const> = node.control.direction or 0
             local wrap<const> = node.control.wrap or false
 
@@ -67,7 +67,7 @@ ugui.internal.layout_strategies = {
                         y = child.control.rectangle.y + child.control.rectangle.height,
                     }
 
-                    if wrap and accumulator.x + child_size.x > size.x then
+                    if wrap and accumulator.x + child_size.x > available_size.x then
                         accumulator.x = 0
                         accumulator.y = accumulator.y + row_height
                         row_height = 0
@@ -98,7 +98,7 @@ ugui.internal.layout_strategies = {
                         y = child.control.rectangle.y + child.control.rectangle.height,
                     }
 
-                    if wrap and accumulator.y + child_size.y > size.y then
+                    if wrap and accumulator.y + child_size.y > available_size.y then
                         accumulator.y = 0
                         accumulator.x = accumulator.x + column_width
                         column_width = 0
@@ -152,8 +152,9 @@ end
 
 ---Measures the specified node and saves its size.
 ---@param node SceneNode
+---@param available_size Vector2
 ---@return Vector2
-function ugui.internal.measure(node)
+function ugui.internal.measure(node, available_size)
     -- We cache the natural sizes per-frame because they can be REALLY expensive to compute and we'd churn through these up to like 5 times depending on depth.
     if ugui.internal.control_data[node.control.uid].natural_size then
         return ugui.internal.control_data[node.control.uid].natural_size
@@ -161,14 +162,10 @@ function ugui.internal.measure(node)
 
     local registry_entry = ugui.registry[node.type]
 
-    local revert_styler_mixin = ugui.internal.apply_styler_mixin(node.control)
     local size
-    if registry_entry.measure then
-        size = registry_entry.measure(node)
-    else
-        size = ugui.internal.get_strategy(node).measure(node)
-    end
-    revert_styler_mixin()
+    ugui.internal.with_styler_mixin(node.control, function()
+        size = registry_entry.measure and registry_entry.measure(node, available_size) or ugui.internal.get_strategy(node).measure(node, available_size)
+    end)
 
     local padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, node) or {x = 0, y = 0}
 
@@ -176,19 +173,23 @@ function ugui.internal.measure(node)
     size.y = size.y + padding.y * 2
 
     ugui.internal.control_data[node.control.uid].natural_size = size
+
     return size
 end
 
+---Arranges the node's children.
 ---@param node SceneNode
-function ugui.internal.arrange(node)
-    local size<const> = {x = node.control.rectangle.width, y = node.control.rectangle.height}
-    local slots = ugui.internal.get_strategy(node).arrange(node, size)
+---@param available_size Vector2
+function ugui.internal.arrange(node, available_size)
+    local slots = ugui.internal.get_strategy(node).arrange(node, available_size)
 
     for i = 1, #slots, 1 do
         local slot = slots[i]
         local child = node.children[i]
 
         ugui.internal.control_data[child.control.uid].slot = slot
+
+        ugui.internal.arrange(child, {x = slot.width, y = slot.height})
     end
 end
 
@@ -197,7 +198,7 @@ function ugui.internal.layout()
         ugui.internal.control_data[node.control.uid].natural_size = nil
     end)
 
-    ugui.internal.measure(ugui.internal.root)
+    ugui.internal.measure(ugui.internal.root, {x = ugui.internal.environment.window_size.x, y = ugui.internal.environment.window_size.y})
 
     ugui.internal.foreach_node_from_root(function(node)
         local control = node.control
@@ -213,18 +214,13 @@ function ugui.internal.layout()
         end
     end)
 
-    ugui.internal.foreach_node_from_root(function(node)
-        ugui.internal.arrange(node)
-    end)
+    ugui.internal.arrange(ugui.internal.root, {x = ugui.internal.environment.window_size.x, y = ugui.internal.environment.window_size.y})
 
     ugui.internal.foreach_node_from_root(function(node)
         local control = node.control
         local parent = node.parent
 
         local slot = parent and ugui.internal.deep_clone(ugui.internal.control_data[control.uid].slot) or {x = 0, y = 0, width = 0, height = 0}
-
-        slot.x = slot.x + (parent and parent.control.rectangle.x or 0)
-        slot.y = slot.y + (parent and parent.control.rectangle.y or 0)
 
         local min_x<const> = slot.x
         local max_x<const> = min_x + slot.width - control.rectangle.width

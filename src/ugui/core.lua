@@ -10,7 +10,7 @@
 ---@field public setup fun(control: Control, data: any)? Sets up the initial control data to be used in `logic` and `draw`.
 ---@field public logic (fun(control: Control, data: any): ControlReturnValue)? Executes control logic.
 ---@field public draw (fun(control: Control))? Draws the control.
----@field public measure (fun(node: SceneNode): Vector2)? Measures the control's natural size.
+---@field public measure (fun(node: SceneNode, available_size: Vector2): Vector2)? Measures the control's natural size.
 ---@field public hittestable (fun(control: Control): boolean)? A function returning whether a control instance of this type should participate in hit-testing. If `nil`, the instance-level `hittestable` field is used. If both are `nil`, the control is hittestable.
 ---Represents an entry in the control registry.
 
