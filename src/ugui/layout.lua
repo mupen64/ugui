@@ -6,7 +6,7 @@
 
 ---@class LayoutStrategy
 ---@field public measure fun(node: SceneNode, available_size: Vector2): Vector2 Measures the node's size.
----@field public arrange fun(node: SceneNode, available_size: Vector2): Rectangle[] Computes slots for the node's children.
+---@field public arrange fun(node: SceneNode, slot: Rectangle): Rectangle[] Computes slots for the node's children.
 
 ---@type table<string, LayoutStrategy>
 ugui.internal.layout_strategies = {
@@ -22,10 +22,10 @@ ugui.internal.layout_strategies = {
             return biggest
         end,
         ---All children get all the space as a slot.
-        arrange = function(node, available_size)
+        arrange = function(node, slot)
             local slots = {}
             for _, child in pairs(node.children) do
-                slots[#slots + 1] = {x = 0, y = 0, width = available_size.x, height = available_size.y}
+                slots[#slots + 1] = {x = 0, y = 0, width = node.control.rectangle.width, height = node.control.rectangle.height}
             end
             return slots
         end,
@@ -52,7 +52,7 @@ ugui.internal.layout_strategies = {
 
             return {x = x, y = y}
         end,
-        arrange = function(node, available_size)
+        arrange = function(node, slot)
             local direction<const> = node.control.direction or 0
             local wrap<const> = node.control.wrap or false
 
@@ -67,7 +67,7 @@ ugui.internal.layout_strategies = {
                         y = child.control.rectangle.y + child.control.rectangle.height,
                     }
 
-                    if wrap and accumulator.x + child_size.x > available_size.x then
+                    if wrap and accumulator.x + child_size.x > node.control.rectangle.width then
                         accumulator.x = 0
                         accumulator.y = accumulator.y + row_height
                         row_height = 0
@@ -98,7 +98,7 @@ ugui.internal.layout_strategies = {
                         y = child.control.rectangle.y + child.control.rectangle.height,
                     }
 
-                    if wrap and accumulator.y + child_size.y > available_size.y then
+                    if wrap and accumulator.y + child_size.y > node.control.rectangle.height then
                         accumulator.y = 0
                         accumulator.x = accumulator.x + column_width
                         column_width = 0
@@ -171,7 +171,7 @@ function ugui.internal.measure(node, available_size)
         end
     end)
 
-    local padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, node, {x = 0, y = 0}) or {x = 0, y = 0}
+    local padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, {x = 0, y = 0}, {x = 0, y = 0}) or {x = 0, y = 0}
 
     size.x = size.x + padding.x * 2
     size.y = size.y + padding.y * 2
@@ -183,66 +183,73 @@ end
 
 ---Arranges the node's children.
 ---@param node SceneNode
----@param available_size Vector2
-function ugui.internal.arrange(node, available_size)
-    local slots = ugui.internal.get_strategy(node).arrange(node, available_size)
+---@param slot Rectangle
+function ugui.internal.arrange(node, slot)
+    ugui.internal.control_data[node.control.uid].slot = slot
+
+    local slots = ugui.internal.get_strategy(node).arrange(node, slot)
 
     for i = 1, #slots, 1 do
-        local slot = slots[i]
-        local child = node.children[i]
-
-        ugui.internal.control_data[child.control.uid].slot = slot
-
-        ugui.internal.arrange(child, {x = slot.width, y = slot.height})
+        ugui.internal.arrange(node.children[i], slots[i])
     end
 end
 
 function ugui.internal.layout()
     ugui.internal.foreach_node_from_root(function(node)
         ugui.internal.control_data[node.control.uid].natural_size = nil
+        ugui.internal.control_data[node.control.uid].render_rect = nil
     end)
 
     ugui.internal.measure(ugui.internal.root, {x = ugui.internal.environment.window_size.x, y = ugui.internal.environment.window_size.y})
+    ugui.internal.arrange(ugui.internal.root, {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y})
 
     ugui.internal.foreach_node_from_root(function(node)
         local control = node.control
+        local slot = ugui.internal.control_data[node.control.uid].slot
         if control.margin then
-            local pos = ugui.internal.resolve_unit2(control.margin, node, {x = 0, y = 0})
+            local pos = ugui.internal.resolve_unit2(control.margin, {x = 0, y = 0}, {x = slot.width, y = slot.height})
             control.rectangle.x = pos.x
             control.rectangle.y = pos.y
         end
         if control.size then
             local natural_size = ugui.internal.control_data[node.control.uid].natural_size
-            local size = ugui.internal.resolve_unit2(control.size, node, natural_size)
+            local size = ugui.internal.resolve_unit2(control.size, natural_size, {x = slot.width, y = slot.height})
             control.rectangle.width = size.x
             control.rectangle.height = size.y
         end
     end)
 
-    ugui.internal.arrange(ugui.internal.root, {x = ugui.internal.environment.window_size.x, y = ugui.internal.environment.window_size.y})
+    -- Arrange again because sizes have been computed.
+    ugui.internal.arrange(ugui.internal.root, {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y})
 
-    ugui.internal.foreach_node_from_root(function(node)
-        local control = node.control
-        local parent = node.parent
+    local function compute_render_rect(node, parent_rect)
+        local data = ugui.internal.control_data[node.control.uid]
 
-        local slot = parent and ugui.internal.deep_clone(ugui.internal.control_data[control.uid].slot) or {x = 0, y = 0, width = 0, height = 0}
+        if data.render_rect then
+            return
+        end
+
+        local slot = data.slot
 
         local min_x<const> = slot.x
-        local max_x<const> = min_x + slot.width - control.rectangle.width
+        local max_x<const> = min_x + slot.width - node.control.rectangle.width
 
         local min_y<const> = slot.y
-        local max_y<const> = min_y + slot.height - control.rectangle.height
+        local max_y<const> = min_y + slot.height - node.control.rectangle.height
 
-        local align = ugui.internal.resolve_alignment2(control.align)
+        local align = ugui.internal.resolve_alignment2(node.control.align)
         local x_offset<const> = ugui.internal.remap(align.x, 0, 1, min_x, max_x)
         local y_offset<const> = ugui.internal.remap(align.y, 0, 1, min_y, max_y)
 
-        control.rectangle.x = control.rectangle.x + x_offset
-        control.rectangle.y = control.rectangle.y + y_offset
-    end)
+        local x<const> = node.control.rectangle.x + parent_rect.x + x_offset
+        local y<const> = node.control.rectangle.y + parent_rect.y + y_offset
 
-    ugui.internal.foreach_node_from_root(function(node)
-        local data = ugui.internal.control_data[node.control.uid]
-        data.render_rect = {x = node.control.rectangle.x, y = node.control.rectangle.y, width = node.control.rectangle.width, height = node.control.rectangle.height}
-    end)
+        data.render_rect = {x = x, y = y, width = node.control.rectangle.width, height = node.control.rectangle.height}
+
+        for _, child in pairs(node.children) do
+            compute_render_rect(child, data.render_rect)
+        end
+    end
+
+    compute_render_rect(ugui.internal.root, {x = 0, y = 0, width = ugui.internal.environment.window_size.x, height = ugui.internal.environment.window_size.y})
 end

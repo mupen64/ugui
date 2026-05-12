@@ -328,21 +328,10 @@ end
 
 ---Parses and resolves a SmartUnit expression.
 ---@param expr string
----@param node SceneNode
----@param axis '"x"'|'"y"'
----@param auto number?
+---@param auto number
+---@param parent_basis number
 ---@return number
-local function resolve_unit(expr, node, axis, auto)
-    local parent = node.parent and node.parent.control.rectangle
-
-    local function parent_basis()
-        ugui.internal.assert(parent, 'percentage unit requires parent node')
-
-        return axis == 'x'
-            and parent.width
-            or parent.height
-    end
-
+local function resolve_unit(expr, auto, parent_basis)
     local function trim(s)
         return (s:gsub('^%s+', ''):gsub('%s+$', ''))
     end
@@ -506,7 +495,7 @@ local function resolve_unit(expr, node, axis, auto)
             local percent = s:match('^([%-%d%.]+)%%$')
 
             if percent then
-                return parent_basis() * (tonumber(percent) / 100)
+                return parent_basis * (tonumber(percent) / 100)
             end
         end
 
@@ -532,10 +521,10 @@ end
 
 ---Resolves a SmartUnit2 to a Vector2.
 ---@param unit SmartUnit2
----@param node SceneNode
----@param auto Vector2?
+---@param auto Vector2
+---@param parent_size Vector2
 ---@return Vector2
-ugui.internal.resolve_unit2 = function(unit, node, auto)
+ugui.internal.resolve_unit2 = function(unit, auto, parent_size)
     local a, b = unit:match('^(%S+)%s+(%S+)$')
 
     if not a then
@@ -544,8 +533,8 @@ ugui.internal.resolve_unit2 = function(unit, node, auto)
     end
 
     return {
-        x = resolve_unit(a, node, 'x', auto and auto.x or nil),
-        y = resolve_unit(b, node, 'y', auto and auto.y or nil),
+        x = resolve_unit(a, auto.x, parent_size.x),
+        y = resolve_unit(b, auto.y, parent_size.y),
     }
 end
 
