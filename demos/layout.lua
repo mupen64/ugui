@@ -1,7 +1,7 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
 dofile(path_root .. 'base.lua')
 
-ugui.DEBUG = true
+-- ugui.DEBUG = true
 
 local pages = {
     function()
@@ -250,20 +250,28 @@ local pages = {
             ugui.button({
                 uid = 340,
                 text = 'Item 1',
+                size = '50px 50px',
             })
             ugui.button({
                 uid = 350,
                 text = 'Item 2',
+                margin = '0 10px',
             })
             ugui.button({
                 uid = 360,
                 text = 'Item 3',
+                margin = '10px 0',
+            })
+            ugui.button({
+                uid = 370,
+                text = 'Item 4',
+                size = '100% 100%',
             })
         end)
     end,
 }
 
-local page = 1
+local page = 8
 
 emu.atdrawd2d(function()
     begin_frame()
