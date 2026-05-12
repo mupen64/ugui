@@ -164,10 +164,14 @@ function ugui.internal.measure(node, available_size)
 
     local size
     ugui.internal.with_styler_mixin(node.control, function()
-        size = registry_entry.measure and registry_entry.measure(node, available_size) or ugui.internal.get_strategy(node).measure(node, available_size)
+        -- Always run the default measure too since even controls with custom measure implementations may have children (user measure implementations arent required to measure children)
+        size = ugui.internal.get_strategy(node).measure(node, available_size)
+        if registry_entry.measure then
+            size = registry_entry.measure(node, available_size)
+        end
     end)
 
-    local padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, node) or {x = 0, y = 0}
+    local padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, node, {x = 0, y = 0}) or {x = 0, y = 0}
 
     size.x = size.x + padding.x * 2
     size.y = size.y + padding.y * 2
@@ -203,12 +207,13 @@ function ugui.internal.layout()
     ugui.internal.foreach_node_from_root(function(node)
         local control = node.control
         if control.margin then
-            local pos = ugui.internal.resolve_unit2(control.margin, node)
+            local pos = ugui.internal.resolve_unit2(control.margin, node, {x = 0, y = 0})
             control.rectangle.x = pos.x
             control.rectangle.y = pos.y
         end
         if control.size then
-            local size = ugui.internal.resolve_unit2(control.size, node)
+            local natural_size = ugui.internal.control_data[node.control.uid].natural_size
+            local size = ugui.internal.resolve_unit2(control.size, node, natural_size)
             control.rectangle.width = size.x
             control.rectangle.height = size.y
         end

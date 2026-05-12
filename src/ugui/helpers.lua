@@ -330,8 +330,9 @@ end
 ---@param expr string
 ---@param node SceneNode
 ---@param axis '"x"'|'"y"'
+---@param auto number?
 ---@return number
-local function resolve_unit(expr, node, axis)
+local function resolve_unit(expr, node, axis, auto)
     local parent = node.parent and node.parent.control.rectangle
 
     local function parent_basis()
@@ -340,16 +341,6 @@ local function resolve_unit(expr, node, axis)
         return axis == 'x'
             and parent.width
             or parent.height
-    end
-
-    local function natural_basis()
-        local natural = ugui.internal.control_data[node.control.uid].natural_size
-
-        ugui.internal.assert(natural, 'auto unit requires natural_size')
-
-        return axis == 'x'
-            and natural.x
-            or natural.y
     end
 
     local function trim(s)
@@ -382,7 +373,6 @@ local function resolve_unit(expr, node, axis)
     local function find_operator(s, operators)
         local depth = 0
 
-        -- right-to-left for correct precedence grouping
         for i = #s, 1, -1 do
             local c = s:sub(i, i)
 
@@ -393,7 +383,6 @@ local function resolve_unit(expr, node, axis)
             elseif depth == 0 then
                 for _, op in ipairs(operators) do
                     if c == op then
-                        -- skip unary minus
                         if op == '-' then
                             local prev = s:sub(i - 1, i - 1)
 
@@ -416,7 +405,9 @@ local function resolve_unit(expr, node, axis)
 
         -- auto
         if s == 'auto' then
-            return natural_basis()
+            ugui.internal.assert(auto ~= nil, 'auto unit requires auto value')
+
+            return auto
         end
 
         -- min(...)
@@ -542,8 +533,9 @@ end
 ---Resolves a SmartUnit2 to a Vector2.
 ---@param unit SmartUnit2
 ---@param node SceneNode
+---@param auto Vector2?
 ---@return Vector2
-ugui.internal.resolve_unit2 = function(unit, node)
+ugui.internal.resolve_unit2 = function(unit, node, auto)
     local a, b = unit:match('^(%S+)%s+(%S+)$')
 
     if not a then
@@ -552,8 +544,8 @@ ugui.internal.resolve_unit2 = function(unit, node)
     end
 
     return {
-        x = resolve_unit(a, node, 'x'),
-        y = resolve_unit(b, node, 'y'),
+        x = resolve_unit(a, node, 'x', auto and auto.x or nil),
+        y = resolve_unit(b, node, 'y', auto and auto.y or nil),
     }
 end
 
