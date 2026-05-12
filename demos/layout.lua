@@ -1,7 +1,7 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
 dofile(path_root .. 'base.lua')
 
--- ugui.DEBUG = true
+ugui.DEBUG = true
 
 local pages = {
     function()
@@ -265,13 +265,83 @@ local pages = {
             ugui.button({
                 uid = 370,
                 text = 'Item 4',
-                size = '100% 100%',
+                padding = '100px 0',
+            })
+            ugui.button({
+                uid = 380,
+                text = 'Item 5',
+            })
+            -- ugui.button({
+            --     uid = 370,
+            --     text = 'Item 4',
+            --     size = '100% 100%',
+            -- })
+        end)
+    end,
+    function()
+        ugui.panel({
+            uid = 500,
+            align = 'center',
+            size = '200px 200px',
+            layout = 'stack',
+            wrap = true,
+        }, function()
+            ugui.button({
+                uid = 510,
+                size = '20% auto',
+                text = 'Item 1',
+            })
+            ugui.button({
+                uid = 520,
+                size = '80% auto',
+                text = 'Item 2',
+            })
+            ugui.button({
+                uid = 530,
+                size = '70% auto',
+                text = 'Item 3 (wrap)',
+            })
+            ugui.button({
+                uid = 540,
+                size = '70% auto',
+                text = 'Item 4 (wrap)',
+            })
+        end)
+    end,
+    function()
+        ugui.panel({
+            uid = 600,
+            align = 'center',
+            size = '200px 200px',
+            layout = 'stack',
+            direction = 1,
+            wrap = true,
+        }, function()
+            ugui.button({
+                uid = 610,
+                size = 'auto 20%',
+                text = 'Item 1',
+            })
+            ugui.button({
+                uid = 620,
+                size = 'auto 80%',
+                text = 'Item 2',
+            })
+            ugui.button({
+                uid = 630,
+                size = 'auto 70%',
+                text = 'Item 3 (wrap)',
+            })
+            ugui.button({
+                uid = 640,
+                size = 'auto 70%',
+                text = 'Item 4 (wrap)',
             })
         end)
     end,
 }
 
-local page = 8
+local page = 10
 
 emu.atdrawd2d(function()
     begin_frame()

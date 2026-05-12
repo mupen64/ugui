@@ -32,6 +32,7 @@ ugui.internal.layout_strategies = {
     },
     stack = {
         measure = function(node)
+            -- FIXME: Consider wrapping!
             local accumulator = {x = 0, y = 0}
             local biggest = {x = 0, y = 0}
             for _, child in pairs(node.children) do
@@ -52,20 +53,85 @@ ugui.internal.layout_strategies = {
             return {x = x, y = y}
         end,
         arrange = function(node, size)
-            local accumulator = {x = 0, y = 0}
+            local direction<const> = node.control.direction or 0
+            local wrap<const> = node.control.wrap or false
 
+            local function arrange_horizontal()
+                local accumulator = {x = 0, y = 0}
+                local row_height = 0
+                local slots = {}
+
+                for _, child in pairs(node.children) do
+                    local child_size = {
+                        x = child.control.rectangle.x + child.control.rectangle.width,
+                        y = child.control.rectangle.y + child.control.rectangle.height,
+                    }
+
+                    if wrap and accumulator.x + child_size.x > size.x then
+                        accumulator.x = 0
+                        accumulator.y = accumulator.y + row_height
+                        row_height = 0
+                    end
+
+                    slots[#slots + 1] = {
+                        x = accumulator.x,
+                        y = accumulator.y,
+                        width = child_size.x,
+                        height = child_size.y,
+                    }
+
+                    accumulator.x = accumulator.x + child_size.x
+                    row_height = math.max(row_height, child_size.y)
+                end
+
+                return slots
+            end
+
+            local function arrange_vertical()
+                local accumulator = {x = 0, y = 0}
+                local column_width = 0
+                local slots = {}
+
+                for _, child in pairs(node.children) do
+                    local child_size = {
+                        x = child.control.rectangle.x + child.control.rectangle.width,
+                        y = child.control.rectangle.y + child.control.rectangle.height,
+                    }
+
+                    if wrap and accumulator.y + child_size.y > size.y then
+                        accumulator.y = 0
+                        accumulator.x = accumulator.x + column_width
+                        column_width = 0
+                    end
+
+                    slots[#slots + 1] = {
+                        x = accumulator.x,
+                        y = accumulator.y,
+                        width = child_size.x,
+                        height = child_size.y,
+                    }
+
+                    accumulator.y = accumulator.y + child_size.y
+                    column_width = math.max(column_width, child_size.x)
+                end
+
+                return slots
+            end
+
+            local horizontal_slots = arrange_horizontal()
+            local vertical_slots = arrange_vertical()
             local slots = {}
-            for _, child in pairs(node.children) do
-                local direction = node.control.direction or 0
-                local x = ugui.internal.lerp(accumulator.x, 0, direction)
-                local y = ugui.internal.lerp(0, accumulator.y, direction)
 
-                local child_size = {x = child.control.rectangle.x + child.control.rectangle.width, y = child.control.rectangle.y + child.control.rectangle.height}
+            for i = 1, #horizontal_slots, 1 do
+                local horizontal_slot = horizontal_slots[i]
+                local vertical_slot = vertical_slots[i]
 
-                slots[#slots + 1] = {x = x, y = y, width = child_size.x, height = child_size.y}
-
-                accumulator.x = accumulator.x + child_size.x
-                accumulator.y = accumulator.y + child_size.y
+                slots[#slots + 1] = {
+                    x = ugui.internal.lerp(horizontal_slot.x, vertical_slot.x, direction),
+                    y = ugui.internal.lerp(horizontal_slot.y, vertical_slot.y, direction),
+                    width = ugui.internal.lerp(horizontal_slot.width, vertical_slot.width, direction),
+                    height = ugui.internal.lerp(horizontal_slot.height, vertical_slot.height, direction),
+                }
             end
 
             return slots

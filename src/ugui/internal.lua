@@ -432,8 +432,8 @@ ugui.internal = {
             end
 
             if ugui.DEBUG then
-                -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 0), '#FF0000', 1)
-                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({x = render_rect.x, y = render_rect.y, width = data.natural_size.x, height = data.natural_size.y}, 0), '#0000FF', 1)
+                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 0), '#FF0000', 1)
+                --BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({x = render_rect.x, y = render_rect.y, width = data.natural_size.x, height = data.natural_size.y}, 0), '#0000FF', 1)
 
                 if ugui.internal.keyboard_captured_control == control.uid then
                     BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 4), '#000000', 2)
