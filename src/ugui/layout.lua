@@ -150,7 +150,7 @@ function ugui.internal.get_strategy(node)
     return ugui.internal.layout_strategies.biggest
 end
 
----Measures the specified node.
+---Measures the specified node and saves its size.
 ---@param node SceneNode
 ---@return Vector2
 function ugui.internal.measure(node)
@@ -197,9 +197,7 @@ function ugui.internal.layout()
         ugui.internal.control_data[node.control.uid].natural_size = nil
     end)
 
-    ugui.internal.foreach_node_from_root(function(node)
-        ugui.internal.control_data[node.control.uid].natural_size = ugui.internal.measure(node)
-    end)
+    ugui.internal.measure(ugui.internal.root)
 
     ugui.internal.foreach_node_from_root(function(node)
         local control = node.control
