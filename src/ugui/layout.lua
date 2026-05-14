@@ -45,7 +45,6 @@ ugui.internal.layout_strategies = {
                 biggest.x = math.max(biggest.x, computed_margin.x + size.x)
                 biggest.y = math.max(biggest.y, computed_margin.y + size.y)
             end
-            print(accumulator)
 
             local horizontal_size = {x = accumulator.x, y = biggest.y}
             local vertical_size = {x = biggest.x, y = accumulator.y}
