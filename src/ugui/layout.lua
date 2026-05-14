@@ -33,27 +33,77 @@ ugui.internal.layout_strategies = {
     },
     stack = {
         measure = function(node, available_size)
-            -- FIXME: Consider wrapping!
-            local accumulator = {x = 0, y = 0}
-            local biggest = {x = 0, y = 0}
-            for _, child in pairs(node.children) do
-                -- FIXME: Compute available_size **correctly**!
-                local size = ugui.internal.measure(child, available_size)
-                local computed_margin = ugui.internal.control_data[child.control.uid].computed_margin
-                accumulator.x = accumulator.x + computed_margin.x + size.x
-                accumulator.y = accumulator.y + computed_margin.y + size.y
-                biggest.x = math.max(biggest.x, computed_margin.x + size.x)
-                biggest.y = math.max(biggest.y, computed_margin.y + size.y)
+            local direction = node.control.direction or 0
+            local wrap = node.control.wrap or false
+
+            local inner_available = available_size
+            if node.control.size then
+                inner_available = ugui.internal.resolve_unit2(node.control.size, available_size, available_size)
             end
 
-            local horizontal_size = {x = accumulator.x, y = biggest.y}
-            local vertical_size = {x = biggest.x, y = accumulator.y}
+            local function measure_horizontal()
+                local cursor_x = 0
+                local cursor_y = 0
+                local row_height = 0
+                local total = {x = 0, y = 0}
 
-            local direction = node.control.direction or 0
-            local x = ugui.internal.lerp(horizontal_size.x, vertical_size.x, direction)
-            local y = ugui.internal.lerp(horizontal_size.y, vertical_size.y, direction)
+                for _, child in pairs(node.children) do
+                    local size = ugui.internal.measure(child, inner_available)
+                    local margin = ugui.internal.control_data[child.control.uid].computed_margin
+                    local child_w = size.x + margin.x
+                    local child_h = size.y + margin.y
 
-            return {x = x, y = y}
+                    if wrap and cursor_x > 0 and cursor_x + child_w > inner_available.x then
+                        total.x = math.max(total.x, cursor_x)
+                        cursor_y = cursor_y + row_height
+                        cursor_x = 0
+                        row_height = 0
+                    end
+
+                    cursor_x = cursor_x + child_w
+                    row_height = math.max(row_height, child_h)
+                end
+
+                total.x = math.max(total.x, cursor_x)
+                total.y = cursor_y + row_height
+                return total
+            end
+
+            local function measure_vertical()
+                local cursor_x = 0
+                local cursor_y = 0
+                local col_width = 0
+                local total = {x = 0, y = 0}
+
+                for _, child in pairs(node.children) do
+                    local size = ugui.internal.measure(child, inner_available)
+                    local margin = ugui.internal.control_data[child.control.uid].computed_margin
+                    local child_w = size.x + margin.x
+                    local child_h = size.y + margin.y
+
+                    if wrap and cursor_y > 0 and cursor_y + child_h > inner_available.y then
+                        total.y = math.max(total.y, cursor_y)
+                        cursor_x = cursor_x + col_width
+                        cursor_y = 0
+                        col_width = 0
+                    end
+
+                    cursor_y = cursor_y + child_h
+                    col_width = math.max(col_width, child_w)
+                end
+
+                total.y = math.max(total.y, cursor_y)
+                total.x = cursor_x + col_width
+                return total
+            end
+
+            local horizontal_size = measure_horizontal()
+            local vertical_size = measure_vertical()
+
+            return {
+                x = ugui.internal.lerp(horizontal_size.x, vertical_size.x, direction),
+                y = ugui.internal.lerp(horizontal_size.y, vertical_size.y, direction),
+            }
         end,
         arrange = function(node, slot)
             local natural_size = ugui.internal.control_data[node.control.uid].natural_size
@@ -69,8 +119,8 @@ ugui.internal.layout_strategies = {
                 for _, child in pairs(node.children) do
                     local child_data = ugui.internal.control_data[child.control.uid]
                     local child_size = {
-                        x = child_data.computed_margin.x + child_data.natural_size.x,
-                        y = child_data.computed_margin.y + child_data.natural_size.y,
+                        x = child_data.natural_size.x + child_data.computed_margin.x,
+                        y = child_data.natural_size.y + child_data.computed_margin.y,
                     }
 
                     if wrap and accumulator.x + child_size.x > natural_size.x then
@@ -101,8 +151,8 @@ ugui.internal.layout_strategies = {
                 for _, child in pairs(node.children) do
                     local child_data = ugui.internal.control_data[child.control.uid]
                     local child_size = {
-                        x = child_data.computed_margin.x + child_data.natural_size.x,
-                        y = child_data.computed_margin.y + child_data.natural_size.y,
+                        x = child_data.natural_size.x + child_data.computed_margin.x,
+                        y = child_data.natural_size.y + child_data.computed_margin.y,
                     }
 
                     if wrap and accumulator.y + child_size.y > natural_size.y then
@@ -250,23 +300,19 @@ function ugui.internal.layout()
         end
 
         local margin = data.computed_margin
-        local size = data.natural_size
+        local natural_size = data.natural_size
         local align = ugui.internal.resolve_alignment2(node.control.align)
         local slot = data.slot
 
-        local min_x<const> = slot.x
-        local max_x<const> = min_x + slot.width - size.x
+        local max_x<const> = slot.width - natural_size.x
+        local max_y<const> = slot.height - natural_size.y
+        local x_offset<const> = ugui.internal.remap(align.x, 0, 1, 0, max_x)
+        local y_offset<const> = ugui.internal.remap(align.y, 0, 1, 0, max_y)
 
-        local min_y<const> = slot.y
-        local max_y<const> = min_y + slot.height - size.y
+        local x<const> = parent_render_rect.x + slot.x + x_offset + margin.x
+        local y<const> = parent_render_rect.y + slot.y + y_offset + margin.y
 
-        local x_offset<const> = ugui.internal.remap(align.x, 0, 1, min_x, max_x)
-        local y_offset<const> = ugui.internal.remap(align.y, 0, 1, min_y, max_y)
-
-        local x<const> = parent_render_rect.x + x_offset + margin.x
-        local y<const> = parent_render_rect.y + y_offset + margin.y
-
-        data.render_rect = {x = x, y = y, width = size.x, height = size.y}
+        data.render_rect = {x = x, y = y, width = natural_size.x, height = natural_size.y}
 
         for _, child in pairs(node.children) do
             compute_render_rect(child, data.render_rect)
