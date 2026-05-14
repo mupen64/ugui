@@ -339,20 +339,46 @@ local pages = {
             })
         end)
     end,
+    function()
+        ugui.panel({
+            uid = 700,
+            align = 'center',
+            layout = 'stack',
+        }, function()
+            ugui.button({
+                uid = 710,
+                size = 'auto',
+                text = 'abc',
+            })
+            ugui.button({
+                uid = 720,
+                size = '120px 60px',
+                margin = '0 120px',
+                text = 'def',
+            })
+            ugui.button({
+                uid = 730,
+                margin = '60px 0',
+                text = 'abc',
+            })
+        end)
+    end,
 }
 
-local page = 10
+local page = 11
 
 emu.atdrawd2d(function()
     begin_frame()
 
-    ugui.label({
-        uid = 2,
-        size = '100% auto',
-        font_size = 24,
-        text = string.format('Press left/right arrows to switch pages (%d/%d)', page, #pages),
-        color = {r = 0, g = 0, b = 0},
-    })
+    if false then
+        ugui.label({
+            uid = 2,
+            size = '100% auto',
+            font_size = 24,
+            text = string.format('Press left/right arrows to switch pages (%d/%d)', page, #pages),
+            color = {r = 0, g = 0, b = 0},
+        })
+    end
 
     pages[page]()
 
