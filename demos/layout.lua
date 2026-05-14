@@ -282,7 +282,7 @@ local pages = {
         ugui.panel({
             uid = 500,
             align = 'center',
-            size = '200px 200px',
+            size = '200px auto',
             layout = 'stack',
             wrap = true,
         }, function()
@@ -312,7 +312,7 @@ local pages = {
         ugui.panel({
             uid = 600,
             align = 'center',
-            size = '200px 200px',
+            size = 'auto 200px',
             layout = 'stack',
             direction = 1,
             wrap = true,
