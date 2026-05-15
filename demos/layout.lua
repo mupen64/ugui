@@ -363,6 +363,31 @@ local pages = {
             })
         end)
     end,
+    function()
+        ugui.button({
+            uid = 800,
+            align = 'center',
+            layout = 'stack',
+            padding = '20px',
+        }, function()
+            ugui.button({
+                uid = 810,
+                size = 'auto',
+                text = 'abc',
+            })
+            ugui.button({
+                uid = 820,
+                size = '120px 60px',
+                margin = '0 120px',
+                text = 'def',
+            })
+            ugui.button({
+                uid = 830,
+                margin = '60px 0',
+                text = 'abc',
+            })
+        end)
+    end,
 }
 
 local page = 11

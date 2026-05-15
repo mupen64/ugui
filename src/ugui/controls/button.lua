@@ -5,7 +5,7 @@
 --
 
 ---@class Button : Control
----@field public text RichText The text displayed on the button.
+---@field public text RichText? The text displayed on the button. If `nil`, the button will have no label child, leaving it up to the user to provide content.
 ---A button which can be clicked.
 
 ---@type ControlRegistryEntry
@@ -14,12 +14,14 @@ ugui.registry.button = {
     place = function(control, fn)
         return ugui.internal.place_control(control, 'button', function()
             local visual_state = ugui.get_visual_state(control)
-            ugui.label({
-                uid = control.uid + 1,
-                text = control.text,
-                align = '50%',
-                color = ugui.standard_styler.params.button.text[visual_state],
-            })
+            if control.text then
+                ugui.label({
+                    uid = control.uid + 1,
+                    text = control.text,
+                    align = '50%',
+                    color = ugui.standard_styler.params.button.text[visual_state],
+                })
+            end
             if fn then
                 fn()
             end
@@ -27,7 +29,7 @@ ugui.registry.button = {
     end,
     ---@param control Button
     validate = function(control)
-        ugui.internal.assert(type(control.text) == 'string', 'expected text to be string')
+        ugui.internal.assert(type(control.text) == 'string' or control.text == nil, 'expected text to be string or nil')
     end,
     ---@param control Button
     ---@return ControlReturnValue
