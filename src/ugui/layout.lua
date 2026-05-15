@@ -10,7 +10,7 @@
 
 ---@type table<string, LayoutStrategy>
 ugui.internal.layout_strategies = {
-    biggest = {
+    relative = {
         ---Fit the biggest child.
         measure = function(node, available_size)
             local biggest = {x = 0, y = 0}
@@ -201,10 +201,13 @@ ugui.internal.layout_strategies = {
 ---@param node SceneNode
 ---@return LayoutStrategy
 function ugui.internal.get_strategy(node)
-    if node.control.layout and node.control.layout == 'stack' then
+    if node.control.layout == 'relative' then
+        return ugui.internal.layout_strategies.relative
+    end
+    if node.control.layout == 'stack' then
         return ugui.internal.layout_strategies.stack
     end
-    return ugui.internal.layout_strategies.biggest
+    return ugui.internal.layout_strategies.relative
 end
 
 ---Measures the specified node and saves its size.

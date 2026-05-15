@@ -5,7 +5,8 @@
 --
 
 ---@alias LayoutMode
----|"stack" # The control's children are laid out in a stack.
+---|"relative" # The control's children are laid out according to their margins, with the control's `auto` size being determined by the largest and most offset child.
+---|"stack" # The control's children are laid out in a stack, with the control's `auto` size being determined by the stack's total size.
 
 ---@class Control
 ---@field public uid UID The unique identifier of the control.
@@ -16,7 +17,7 @@
 ---@field public size SmartUnit2? The control's size. If `nil`, `auto` is assumed.
 ---@field public padding SmartUnit2? Padding around the control's content. If `nil`, the control default padding is used.
 ---@field public align SmartAlignment2? The control's alignment within its parent. Note that margins are applied after alignment. If `nil`, `0` is assumed.
----@field public layout LayoutMode? The way the control's children are laid out. If `nil`, `stack` is assumed.
+---@field public layout LayoutMode? The way the control's children are laid out. If `nil`, `relative` is assumed.
 ---@field public gap SmartUnit? The gap between child controls when using `stack` layout. If `nil`, `0` is assumed.
 ---@field public wrap boolean? Whether the control's children should wrap to the next line when using `stack` layout. If `nil`, `false` is assumed.
 ---@field public direction number? The direction of the layout in the range `[0, 1]`, where `0` is horizontal and `1` is vertical. If `nil`, `0` is assumed.
