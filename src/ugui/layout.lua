@@ -255,10 +255,10 @@ function ugui.internal.measure(node, available_size)
         end
     end
 
-    local padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, {x = 0, y = 0}, {x = 0, y = 0}) or {x = 0, y = 0}
+    data.computed_padding = node.control.padding and ugui.internal.resolve_unit2(node.control.padding, {x = 0, y = 0}, {x = 0, y = 0}) or {x = 0, y = 0}
 
-    size.x = size.x + padding.x * 2
-    size.y = size.y + padding.y * 2
+    size.x = size.x + data.computed_padding.x * 2
+    size.y = size.y + data.computed_padding.y * 2
 
     data.natural_size = size
 
@@ -269,11 +269,15 @@ end
 ---@param node SceneNode
 ---@param slot Rectangle
 function ugui.internal.arrange(node, slot)
-    ugui.internal.control_data[node.control.uid].slot = slot
+    local data = ugui.internal.control_data[node.control.uid]
+    data.slot = slot
 
     local slots = ugui.internal.get_strategy(node).arrange(node, slot)
 
     for i = 1, #slots, 1 do
+        slots[i].x = slots[i].x + data.computed_padding.x
+        slots[i].y = slots[i].y + data.computed_padding.y
+
         ugui.internal.arrange(node.children[i], slots[i])
     end
 end
