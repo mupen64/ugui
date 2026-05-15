@@ -8,6 +8,8 @@
 ---@field public items RichText[] The tab headers.
 ---@field public selected_index integer The index of the currently selected tab.
 ---A tab control, which allows the user to choose from a list of tabs.
+---The control's content slot is:
+---    - the nth child, right after the tab buttons with n = #items
 
 ---@class TabControlResult
 ---@field public selected_index integer The index of the selected tab.

@@ -7,18 +7,23 @@
 ---@class ToggleButton : Button
 ---@field public is_checked boolean? Whether the button is checked. If nil, the ToggleButton is considered unchecked.
 ---A button which can be toggled on and off.
+---The control's content slot is:
+---    - the second child after the label if `text` is not `nil`
+---    - the first child if `text` is `nil`
 
 ---@type ControlRegistryEntry
 ugui.registry.toggle_button = {
     place = function(control, fn)
         return ugui.internal.place_control(control, 'toggle_button', function()
             local visual_state = ugui.get_visual_state(control)
-            ugui.label({
-                uid = control.uid + 1,
-                text = control.text,
-                align = '50%',
-                color = ugui.standard_styler.params.button.text[visual_state],
-            })
+            if control.text then
+                ugui.label({
+                    uid = control.uid + 1,
+                    text = control.text,
+                    align = '50%',
+                    color = ugui.standard_styler.params.button.text[visual_state],
+                })
+            end
             if fn then
                 fn()
             end

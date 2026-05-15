@@ -7,6 +7,9 @@
 ---@class Button : Control
 ---@field public text RichText? The text displayed on the button. If `nil`, the button will have no label child, leaving it up to the user to provide content.
 ---A button which can be clicked.
+---The control's content slot is:
+---    - the second child after the label if `text` is not `nil`
+---    - the first child if `text` is `nil`
 
 ---@type ControlRegistryEntry
 ugui.registry.button = {

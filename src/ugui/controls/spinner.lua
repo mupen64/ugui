@@ -11,6 +11,8 @@
 ---@field public maximum_value number? The maximum value.
 ---@field public is_horizontal boolean? Whether the increment buttons are stacked horizontally.
 ---A spinner, consisting of a textbox and buttons for incrementing or decrementing a number.
+---The control's content slot is:
+---    - the first child
 
 ---Places a Spinner.
 ---@param control Spinner The control table.

@@ -8,6 +8,8 @@
 ---@field public selected_index integer? The index of the currently selected item into the items array. If nil, no item is selected.
 ---@field public editable boolean? Whether the user can type in the combobox to filter the items.
 ---A combobox which allows the user to choose from a list of items.
+---The control's content slot is:
+---    - after the labels
 
 ---@type ControlRegistryEntry
 ugui.registry.combobox = {

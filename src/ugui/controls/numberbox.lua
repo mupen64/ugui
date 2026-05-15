@@ -9,6 +9,8 @@
 ---@field public places integer The amount of digits the value is padded to.
 ---@field public show_negative boolean? Whether a button for viewing and toggling the value's sign is shown. If nil, false is assumed.
 ---A numberbox, which allows modifying a number by typing or by adjusting its individual digits.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.numberbox = {

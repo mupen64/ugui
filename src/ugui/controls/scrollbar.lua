@@ -8,6 +8,8 @@
 ---@field public value number The scroll proportion in the range 0-1.
 ---@field public ratio number The overflow ratio, which is calculated by dividing the desired content dimensions by the relevant attached control's (e.g.: a listbox's) dimensions.
 ---A scrollbar which allows scrolling horizontally or vertically, depending on the control's dimensions.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.scrollbar = {

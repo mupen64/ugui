@@ -10,6 +10,8 @@
 ---@field public x_snap integer? The snap distance to 0 on the X axis. If nil, no snap will be applied.
 ---@field public y_snap integer? The snap distance to 0 on the Y axis. If nil, no snap will be applied.
 ---A joystick which can be interacted with.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.joystick = {

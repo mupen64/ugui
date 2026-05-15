@@ -12,6 +12,8 @@
 ---If the items don't fit in the control's bounds vertically, vertical scrolling will be enabled.
 ---If the items don't fit in the control's bounds horizontally, horizontal scrolling will be enabled if horizontal_scroll is true.
 ---The `rectangle` field might be mutated to accommodate the scrollbars.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.listbox = {

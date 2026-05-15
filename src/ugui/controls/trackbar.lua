@@ -7,6 +7,8 @@
 ---@class Trackbar : Control
 ---@field public value number The current value in the range 0-1.
 ---A trackbar which can have its value adjusted.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.trackbar = {

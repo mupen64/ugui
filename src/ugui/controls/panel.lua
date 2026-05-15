@@ -6,6 +6,8 @@
 
 ---@class Panel : Control
 ---An inert control used mostly as a container for other controls.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.panel = {}

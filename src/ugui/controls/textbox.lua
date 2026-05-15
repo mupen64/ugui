@@ -7,6 +7,8 @@
 ---@class TextBox : Control
 ---@field public text string The text contained in the textbox.
 ---A textbox which can be edited.
+---The control's content slot is:
+---    - the first child
 
 
 ---Gets the index of the surrounding words in the specified text.

@@ -12,6 +12,8 @@
 ---@field public align_x Alignment? The text's horizontal alignment inside the control rectangle. If `nil`, `alignment.center` is assumed.
 ---@field public align_y Alignment? The text's vertical alignment inside the control rectangle. If `nil`, `alignment.center` is assumed.
 ---A label that contains text.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.label = {

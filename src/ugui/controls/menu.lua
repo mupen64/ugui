@@ -18,6 +18,8 @@
 ---@class Menu : Control
 ---@field public items MenuItem[] The items contained in the menu.
 ---A menu, which allows the user to choose from a list of items.
+---The control's content slot is:
+---    - the first child
 
 ---@type ControlRegistryEntry
 ugui.registry.menu = {
