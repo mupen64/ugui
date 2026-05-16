@@ -331,7 +331,7 @@ end
 ---@param auto number
 ---@param parent_basis number
 ---@return number
-local function resolve_unit(expr, auto, parent_basis)
+ugui.internal.resolve_unit = function(expr, auto, parent_basis)
     local function trim(s)
         return (s:gsub('^%s+', ''):gsub('%s+$', ''))
     end
@@ -533,8 +533,8 @@ ugui.internal.resolve_unit2 = function(unit, auto, parent_size)
     end
 
     return {
-        x = resolve_unit(a, auto.x, parent_size.x),
-        y = resolve_unit(b, auto.y, parent_size.y),
+        x = ugui.internal.resolve_unit(a, auto.x, parent_size.x),
+        y = ugui.internal.resolve_unit(b, auto.y, parent_size.y),
     }
 end
 

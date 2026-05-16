@@ -442,14 +442,22 @@ ugui.internal = {
 
             local data = ugui.internal.control_data[node.control.uid]
             local render_rect = data.render_rect
-
             local entry = ugui.registry[type]
 
-            if entry.draw then
-                local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
-                entry.draw(control)
-                revert_styler_mixin()
+            local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
+
+            if control.background then
+                BreitbandGraphics.fill_rectangle(render_rect, control.background)
             end
+            if control.border then
+                local thickness = ugui.internal.resolve_unit(control.border_width or '1px', 1, math.max(render_rect.width, render_rect.height))
+                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, -thickness / 2), control.border, thickness)
+            end
+            if entry.draw then
+                entry.draw(control)
+            end
+
+            revert_styler_mixin()
 
             if ugui.DEBUG then
                 BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 0), '#FF0000', 1)
