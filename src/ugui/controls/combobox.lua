@@ -76,6 +76,9 @@ ugui.combobox = function(control)
     local button_uid<const> = control.uid + 2
     local listbox_uid<const> = control.uid + 3
 
+    -- listbox_uid + 2 for the scrollbars
+    local highest_owned_uid<const> = control.uid + 5
+
     local button_size<const> = 30
 
     if control.editable then
@@ -170,7 +173,7 @@ ugui.combobox = function(control)
         ugui.internal.keyboard_captured_control = listbox_uid
         local listbox = {
             uid = listbox_uid,
-            rectangle = ugui.internal.deep_clone(list_rect),
+            rectangle = list_rect,
             items = items_to_show,
             selected_index = data.selected_index,
             plaintext = control.plaintext,
@@ -183,7 +186,7 @@ ugui.combobox = function(control)
         local enter_pressed = false
         -- allow confirming the selection with return when any of the owned controls captures keyboard input
         if ugui.internal.keyboard_captured_control >= control.uid
-            and ugui.internal.keyboard_captured_control <= listbox_uid
+            and ugui.internal.keyboard_captured_control <= highest_owned_uid
         then
             for _, e in ipairs(ugui.internal.environment.key_events) do
                 if e.keycode == ugui.keycodes.VK_RETURN and e.pressed then
@@ -197,15 +200,7 @@ ugui.combobox = function(control)
         local released_inside = ugui.internal.is_mouse_just_up() and in_listbox
         local clicked_outside =
             ugui.internal.is_mouse_just_down()
-            and not (
-                    in_listbox
-                    or ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
-                    or (-- weird hack to discover whether the user intends to scroll:
-                        -- this works because the listbox logic mutates its rectangle to be smaller if it spawns a scrollbar
-                        BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, list_rect)
-                        and not in_listbox
-                        )
-                    )
+            and (ugui.internal.hovered_control < control.uid or ugui.internal.hovered_control > highest_owned_uid)
 
         if enter_pressed or released_inside or clicked_outside then
             data.open = false
