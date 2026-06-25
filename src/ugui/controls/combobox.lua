@@ -22,10 +22,8 @@ ugui.registry.combobox = {
         data.open = false
         data.was_open = false
         data.selected_index = control.selected_index
-        data.quiet_selected_index = control.selected_index
         data.update_filter = false
         data.search_text = nil
-        data.close_on_next_update = false
     end,
     ---@param control ComboBox
     ---@return ControlReturnValue
@@ -61,11 +59,6 @@ ugui.registry.combobox = {
         if signal_change == ugui.signal_change_states.ended then
             data.searching = false
             data.search_text = nil
-        elseif signal_change == ugui.signal_change_states.none then
-            selected_index = control.selected_index
-            if not control.editable then
-                data.selected_index = selected_index
-            end
         end
         data.was_open = data.open
         return {
@@ -122,14 +115,12 @@ ugui.combobox = function(control)
             data.open = not data.open
             data.update_filter = data.open
             data.search_text = current_text
-            data.quiet_selected_index = 1
         end
 
         if search_text ~= current_text then
             data.update_filter = true
             data.open = true
             data.search_text = search_text
-            data.quiet_selected_index = 1
         end
     end
 
@@ -185,27 +176,41 @@ ugui.combobox = function(control)
 
         local restore = ugui.internal.keyboard_captured_control
         ugui.internal.keyboard_captured_control = listbox_uid
-        data.quiet_selected_index = ugui.listbox({
+        local listbox = {
             uid = listbox_uid,
-            rectangle = list_rect,
+            rectangle = ugui.internal.deep_clone(list_rect),
             items = items_to_show,
-            selected_index = data.quiet_selected_index,
+            selected_index = data.selected_index,
             plaintext = control.plaintext,
             z_index = math.maxinteger,
-        })
+        }
+        data.selected_index = ugui.listbox(listbox)
+        result.primary = data.selected_index
         ugui.internal.keyboard_captured_control = restore
 
-        if data.close_on_next_update then
+
+        local in_listbox = ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, listbox)
+        local released_inside = ugui.internal.is_mouse_just_up() and in_listbox
+        local clicked_outside =
+            ugui.internal.is_mouse_just_down()
+            and not (
+                    in_listbox
+                    or ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
+                    )
+
+        if released_inside or clicked_outside then
             data.open = false
             data.search_text = nil
-            -- Commit the selection
-            data.selected_index = data.filtered_to_original and data.filtered_to_original[data.quiet_selected_index] or data.quiet_selected_index
-        end
+            result.meta.signal_change = ugui.signal_change_states.ended
 
-        data.close_on_next_update =
-            data.open
-            and ugui.internal.is_mouse_just_down()
-            and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
+            -- discard the intermediate result when the user did not confirm it
+            if clicked_outside or (data.filtered_items and next(data.filtered_items) == nil) then
+                data.selected_index = control.selected_index
+                result.primary = control.selected_index
+            end
+        end
+    else
+        data.selected_index = control.selected_index
     end
 
     return result.primary, result.meta
