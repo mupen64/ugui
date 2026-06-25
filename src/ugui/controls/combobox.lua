@@ -200,6 +200,11 @@ ugui.combobox = function(control)
             and not (
                     in_listbox
                     or ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
+                    or (-- weird hack to discover whether the user intends to scroll:
+                        -- this works because the listbox logic mutates its rectangle to be smaller if it spawns a scrollbar
+                        BreitbandGraphics.is_point_inside_rectangle(ugui.internal.environment.mouse_position, list_rect)
+                        and not in_listbox
+                        )
                     )
 
         if enter_pressed or released_inside or clicked_outside then
