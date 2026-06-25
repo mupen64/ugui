@@ -7,6 +7,7 @@
 ---@field public items RichText[] The items contained in the control.
 ---@field public selected_index integer? The index of the currently selected item into the items array. If nil, no item is selected.
 ---@field public editable boolean? Whether the user can type in the combobox to filter the items.
+---@field public preview_change boolean? Whether the selection is returned while the combobox is open.
 ---A combobox which allows the user to choose from a list of items.
 
 ---@type ControlRegistryEntry
@@ -63,8 +64,10 @@ ugui.registry.combobox = {
 
 
 ---Places a ComboBox.
+---
+---When preview_change is set, meta.signal_change == ugui.signal_change_states.ended may be used to determine when the combobox was closed to confirm the new selection.
 ---@param control ComboBox The control table.
----@return integer, Meta # The new selected index.
+---@return integer selected_index, Meta meta The new selected index and metadata.
 ugui.combobox = function(control)
     local result = ugui.control(control, 'combobox')
     local data = ugui.internal.control_data[control.uid]
@@ -214,5 +217,6 @@ ugui.combobox = function(control)
         data.selected_index = control.selected_index
     end
 
-    return result.primary, result.meta
+    local yield_primary = (control.preview_change or result.meta.signal_change == ugui.signal_change_states.ended)
+    return yield_primary and result.primary or control.selected_index, result.meta
 end
