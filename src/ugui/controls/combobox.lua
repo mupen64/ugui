@@ -37,17 +37,6 @@ ugui.registry.combobox = {
             data.open = not data.open
         end
 
-        if data.open then
-            -- allow confirming the selection with return when the control itself or the textbox captures keyboard input
-            if ugui.internal.keyboard_captured_control == control.uid + (control.editable and 1 or 0) then
-                for _, e in ipairs(ugui.internal.environment.key_events) do
-                    if e.keycode == ugui.keycodes.VK_RETURN and e.pressed then
-                        data.close_on_next_update = true
-                    end
-                end
-            end
-        end
-
         local selected_index = data.filtered_to_original and data.filtered_to_original[data.selected_index] or data.selected_index
 
         local signal_change = control.selected_index ~= selected_index
@@ -188,6 +177,18 @@ ugui.combobox = function(control)
         result.primary = data.selected_index
         ugui.internal.keyboard_captured_control = restore
 
+        local enter_pressed = false
+        -- allow confirming the selection with return when any of the owned controls captures keyboard input
+        if ugui.internal.keyboard_captured_control >= control.uid
+            and ugui.internal.keyboard_captured_control <= listbox_uid
+        then
+            for _, e in ipairs(ugui.internal.environment.key_events) do
+                if e.keycode == ugui.keycodes.VK_RETURN and e.pressed then
+                    enter_pressed = true
+                    break
+                end
+            end
+        end
 
         local in_listbox = ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, listbox)
         local released_inside = ugui.internal.is_mouse_just_up() and in_listbox
@@ -198,7 +199,7 @@ ugui.combobox = function(control)
                     or ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
                     )
 
-        if released_inside or clicked_outside then
+        if enter_pressed or released_inside or clicked_outside then
             data.open = false
             data.search_text = nil
             result.meta.signal_change = ugui.signal_change_states.ended
