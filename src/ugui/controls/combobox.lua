@@ -163,51 +163,49 @@ ugui.combobox = function(control)
             data.filtered_to_original = nil
         end
 
-        if data.open then
-            local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
+        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
 
-            local width = control.rectangle.width
-            if control.rectangle.x + width > ugui.internal.environment.window_size.x then
-                width = ugui.internal.environment.window_size.x - control.rectangle.x
-            end
-
-            local height = content_bounds.height
-            if control.rectangle.y + height > ugui.internal.environment.window_size.y then
-                height = ugui.internal.environment.window_size.y - control.rectangle.y -
-                    ugui.standard_styler.params.listbox_item.height * 2
-            end
-
-            local list_rect = {
-                x = control.rectangle.x,
-                y = control.rectangle.y + control.rectangle.height,
-                width = width,
-                height = height,
-            }
-
-            local restore = ugui.internal.keyboard_captured_control
-            ugui.internal.keyboard_captured_control = listbox_uid
-            data.quiet_selected_index = ugui.listbox({
-                uid = listbox_uid,
-                rectangle = list_rect,
-                items = items_to_show,
-                selected_index = data.quiet_selected_index,
-                plaintext = control.plaintext,
-                z_index = math.maxinteger,
-            })
-            ugui.internal.keyboard_captured_control = restore
-
-            if data.close_on_next_update then
-                data.open = false
-                data.search_text = nil
-                -- Commit the selection
-                data.selected_index = data.filtered_to_original and data.filtered_to_original[data.quiet_selected_index] or data.quiet_selected_index
-            end
-
-            data.close_on_next_update =
-                data.open
-                and ugui.internal.is_mouse_just_down()
-                and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
+        local width = control.rectangle.width
+        if control.rectangle.x + width > ugui.internal.environment.window_size.x then
+            width = ugui.internal.environment.window_size.x - control.rectangle.x
         end
+
+        local height = content_bounds.height
+        if control.rectangle.y + height > ugui.internal.environment.window_size.y then
+            height = ugui.internal.environment.window_size.y - control.rectangle.y -
+                ugui.standard_styler.params.listbox_item.height * 2
+        end
+
+        local list_rect = {
+            x = control.rectangle.x,
+            y = control.rectangle.y + control.rectangle.height,
+            width = width,
+            height = height,
+        }
+
+        local restore = ugui.internal.keyboard_captured_control
+        ugui.internal.keyboard_captured_control = listbox_uid
+        data.quiet_selected_index = ugui.listbox({
+            uid = listbox_uid,
+            rectangle = list_rect,
+            items = items_to_show,
+            selected_index = data.quiet_selected_index,
+            plaintext = control.plaintext,
+            z_index = math.maxinteger,
+        })
+        ugui.internal.keyboard_captured_control = restore
+
+        if data.close_on_next_update then
+            data.open = false
+            data.search_text = nil
+            -- Commit the selection
+            data.selected_index = data.filtered_to_original and data.filtered_to_original[data.quiet_selected_index] or data.quiet_selected_index
+        end
+
+        data.close_on_next_update =
+            data.open
+            and ugui.internal.is_mouse_just_down()
+            and not ugui.internal.is_point_inside_control(ugui.internal.environment.mouse_position, control)
     end
 
     return result.primary, result.meta
