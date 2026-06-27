@@ -185,7 +185,8 @@ ugui.combobox = function(control)
 
         local enter_pressed = false
         -- allow confirming the selection with return when any of the owned controls captures keyboard input
-        if ugui.internal.keyboard_captured_control >= control.uid
+        if ugui.internal.keyboard_captured_control ~= nil
+            and ugui.internal.keyboard_captured_control >= control.uid
             and ugui.internal.keyboard_captured_control <= highest_owned_uid
         then
             for _, e in ipairs(ugui.internal.environment.key_events) do
@@ -200,6 +201,7 @@ ugui.combobox = function(control)
         local released_inside = ugui.internal.is_mouse_just_up() and in_listbox
         local clicked_outside =
             ugui.internal.is_mouse_just_down()
+            and ugui.internal.hovered_control ~= nil
             and (ugui.internal.hovered_control < control.uid or ugui.internal.hovered_control > highest_owned_uid)
 
         if enter_pressed or released_inside or clicked_outside then
