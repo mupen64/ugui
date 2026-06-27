@@ -65,7 +65,7 @@ ugui.registry.combobox = {
 
 ---Places a ComboBox.
 ---
----When preview_change is set, meta.signal_change == ugui.signal_change_states.ended may be used to determine when the combobox was closed to confirm the new selection.
+---When preview_change is set, `meta.signal_change == ugui.signal_change_states.ended` may be used to determine when the combobox was closed to confirm the new selection.
 ---@param control ComboBox The control table.
 ---@return integer selected_index, Meta meta The new selected index and metadata.
 ugui.combobox = function(control)
