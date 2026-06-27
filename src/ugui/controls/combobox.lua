@@ -7,7 +7,7 @@
 ---@field public items RichText[] The items contained in the control.
 ---@field public selected_index integer? The index of the currently selected item into the items array. If nil, no item is selected.
 ---@field public editable boolean? Whether the user can type in the combobox to filter the items.
----@field public preview_change boolean? Whether the selection is returned while the combobox is open.
+---@field public preview_change boolean? Whether the returned selected index can change while the combobox is open.
 ---A combobox which allows the user to choose from a list of items.
 
 ---@type ControlRegistryEntry
