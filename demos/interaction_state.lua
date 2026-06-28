@@ -1,17 +1,19 @@
 local path_root = debug.getinfo(1).source:sub(2):gsub('\\[^\\]+\\[^\\]+$', '\\') .. 'demos\\'
 dofile(path_root .. 'base.lua')
 
-local interaction_logs = {}
+local interaction_logs = {'none'}
 local items = {}
 local checked = true
 local index = 1
+local combobox1_selected_index = 1
+local combobox2_selected_index = 1
 
 for i = 1, 100, 1 do
     items[#items + 1] = 'Item ' .. i
 end
 
 ---@param meta Meta
-local function log_interaction(meta)
+local function log_interaction(meta, value)
     local text_interaction
     if meta.signal_change == ugui.signal_change_states.none then
         text_interaction = 'none'
@@ -20,8 +22,9 @@ local function log_interaction(meta)
     elseif meta.signal_change == ugui.signal_change_states.ongoing then
         text_interaction = 'ongoing'
     elseif meta.signal_change == ugui.signal_change_states.ended then
-        text_interaction = 'ended'
+        text_interaction = 'ended, finally'
     end
+    text_interaction = text_interaction .. '(' .. tostring(value) .. ')'
     if interaction_logs[#interaction_logs] == text_interaction then
         return
     end
@@ -36,6 +39,7 @@ emu.atdrawd2d(function()
         rectangle = {x = 10, y = 40, width = 100, height = 200},
         items = interaction_logs,
         selected_index = nil,
+        horizontal_scroll = true,
     })
 
     local pressed, meta = ugui.button({
@@ -58,7 +62,45 @@ emu.atdrawd2d(function()
         items = items,
         selected_index = index,
     })
-    log_interaction(meta)
+
+    local new_index, meta = ugui.combobox({
+        uid = 25,
+        rectangle = {x = 350, y = 40, width = 100, height = 30},
+        items = {'One', 'Two which is very long', 'Three', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More'},
+        selected_index = combobox1_selected_index,
+        editable = true,
+        preview_change = true,
+    })
+    if meta.signal_change == ugui.signal_change_states.ended then
+        combobox1_selected_index = new_index
+    end
+    ugui.label({
+        uid = 40,
+        rectangle = {x = 460, y = 40, width = 100, height = 30},
+        text = 'Selected index: ' .. combobox1_selected_index .. ', immediate ' .. tostring(new_index),
+        color = {r = 0, g = 0, b = 0},
+        align_x = BreitbandGraphics.alignment.start,
+    })
+    log_interaction(meta, new_index)
+
+    local new_index2, meta = ugui.combobox({
+        uid = 60,
+        rectangle = {x = 350, y = 80, width = 100, height = 30},
+        items = {'One', 'Two which is very long', 'Three', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More', 'More'},
+        selected_index = combobox2_selected_index,
+        editable = true,
+    })
+    if meta.signal_change == ugui.signal_change_states.ended then
+        combobox2_selected_index = new_index2
+    end
+    ugui.label({
+        uid = 80,
+        rectangle = {x = 460, y = 80, width = 100, height = 30},
+        text = 'Selected index: ' .. combobox2_selected_index .. ', immediate ' .. tostring(new_index2),
+        color = {r = 0, g = 0, b = 0},
+        align_x = BreitbandGraphics.alignment.start,
+    })
+    log_interaction(meta, new_index2)
 
     end_frame()
 end)
