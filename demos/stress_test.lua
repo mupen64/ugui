@@ -17,7 +17,7 @@ emu.atdrawd2d(function()
             } or nil
 
             ugui.button({
-                uid = i,
+                uid = (i + 1) * 100,
                 rectangle = {
                     x = (x - 1) * 20,
                     y = (y - 1) * 20,

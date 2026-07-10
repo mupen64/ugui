@@ -20,7 +20,7 @@ emu.atdrawd2d(function()
     do
         local x, y = COL1_X, ROW1_Y
         ugui.label({
-            uid = 1,
+            uid = 100,
             rectangle = {x = x, y = y, width = IMG_W, height = LABEL_H},
             text = '1. Natural size (destx2/y2 = nil)',
             color = BreitbandGraphics.colors.black,
@@ -37,7 +37,7 @@ emu.atdrawd2d(function()
     do
         local x, y = COL2_X, ROW1_Y
         ugui.label({
-            uid = 2,
+            uid = 200,
             rectangle = {x = x, y = y, width = IMG_W, height = LABEL_H},
             text = '2. Scaled to ' .. IMG_W .. 'x' .. IMG_H,
             color = BreitbandGraphics.colors.black,
@@ -54,7 +54,7 @@ emu.atdrawd2d(function()
     do
         local x, y = COL3_X, ROW1_Y
         ugui.label({
-            uid = 3,
+            uid = 300,
             rectangle = {x = x, y = y, width = IMG_W, height = LABEL_H},
             text = '3. Source crop (top-left quarter)',
             color = BreitbandGraphics.colors.black,
@@ -77,7 +77,7 @@ emu.atdrawd2d(function()
     do
         local x, y = COL1_X, ROW2_Y
         ugui.label({
-            uid = 4,
+            uid = 400,
             rectangle = {x = x, y = y, width = IMG_W, height = LABEL_H},
             text = '4. Red tint',
             color = BreitbandGraphics.colors.black,
@@ -95,7 +95,7 @@ emu.atdrawd2d(function()
     do
         local x, y = COL2_X, ROW2_Y
         ugui.label({
-            uid = 5,
+            uid = 500,
             rectangle = {x = x, y = y, width = IMG_W, height = LABEL_H},
             text = '5. Nearest-neighbor interp (0)',
             color = BreitbandGraphics.colors.black,
@@ -117,7 +117,7 @@ emu.atdrawd2d(function()
     do
         local x, y = COL3_X, ROW2_Y
         ugui.label({
-            uid = 6,
+            uid = 600,
             rectangle = {x = x, y = y, width = IMG_W, height = LABEL_H},
             text = '6. Linear interp (1)',
             color = BreitbandGraphics.colors.black,

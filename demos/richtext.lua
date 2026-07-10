@@ -15,7 +15,7 @@ emu.atdrawd2d(function()
     begin_frame()
 
     ugui.button({
-        uid = 1,
+        uid = 100,
         rectangle = {x = 20, y = 20, width = 100, height = 100},
         text = '[icon:arrow_left]Go Back',
         tooltip = 'In the [icon:arrow_up] middle',
@@ -23,7 +23,7 @@ emu.atdrawd2d(function()
     })
 
     align_x = ugui.combobox({
-        uid = 5,
+        uid = 200,
         rectangle = {x = 200, y = 20, width = 90, height = 20},
         items = alignments,
         selected_index = align_x,
@@ -31,7 +31,7 @@ emu.atdrawd2d(function()
     })
 
     align_y = ugui.combobox({
-        uid = 10,
+        uid = 300,
         rectangle = {x = 200, y = 100, width = 90, height = 20},
         items = alignments,
         selected_index = align_y,
@@ -39,7 +39,7 @@ emu.atdrawd2d(function()
     })
 
     plaintext = ugui.toggle_button({
-        uid = 15,
+        uid = 400,
         rectangle = {x = 200, y = 130, width = 90, height = 20},
         text = 'Plaintext',
         is_checked = plaintext,
@@ -47,7 +47,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.listbox({
-        uid = 20,
+        uid = 500,
         rectangle = {x = 200, y = 160, width = 140, height = 300},
         items = {
             '[icon:arrow_up] Hello',

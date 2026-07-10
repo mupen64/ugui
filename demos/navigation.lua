@@ -7,7 +7,7 @@ local is_joystick_enabled = true
 
 pages[1] = function()
     ugui.button({
-        uid = 0,
+        uid = 100,
 
         rectangle = {
             x = 5,
@@ -21,7 +21,7 @@ end
 
 pages[2] = function()
     ugui.joystick({
-        uid = 1,
+        uid = 200,
         is_enabled = is_joystick_enabled,
         rectangle = {
             x = 5,
@@ -37,7 +37,7 @@ pages[2] = function()
     })
 
     is_joystick_enabled = ugui.toggle_button({
-        uid = 2,
+        uid = 300,
 
         rectangle = {
             x = 5,
@@ -60,7 +60,7 @@ emu.atdrawd2d(function()
     end
 
     selected_page_index = ugui.combobox({
-        uid = 6000,
+        uid = 400,
 
         rectangle = {
             x = 5,
@@ -73,7 +73,7 @@ emu.atdrawd2d(function()
     })
 
     selected_page_index = ugui.carrousel_button({
-        uid = 60001,
+        uid = 500,
 
         rectangle = {
             x = 5,

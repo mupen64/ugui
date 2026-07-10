@@ -5,7 +5,7 @@ emu.atdrawd2d(function()
     begin_frame()
 
     ugui.button({
-        uid = 0,
+        uid = 100,
         rectangle = {
             x = 0,
             y = 10,
@@ -16,7 +16,7 @@ emu.atdrawd2d(function()
     })
 
     if (ugui.button({
-            uid = 1,
+            uid = 200,
             is_enabled = false,
             rectangle = {
                 x = 100,
@@ -30,7 +30,7 @@ emu.atdrawd2d(function()
     end
 
     ugui.textbox({
-        uid = 2,
+        uid = 300,
         rectangle = {
             x = 0,
             y = 50,
@@ -41,7 +41,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.textbox({
-        uid = 3,
+        uid = 400,
         is_enabled = false,
         rectangle = {
             x = 100,
@@ -53,7 +53,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.combobox({
-        uid = 4,
+        uid = 500,
         rectangle = {
             x = 0,
             y = 90,
@@ -67,7 +67,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.combobox({
-        uid = 5,
+        uid = 600,
         is_enabled = false,
         rectangle = {
             x = 100,
@@ -82,7 +82,7 @@ emu.atdrawd2d(function()
     })
 
     value = ugui.trackbar({
-        uid = 6,
+        uid = 700,
         rectangle = {
             x = 0,
             y = 130,
@@ -93,7 +93,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.trackbar({
-        uid = 7,
+        uid = 800,
         is_enabled = false,
         rectangle = {
             x = 100,
@@ -106,7 +106,7 @@ emu.atdrawd2d(function()
 
 
     ugui.listbox({
-        uid = 8,
+        uid = 900,
         rectangle = {
             x = 0,
             y = 170,
@@ -121,7 +121,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.listbox({
-        uid = 9,
+        uid = 1000,
         is_enabled = false,
         rectangle = {
             x = 100,
@@ -137,7 +137,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.joystick({
-        uid = 10,
+        uid = 1100,
         rectangle = {
             x = 0,
             y = 210,
@@ -152,7 +152,7 @@ emu.atdrawd2d(function()
     })
 
     ugui.joystick({
-        uid = 11,
+        uid = 1200,
         is_enabled = false,
         rectangle = {
             x = 100,

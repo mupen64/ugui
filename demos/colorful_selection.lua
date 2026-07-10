@@ -26,7 +26,7 @@ emu.atdrawd2d(function()
     ugui.standard_styler.params.numberbox.selection = selection_color
 
     text = ugui.textbox({
-        uid = 1,
+        uid = 100,
         rectangle = { x = 10, y = 10, width = 100, height = 20 },
         text = text,
     })

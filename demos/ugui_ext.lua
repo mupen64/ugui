@@ -8,7 +8,7 @@ emu.atdrawd2d(function()
     begin_frame()
 
     value = ugui.spinner({
-        uid = 1,
+        uid = 100,
         rectangle = {
             x = 5,
             y = 10,
@@ -19,7 +19,7 @@ emu.atdrawd2d(function()
     })
 
     local result = ugui.tabcontrol({
-        uid = 5,
+        uid = 200,
         rectangle = {
             x = 5,
             y = 40,
@@ -35,7 +35,7 @@ emu.atdrawd2d(function()
     })
 
     value = ugui.numberbox({
-        uid = 10,
+        uid = 300,
         rectangle = {
             x = 5,
             y = 250,

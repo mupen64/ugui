@@ -6,54 +6,54 @@ ugui.DEBUG = true
 local pages = {
     function()
         ugui.button({
-            uid = 10,
+            uid = 100,
             text = '',
             size = '0.3 0.3',
             align = 'center',
             padding = '20px',
         }, function()
             ugui.button({
-                uid = 20,
+                uid = 200,
                 text = 'top left',
             })
             ugui.button({
-                uid = 30,
+                uid = 300,
                 text = 'top center',
                 align = 'center top',
             })
             ugui.button({
-                uid = 40,
+                uid = 400,
                 text = 'top right',
                 align = 'right top',
             })
             ugui.button({
-                uid = 50,
+                uid = 500,
                 text = 'center left',
                 align = 'left center',
             })
             ugui.button({
-                uid = 60,
+                uid = 600,
                 text = 'center center',
                 align = 'center',
                 padding = '20px',
             })
             ugui.button({
-                uid = 70,
+                uid = 700,
                 text = 'center right',
                 align = 'right center',
             })
             ugui.button({
-                uid = 80,
+                uid = 800,
                 text = 'bottom left',
                 align = 'left bottom',
             })
             ugui.button({
-                uid = 90,
+                uid = 900,
                 text = 'bottom center',
                 align = 'center bottom',
             })
             ugui.button({
-                uid = 100,
+                uid = 1000,
                 text = 'bottom right',
                 align = 'right bottom',
             })
@@ -62,7 +62,7 @@ local pages = {
     function()
         _sl = _sl or 1
         _sl = ugui.listbox({
-            uid = 110,
+            uid = 1100,
             align = 'center',
             items = {
                 'Item 1',
@@ -77,7 +77,7 @@ local pages = {
     function()
         _sl2 = _sl2 or 1
         _sl2 = ugui.listbox({
-            uid = 120,
+            uid = 1200,
             align = 'center',
             size = '130px 130px',
             horizontal_scroll = true,
@@ -103,7 +103,7 @@ local pages = {
     function()
         _sl3 = _sl3 or 1
         _sl3 = ugui.combobox({
-            uid = 130,
+            uid = 1300,
             align = 'center',
             padding = '40px 10px',
             items = {
@@ -124,7 +124,7 @@ emu.atdrawd2d(function()
     begin_frame()
 
     ugui.label({
-        uid = 2,
+        uid = 1400,
         size = '1 auto',
         font_size = 24,
         text = string.format('Press left/right arrows to switch pages (%d/%d)', page, #pages),

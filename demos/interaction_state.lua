@@ -32,27 +32,27 @@ emu.atdrawd2d(function()
     begin_frame()
 
     ugui.listbox({
-        uid = 1,
+        uid = 100,
         rectangle = {x = 10, y = 40, width = 100, height = 200},
         items = interaction_logs,
         selected_index = nil,
     })
 
     local pressed, meta = ugui.button({
-        uid = 10,
+        uid = 200,
         rectangle = {x = 120, y = 10, width = 100, height = 23},
         text = 'Hello, world!',
     })
 
     checked, meta = ugui.toggle_button({
-        uid = 15,
+        uid = 300,
         rectangle = {x = 120, y = 35, width = 100, height = 23},
         text = 'Hello, world!',
         is_checked = checked,
     })
 
     index, meta = ugui.listbox({
-        uid = 20,
+        uid = 400,
         rectangle = {x = 230, y = 40, width = 100, height = 200},
         text = 'Hello, world!',
         items = items,

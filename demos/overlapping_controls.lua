@@ -20,7 +20,7 @@ emu.atdrawd2d(function()
     begin_frame()
 
     if ugui.button({
-            uid = 5,
+            uid = 100,
             margin = '10px 10px',
             size = '600px 400px',
             text = 'Hello, world!',
@@ -28,13 +28,13 @@ emu.atdrawd2d(function()
         print('1')
     end
     if ugui.button({
-            uid = 15,
+            uid = 200,
             margin = (80 + math.sin(os.clock() * 5) * 10) .. 'px ' .. (80 + math.cos(os.clock() * 5) * 10) .. 'px',
             size = '100px 50px',
             text = tostring(index),
         }, function()
             ugui.button({
-                uid = 999999,
+                uid = 300,
                 margin = '10px 10px',
                 size = '20px 20px',
                 text = '😀',
@@ -43,7 +43,7 @@ emu.atdrawd2d(function()
         index = index + 1
     end
     if ugui.button({
-            uid = 25,
+            uid = 400,
             margin = '80px 140px',
             size = '100px 30px',
             text = 'Hello, world!',
@@ -52,55 +52,55 @@ emu.atdrawd2d(function()
         print('3')
     end
     checked = ugui.toggle_button({
-        uid = 35,
+        uid = 500,
         margin = '80px 200px',
         size = '200px 50px',
         text = 'Hello, world!',
         is_checked = checked,
     })
     text = ugui.textbox({
-        uid = 45,
+        uid = 600,
         margin = '20px 20px',
         size = '100px 20px',
         text = text,
     })
     position = ugui.joystick({
-        uid = 55,
+        uid = 700,
         margin = '20px 200px',
         size = '150px 150px',
         position = position,
     })
 
     index = ugui.listbox({
-        uid = 65,
+        uid = 800,
         margin = '20px 300px',
         size = '120px 200px',
         items = items,
         selected_index = index,
     })
     value = ugui.scrollbar({
-        uid = 75,
+        uid = 900,
         margin = '230px 10px',
         size = '20px 300px',
         value = value,
         ratio = 0.2,
     })
     value = ugui.scrollbar({
-        uid = 85,
+        uid = 1000,
         margin = '280px 10px',
         size = '300px 20px',
         value = value,
         ratio = 0.2,
     })
     index = ugui.combobox({
-        uid = 95,
+        uid = 1100,
         margin = '200px 300px',
         size = '160px 23px',
         items = items,
         selected_index = index,
     })
     ugui.joystick({
-        uid = 105,
+        uid = 1200,
         margin = '200px 350px',
         size = '150px 150px',
         position = {
@@ -114,7 +114,7 @@ emu.atdrawd2d(function()
         },
     })
     ugui.joystick({
-        uid = 115,
+        uid = 1300,
         margin = '355px 350px',
         size = '150px 150px',
         position = {
@@ -123,7 +123,7 @@ emu.atdrawd2d(function()
         },
     })
     index = ugui.carrousel_button({
-        uid = 125,
+        uid = 1400,
         margin = '380px 300px',
         size = '160px 23px',
         items = items,
@@ -131,7 +131,7 @@ emu.atdrawd2d(function()
     })
 
     num = ugui.numberbox({
-        uid = 135,
+        uid = 1500,
         margin = '350px 50px',
         size = '160px 23px',
         value = num,
@@ -146,7 +146,7 @@ emu.atdrawd2d(function()
         font_size = ugui.standard_styler.params.font_size,
     })
     num2 = ugui.numberbox({
-        uid = 145,
+        uid = 1600,
         margin = '350px 75px',
         size = '160px 23px',
         value = num2,
@@ -162,7 +162,7 @@ emu.atdrawd2d(function()
         font_size = ugui.standard_styler.params.font_size,
     })
     ugui.label({
-        uid = 155,
+        uid = 1700,
         margin = '350px 150px',
         size = '160px 23px',
         text = 'Hello World!',
@@ -171,7 +171,7 @@ emu.atdrawd2d(function()
         font_size = 24,
     })
     ugui.label({
-        uid = 165,
+        uid = 1800,
         margin = '350px 180px',
         size = '160px 23px',
         text = 'Hello World!',
@@ -181,7 +181,7 @@ emu.atdrawd2d(function()
         hittestable = true,
     })
     index = ugui.combobox({
-        uid = 175,
+        uid = 1900,
         margin = '350px 230px',
         size = '160px 23px',
         items = items,
@@ -189,89 +189,89 @@ emu.atdrawd2d(function()
         editable = true,
     })
     ugui.listbox({
-        uid = 185,
+        uid = 2000,
         margin = '560px 230px',
         size = '160px 160px',
         items = {},
         selected_index = 1,
     })
     ugui.listbox({
-        uid = 195,
+        uid = 2100,
         margin = '560px 360px',
         size = '160px 160px',
         items = {'a'},
         selected_index = nil,
     })
     if ugui.button({
-            uid = 210,
+            uid = 2200,
             margin = '620px 10px',
             size = '200px 200px',
             text = '',
         }, function()
             ugui.button({
-                uid = 220,
+                uid = 2300,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'top left',
             })
             ugui.button({
-                uid = 230,
+                uid = 2400,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'top center',
                 align = 'center top',
             })
             ugui.button({
-                uid = 240,
+                uid = 2500,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'top right',
                 align = 'right top',
             })
             ugui.button({
-                uid = 250,
+                uid = 2600,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'bottom left',
                 align = 'left bottom',
             })
             ugui.button({
-                uid = 260,
+                uid = 2700,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'bottom center',
                 align = 'center bottom',
             })
             ugui.button({
-                uid = 270,
+                uid = 2800,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'bottom right',
                 align = 'right bottom',
             })
             ugui.button({
-                uid = 280,
+                uid = 2900,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'left center',
                 align = 'left center',
             })
             ugui.button({
-                uid = 290,
+                uid = 3000,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'right center',
                 align = 'right center',
             })
             ugui.button({
-                uid = 300,
+                uid = 3100,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'center',
                 align = 'center',
             })
             ugui.button({
-                uid = 310,
+                uid = 3200,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'smooth',
@@ -281,19 +281,19 @@ emu.atdrawd2d(function()
         index = index + 1
     end
     if ugui.button({
-            uid = 320,
+            uid = 3300,
             margin = '650px 220px',
             size = '200px',
             text = '',
             is_enabled = false,
         }, function()
             ugui.button({
-                uid = 330,
+                uid = 3400,
                 text = 'half width',
                 size = '0.5 23px',
             })
             ugui.button({
-                uid = 340,
+                uid = 3500,
                 text = 'half\nheight',
                 size = '23px 0.5',
                 align = '50% 100%',
