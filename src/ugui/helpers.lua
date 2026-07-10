@@ -328,35 +328,32 @@ end
 
 ---Parses and resolves a SmartUnit.
 ---@param expr string
----@param node SceneNode
 ---@param axis '"x"'|'"y"'
+---@param parent_size number?
+---@param natural_basis number?
 ---@return number
-local function resolve_unit(expr, node, axis)
-    local parent = node.parent and node.parent.control.rectangle
+local function resolve_unit(expr, axis, parent_size, natural_basis)
+    local function get_parent_basis()
+        local basis = parent_size
+        ugui.internal.assert(basis ~= nil, 'fractional unit requires parent basis')
+        ---@cast basis number
 
-    local function parent_basis()
-        ugui.internal.assert(parent, 'fractional unit requires parent node')
-
-        return axis == 'x'
-            and parent.width
-            or parent.height
+        return basis
     end
 
-    local function natural_basis()
-        local natural = ugui.internal.control_data[node.control.uid].natural_size
+    local function get_natural_basis()
+        local basis = natural_basis
+        ugui.internal.assert(basis ~= nil, 'auto unit requires natural_size')
+        ---@cast basis number
 
-        ugui.internal.assert(natural, 'auto unit requires natural_size')
-
-        return axis == 'x'
-            and natural.x
-            or natural.y
+        return basis
     end
 
     local s = expr:gsub('^%s+', ''):gsub('%s+$', '')
 
     -- auto
     if s == 'auto' then
-        return natural_basis()
+        return get_natural_basis()
     end
 
     -- px
@@ -364,7 +361,10 @@ local function resolve_unit(expr, node, axis)
         local px = s:match('^([%-%d%.]+)px$')
 
         if px then
-            return tonumber(px)
+            local value = tonumber(px)
+            ugui.internal.assert(value ~= nil, string.format('invalid pixel SmartUnit: %q', s))
+            ---@cast value number
+            return value
         end
     end
 
@@ -373,18 +373,20 @@ local function resolve_unit(expr, node, axis)
         local n = tonumber(s)
 
         if n then
-            return parent_basis() * n
+            return get_parent_basis() * n
         end
     end
 
     ugui.internal.assert(false, string.format('unsupported SmartUnit: %q', s))
+    return 0
 end
 
 ---Resolves a SmartUnit2 to a Vector2.
 ---@param unit SmartUnit2
----@param node SceneNode
+---@param parent_size Vector2?
+---@param natural_size Vector2?
 ---@return Vector2
-ugui.internal.resolve_unit2 = function(unit, node)
+ugui.internal.resolve_unit2 = function(unit, parent_size, natural_size)
     local a, b = unit:match('^(%S+)%s+(%S+)$')
 
     if not a then
@@ -393,8 +395,8 @@ ugui.internal.resolve_unit2 = function(unit, node)
     end
 
     return {
-        x = resolve_unit(a, node, 'x'),
-        y = resolve_unit(b, node, 'y'),
+        x = resolve_unit(a, 'x', parent_size and parent_size.x, natural_size and natural_size.x),
+        y = resolve_unit(b, 'y', parent_size and parent_size.y, natural_size and natural_size.y),
     }
 end
 
