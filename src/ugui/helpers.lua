@@ -326,7 +326,7 @@ ugui.internal.print_tree = function(node)
     print('')
 end
 
----Parses and resolves a SmartUnit expression.
+---Parses and resolves a SmartUnit.
 ---@param expr string
 ---@param node SceneNode
 ---@param axis '"x"'|'"y"'
@@ -335,7 +335,7 @@ local function resolve_unit(expr, node, axis)
     local parent = node.parent and node.parent.control.rectangle
 
     local function parent_basis()
-        ugui.internal.assert(parent, 'percentage unit requires parent node')
+        ugui.internal.assert(parent, 'fractional unit requires parent node')
 
         return axis == 'x'
             and parent.width
@@ -352,191 +352,32 @@ local function resolve_unit(expr, node, axis)
             or natural.y
     end
 
-    local function trim(s)
-        return (s:gsub('^%s+', ''):gsub('%s+$', ''))
+    local s = expr:gsub('^%s+', ''):gsub('%s+$', '')
+
+    -- auto
+    if s == 'auto' then
+        return natural_basis()
     end
 
-    local function split_args(s)
-        local args = {}
-        local depth = 0
-        local start = 1
+    -- px
+    do
+        local px = s:match('^([%-%d%.]+)px$')
 
-        for i = 1, #s do
-            local c = s:sub(i, i)
-
-            if c == '(' then
-                depth = depth + 1
-            elseif c == ')' then
-                depth = depth - 1
-            elseif c == ',' and depth == 0 then
-                table.insert(args, trim(s:sub(start, i - 1)))
-                start = i + 1
-            end
-        end
-
-        table.insert(args, trim(s:sub(start)))
-
-        return args
-    end
-
-    local function find_operator(s, operators)
-        local depth = 0
-
-        -- right-to-left for correct precedence grouping
-        for i = #s, 1, -1 do
-            local c = s:sub(i, i)
-
-            if c == ')' then
-                depth = depth + 1
-            elseif c == '(' then
-                depth = depth - 1
-            elseif depth == 0 then
-                for _, op in ipairs(operators) do
-                    if c == op then
-                        -- skip unary minus
-                        if op == '-' then
-                            local prev = s:sub(i - 1, i - 1)
-
-                            if i == 1 or prev:match('[%+%-%*/%(,]') then
-                                goto continue
-                            end
-                        end
-
-                        return i, op
-                    end
-                end
-            end
-
-            ::continue::
+        if px then
+            return tonumber(px)
         end
     end
 
-    local function eval(s)
-        s = trim(s)
+    -- parent-relative fraction
+    do
+        local n = tonumber(s)
 
-        -- auto
-        if s == 'auto' then
-            return natural_basis()
+        if n then
+            return parent_basis() * n
         end
-
-        -- min(...)
-        do
-            local inner = s:match('^min%((.*)%)$')
-
-            if inner then
-                local args = split_args(inner)
-
-                ugui.internal.assert(#args == 2, 'min() expects 2 arguments')
-
-                return math.min(
-                    eval(args[1]),
-                    eval(args[2])
-                )
-            end
-        end
-
-        -- max(...)
-        do
-            local inner = s:match('^max%((.*)%)$')
-
-            if inner then
-                local args = split_args(inner)
-
-                ugui.internal.assert(#args == 2, 'max() expects 2 arguments')
-
-                return math.max(
-                    eval(args[1]),
-                    eval(args[2])
-                )
-            end
-        end
-
-        -- clamp(...)
-        do
-            local inner = s:match('^clamp%((.*)%)$')
-
-            if inner then
-                local args = split_args(inner)
-
-                ugui.internal.assert(#args == 3, 'clamp() expects 3 arguments')
-
-                local v = eval(args[1])
-                local mn = eval(args[2])
-                local mx = eval(args[3])
-
-                return math.max(mn, math.min(mx, v))
-            end
-        end
-
-        -- parenthesized expression
-        if s:match('^%b()$') then
-            return eval(s:sub(2, -2))
-        end
-
-        -- + -
-        do
-            local i, op = find_operator(s, {'+', '-'})
-
-            if i then
-                local lhs = eval(s:sub(1, i - 1))
-                local rhs = eval(s:sub(i + 1))
-
-                return op == '+'
-                    and (lhs + rhs)
-                    or (lhs - rhs)
-            end
-        end
-
-        -- * /
-        do
-            local i, op = find_operator(s, {'*', '/'})
-
-            if i then
-                local lhs = eval(s:sub(1, i - 1))
-                local rhs = eval(s:sub(i + 1))
-
-                return op == '*'
-                    and (lhs * rhs)
-                    or (lhs / rhs)
-            end
-        end
-
-        -- px
-        do
-            local px = s:match('^([%-%d%.]+)px$')
-
-            if px then
-                return tonumber(px)
-            end
-        end
-
-        -- %
-        do
-            local percent = s:match('^([%-%d%.]+)%%$')
-
-            if percent then
-                return parent_basis() * (tonumber(percent) / 100)
-            end
-        end
-
-        -- zero literal
-        if s == '0' then
-            return 0
-        end
-
-        -- raw number
-        do
-            local n = tonumber(s)
-
-            if n then
-                return n
-            end
-        end
-
-        ugui.internal.assert(false, string.format('unsupported SmartUnit: %q', s))
     end
 
-    return eval(expr)
+    ugui.internal.assert(false, string.format('unsupported SmartUnit: %q', s))
 end
 
 ---Resolves a SmartUnit2 to a Vector2.

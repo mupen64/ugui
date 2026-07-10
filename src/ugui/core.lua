@@ -26,20 +26,7 @@
 ---
 ---    `"auto"` - natural size
 ---    `"{}px"` - absolute pixels (e.g. `"100px"`)
----    `"{}%"` - percentage of parent size (e.g. `"50%"`)
----
----Zero literals are treated as `0px` (e.g. `0` => `0px`)
----
----Basic arithmetic operations are also supported: `+`, `-`, `*`, `/`.
----
----    `100px-3%`
----    `auto*10px`
----
----Constraints can also be applied:
----
----    `min(auto,5px)`
----    `max(auto,5px)`
----    `clamp(auto,5px,10px)`
+---    `"{}"` - fraction of parent size (e.g. `"0.5"`)
 
 
 ---@alias SmartUnit2
@@ -55,7 +42,7 @@
 ---
 ---    `100px 100px`
 ---    `100px` (expands to `100px 100px`)
----    `auto 50%`
+---    `auto 0.5`
 
 ---@alias SmartAlignment
 ---| "0"

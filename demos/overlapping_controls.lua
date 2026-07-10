@@ -290,12 +290,12 @@ emu.atdrawd2d(function()
             ugui.button({
                 uid = 330,
                 text = 'half width',
-                size = '50% 23px',
+                size = '0.5 23px',
             })
             ugui.button({
                 uid = 340,
                 text = 'half\nheight',
-                size = '23px 50%',
+                size = '23px 0.5',
                 align = '50% 100%',
             })
         end) then

@@ -8,7 +8,7 @@ local pages = {
         ugui.button({
             uid = 10,
             text = '',
-            size = '30% 30%',
+            size = '0.3 0.3',
             align = 'center',
             padding = '20px',
         }, function()
@@ -125,7 +125,7 @@ emu.atdrawd2d(function()
 
     ugui.label({
         uid = 2,
-        size = '100% auto',
+        size = '1 auto',
         font_size = 24,
         text = string.format('Press left/right arrows to switch pages (%d/%d)', page, #pages),
         color = {r = 0, g = 0, b = 0},
