@@ -59,14 +59,14 @@ ugui.registry.menu = {
             data.dismissed = 2
         end
 
-        if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
+        if ugui.internal.is_mouse_just_down() and not BreitbandGraphics.is_point_inside_rectangle(ugui.internal.mouse_down_position, data.render_rect) then
             data.dismissed = 1
         end
 
         if ugui.internal.hovered_control == control.uid then
             reset_hovered_index_for_all_child_menus(control.uid, control.items)
 
-            local i = math.floor((ugui.internal.environment.mouse_position.y - control.rectangle.y) /
+            local i = math.floor((ugui.internal.environment.mouse_position.y - data.render_rect.y) /
                 ugui.standard_styler.params.menu_item.height) + 1
             data.hovered_index = ugui.internal.clamp(i, 1, #control.items)
         end
@@ -95,7 +95,8 @@ ugui.registry.menu = {
     end,
     ---@param control Menu
     draw = function(control)
-        ugui.standard_styler.draw_menu(control, control.rectangle)
+        local data = ugui.internal.control_data[control.uid]
+        ugui.standard_styler.draw_menu(control, data.render_rect)
     end,
 }
 

@@ -122,10 +122,10 @@ ugui.apply_nineslice = function(style)
             ugui.standard_styler.params.color_filter, 'linear')
     end
 
-    ugui.standard_styler.draw_raised_frame = function(control, visual_state)
-        local key = ugui.internal.params_to_key('raised_frame', control.rectangle, visual_state)
+    ugui.standard_styler.draw_raised_frame = function(rectangle, visual_state)
+        local key = ugui.internal.params_to_key('raised_frame', rectangle, visual_state)
 
-        ugui.internal.cached_draw(key, control.rectangle, function(eff_rectangle)
+        ugui.internal.cached_draw(key, rectangle, function(eff_rectangle)
             BreitbandGraphics.draw_image_nineslice(eff_rectangle,
                 style.button.states[visual_state].source,
                 style.button.states[visual_state].center,
@@ -133,7 +133,7 @@ ugui.apply_nineslice = function(style)
         end)
     end
 
-    ugui.standard_styler.draw_edit_frame = function(control, rectangle,
+    ugui.standard_styler.draw_edit_frame = function(rectangle,
                                                     visual_state)
         local key = ugui.internal.params_to_key('edit_frame', rectangle, visual_state)
 

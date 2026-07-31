@@ -25,11 +25,11 @@ ugui.registry.scrollbar = {
     logic = function(control, data)
         data.value = control.value
 
-        local is_horizontal = control.rectangle.width > control.rectangle.height
+        local is_horizontal = data.render_rect.width > data.render_rect.height
 
         local thumb_size = is_horizontal
-            and control.rectangle.width * control.ratio
-            or control.rectangle.height * control.ratio
+            and data.render_rect.width * control.ratio
+            or data.render_rect.height * control.ratio
 
         if ugui.internal.mouse_captured_control == control.uid then
             local mouse_pos = ugui.internal.environment.mouse_position
@@ -37,16 +37,16 @@ ugui.registry.scrollbar = {
 
             if data.drag_offset == nil then
                 if is_horizontal then
-                    local thumb_start = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.width - thumb_size)
-                    data.drag_offset = mouse_down.x - (control.rectangle.x + thumb_start)
+                    local thumb_start = ugui.internal.remap(data.value, 0, 1, 0, data.render_rect.width - thumb_size)
+                    data.drag_offset = mouse_down.x - (data.render_rect.x + thumb_start)
                 else
-                    local thumb_start = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.height - thumb_size)
-                    data.drag_offset = mouse_down.y - (control.rectangle.y + thumb_start)
+                    local thumb_start = ugui.internal.remap(data.value, 0, 1, 0, data.render_rect.height - thumb_size)
+                    data.drag_offset = mouse_down.y - (data.render_rect.y + thumb_start)
                 end
             end
 
-            local current_pos = is_horizontal and (mouse_pos.x - control.rectangle.x - data.drag_offset) or (mouse_pos.y - control.rectangle.y - data.drag_offset)
-            local track_length = (is_horizontal and control.rectangle.width or control.rectangle.height) - thumb_size
+            local current_pos = is_horizontal and (mouse_pos.x - data.render_rect.x - data.drag_offset) or (mouse_pos.y - data.render_rect.y - data.drag_offset)
+            local track_length = (is_horizontal and data.render_rect.width or data.render_rect.height) - thumb_size
 
             data.value = ugui.internal.clamp(current_pos / track_length, 0, 1)
         else
@@ -63,27 +63,27 @@ ugui.registry.scrollbar = {
     ---@param control ScrollBar
     draw = function(control)
         local data = ugui.internal.control_data[control.uid]
-        local is_horizontal = control.rectangle.width > control.rectangle.height
+        local is_horizontal = data.render_rect.width > data.render_rect.height
 
         ---@type Rectangle
         local thumb_rectangle
 
         if is_horizontal then
-            local scrollbar_width = control.rectangle.width * control.ratio
-            local scrollbar_x = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.width - scrollbar_width)
+            local scrollbar_width = data.render_rect.width * control.ratio
+            local scrollbar_x = ugui.internal.remap(data.value, 0, 1, 0, data.render_rect.width - scrollbar_width)
             thumb_rectangle = {
-                x = control.rectangle.x + scrollbar_x,
-                y = control.rectangle.y,
+                x = data.render_rect.x + scrollbar_x,
+                y = data.render_rect.y,
                 width = scrollbar_width,
-                height = control.rectangle.height,
+                height = data.render_rect.height,
             }
         else
-            local scrollbar_height = control.rectangle.height * control.ratio
-            local scrollbar_y = ugui.internal.remap(data.value, 0, 1, 0, control.rectangle.height - scrollbar_height)
+            local scrollbar_height = data.render_rect.height * control.ratio
+            local scrollbar_y = ugui.internal.remap(data.value, 0, 1, 0, data.render_rect.height - scrollbar_height)
             thumb_rectangle = {
-                x = control.rectangle.x,
-                y = control.rectangle.y + scrollbar_y,
-                width = control.rectangle.width,
+                x = data.render_rect.x,
+                y = data.render_rect.y + scrollbar_y,
+                width = data.render_rect.width,
                 height = scrollbar_height,
             }
         end

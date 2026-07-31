@@ -46,10 +46,10 @@ ugui.spinner = function(control, fn)
     end
 
     local textbox_rect = {
-        x = control.rectangle.x,
-        y = control.rectangle.y,
-        width = control.rectangle.width - ugui.standard_styler.params.spinner.button_size * 2,
-        height = control.rectangle.height,
+        x = data.render_rect.x,
+        y = data.render_rect.y,
+        width = data.render_rect.width - ugui.standard_styler.params.spinner.button_size * 2,
+        height = data.render_rect.height,
     }
 
     local new_text = ugui.textbox({
@@ -78,11 +78,11 @@ ugui.spinner = function(control, fn)
                 uid = button_1_uid,
                 is_enabled = not (value == control.minimum_value),
                 rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
+                    x = data.render_rect.x + data.render_rect.width -
                         ugui.standard_styler.params.spinner.button_size * 2,
-                    y = control.rectangle.y,
+                    y = data.render_rect.y,
                     width = ugui.standard_styler.params.spinner.button_size,
-                    height = control.rectangle.height,
+                    height = data.render_rect.height,
                 },
                 text = '-',
             }))
@@ -94,11 +94,11 @@ ugui.spinner = function(control, fn)
                 uid = button_2_uid,
                 is_enabled = not (value == control.maximum_value),
                 rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
+                    x = data.render_rect.x + data.render_rect.width -
                         ugui.standard_styler.params.spinner.button_size,
-                    y = control.rectangle.y,
+                    y = data.render_rect.y,
                     width = ugui.standard_styler.params.spinner.button_size,
-                    height = control.rectangle.height,
+                    height = data.render_rect.height,
                 },
                 text = '+',
             }))
@@ -110,11 +110,11 @@ ugui.spinner = function(control, fn)
                 uid = button_3_uid,
                 is_enabled = not (value == control.maximum_value),
                 rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
+                    x = data.render_rect.x + data.render_rect.width -
                         ugui.standard_styler.params.spinner.button_size * 2,
-                    y = control.rectangle.y,
+                    y = data.render_rect.y,
                     width = ugui.standard_styler.params.spinner.button_size * 2,
-                    height = control.rectangle.height / 2,
+                    height = data.render_rect.height / 2,
                 },
                 text = '+',
             }))
@@ -126,11 +126,11 @@ ugui.spinner = function(control, fn)
                 uid = button_4_uid,
                 is_enabled = not (value == control.minimum_value),
                 rectangle = {
-                    x = control.rectangle.x + control.rectangle.width -
+                    x = data.render_rect.x + data.render_rect.width -
                         ugui.standard_styler.params.spinner.button_size * 2,
-                    y = control.rectangle.y + control.rectangle.height / 2,
+                    y = data.render_rect.y + data.render_rect.height / 2,
                     width = ugui.standard_styler.params.spinner.button_size * 2,
-                    height = control.rectangle.height / 2,
+                    height = data.render_rect.height / 2,
                 },
                 text = '-',
             }))

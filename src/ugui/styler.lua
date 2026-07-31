@@ -491,33 +491,26 @@ ugui.standard_styler = {
         end
     end,
 
-    ---Draws a raised frame with the specified parameters.
-    ---@param control Control The control table.
-    ---@param visual_state VisualState The control's visual state.
-    draw_raised_frame = function(control, visual_state)
-        local render_rect = ugui.internal.control_data[control.uid].render_rect
-
-        BreitbandGraphics.fill_rectangle(render_rect,
+    ---@param rectangle Rectangle
+    ---@param visual_state VisualState
+    draw_raised_frame = function(rectangle, visual_state)
+        BreitbandGraphics.fill_rectangle(rectangle,
             ugui.standard_styler.params.button.border[visual_state])
-        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, -1),
+        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(rectangle, -1),
             ugui.standard_styler.params.button.back[visual_state])
     end,
 
-    ---Draws an edit frame with the specified parameters.
-    ---@param control Control The control table.
-    ---@param visual_state VisualState The control's visual state.
-    draw_edit_frame = function(control, rectangle, visual_state)
-        local render_rect = ugui.internal.control_data[control.uid].render_rect
-
-        BreitbandGraphics.fill_rectangle(render_rect,
+    ---@param rectangle Rectangle
+    ---@param visual_state VisualState
+    draw_edit_frame = function(rectangle, visual_state)
+        BreitbandGraphics.fill_rectangle(rectangle,
             ugui.standard_styler.params.textbox.border[visual_state])
-        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, -1),
+        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(rectangle, -1),
             ugui.standard_styler.params.textbox.back[visual_state])
     end,
 
-    ---Draws a list frame with the specified parameters.
-    ---@param rectangle Rectangle The control bounds.
-    ---@param visual_state VisualState The control's visual state.
+    ---@param rectangle Rectangle
+    ---@param visual_state VisualState
     draw_list_frame = function(rectangle, visual_state)
         BreitbandGraphics.fill_rectangle(rectangle,
             ugui.standard_styler.params.listbox.border[visual_state])
@@ -849,7 +842,8 @@ ugui.standard_styler = {
             visual_state = ugui.visual_states.active
         end
 
-        ugui.standard_styler.draw_raised_frame(control, visual_state)
+        local data = ugui.internal.control_data[control.uid]
+        ugui.standard_styler.draw_raised_frame(data.render_rect, visual_state)
     end,
 
     ---Draws a ToggleButton with the specified parameters.
@@ -881,7 +875,7 @@ ugui.standard_styler = {
             visual_state = ugui.visual_states.active
         end
 
-        ugui.standard_styler.draw_edit_frame(control, render_rect, visual_state)
+        ugui.standard_styler.draw_edit_frame(render_rect, visual_state)
         BreitbandGraphics.push_clip(render_rect)
 
         local should_visualize_selection =
@@ -983,6 +977,8 @@ ugui.standard_styler = {
     ---@param control Joystick The control table.
     draw_joystick = function(control)
         local visual_state = ugui.get_visual_state(control)
+        local data = ugui.internal.control_data[control.uid]
+
         local x = control.position and control.position.x or 0
         local y = control.position and control.position.y or 0
         local mag = control.mag or 0
@@ -993,7 +989,7 @@ ugui.standard_styler = {
             visual_state = ugui.visual_states.normal
         end
 
-        ugui.standard_styler.draw_raised_frame(control, visual_state)
+        ugui.standard_styler.draw_raised_frame(data.render_rect, visual_state)
         ugui.standard_styler.draw_joystick_inner(render_rect, visual_state, {
             x = ugui.internal.remap(ugui.internal.clamp(x, -128, 128), -128, 128,
                 render_rect.x, render_rect.x + render_rect.width),
@@ -1093,7 +1089,7 @@ ugui.standard_styler = {
             visual_state = ugui.visual_states.active
         end
 
-        ugui.standard_styler.draw_raised_frame(control, visual_state)
+        ugui.standard_styler.draw_raised_frame(data.render_rect, visual_state)
     end,
 
     ---Draws a ListBox with the specified parameters.

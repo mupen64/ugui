@@ -23,8 +23,8 @@ ugui.registry.carrousel_button = {
         data.selected_index = control.selected_index
 
         if ugui.internal.clicked_control == control.uid then
-            local relative_x = ugui.internal.environment.mouse_position.x - control.rectangle.x
-            if relative_x > control.rectangle.width / 2 then
+            local relative_x = ugui.internal.environment.mouse_position.x - data.render_rect.x
+            if relative_x > data.render_rect.width / 2 then
                 data.selected_index = data.selected_index + 1
                 if data.selected_index > #control.items then
                     data.selected_index = 1

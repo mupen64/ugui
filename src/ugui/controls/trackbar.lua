@@ -20,12 +20,12 @@ ugui.registry.trackbar = {
         data.value = control.value
 
         if ugui.internal.mouse_captured_control == control.uid then
-            if control.rectangle.width > control.rectangle.height then
-                data.value = (ugui.internal.environment.mouse_position.x - control.rectangle.x) / control.rectangle
+            if data.render_rect.width > data.render_rect.height then
+                data.value = (ugui.internal.environment.mouse_position.x - data.render_rect.x) / data.render_rect
                     .width
             else
-                data.value = (ugui.internal.environment.mouse_position.y - control.rectangle.y) /
-                    control.rectangle.height
+                data.value = (ugui.internal.environment.mouse_position.y - data.render_rect.y) /
+                    data.render_rect.height
             end
         end
 
