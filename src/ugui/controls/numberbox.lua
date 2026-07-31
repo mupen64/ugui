@@ -45,7 +45,7 @@ ugui.registry.numberbox = {
                     font_size,
                     font_name).width
 
-                local left = control.rectangle.width / 2 - full_width / 2
+                local left = data.render_rect.width / 2 - full_width / 2
                 positions[#positions + 1] = width + left
             end
 
@@ -196,23 +196,23 @@ ugui.numberbox = function(control, fn)
     local data = ugui.internal.control_data[control.uid]
 
     if control.show_negative then
-        local negative_button_size = control.rectangle.width / 8
+        local negative_button_size = data.render_rect.width / 8
 
-        control.rectangle = {
-            x = control.rectangle.x + negative_button_size,
-            y = control.rectangle.y,
-            width = control.rectangle.width - negative_button_size,
-            height = control.rectangle.height,
+        data.render_rect = {
+            x = data.render_rect.x + negative_button_size,
+            y = data.render_rect.y,
+            width = data.render_rect.width - negative_button_size,
+            height = data.render_rect.height,
         }
 
         if ugui.button({
                 uid = control.uid + 1,
                 is_enabled = true,
                 rectangle = {
-                    x = control.rectangle.x - negative_button_size,
-                    y = control.rectangle.y,
+                    x = data.render_rect.x - negative_button_size,
+                    y = data.render_rect.y,
                     width = negative_button_size,
-                    height = control.rectangle.height,
+                    height = data.render_rect.height,
                 },
                 text = data.value >= 0 and '+' or '-',
             }) then
