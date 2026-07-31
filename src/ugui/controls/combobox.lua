@@ -176,31 +176,12 @@ ugui.combobox = function(control, fn)
             data.filtered_to_original = nil
         end
 
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-
-        local width = data.render_rect.width
-        if data.render_rect.x + width > ugui.internal.environment.window_size.x then
-            width = ugui.internal.environment.window_size.x - data.render_rect.x
-        end
-
-        local height = content_bounds.height
-        if data.render_rect.y + height > ugui.internal.environment.window_size.y then
-            height = ugui.internal.environment.window_size.y - data.render_rect.y -
-                ugui.standard_styler.params.listbox_item.height * 2
-        end
-
-        local list_rect = {
-            x = data.render_rect.x,
-            y = data.render_rect.y + data.render_rect.height,
-            width = width,
-            height = height,
-        }
-
         local restore = ugui.internal.keyboard_captured_control
         ugui.internal.keyboard_captured_control = listbox_uid
         local listbox = {
             uid = listbox_uid,
-            rectangle = list_rect,
+            margin = string.format('%fpx %fpx', data.render_rect.x, data.render_rect.y + data.render_rect.height),
+            size = string.format('%fpx auto', data.render_rect.width), -- FIXME: This needs overflow prevention
             items = items_to_show,
             selected_index = data.selected_index,
             plaintext = control.plaintext,
