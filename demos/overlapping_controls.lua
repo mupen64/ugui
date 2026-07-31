@@ -219,56 +219,56 @@ emu.atdrawd2d(function()
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'top center',
-                align = 'center top',
+                align = '0.5 0',
             })
             ugui.button({
                 uid = 2500,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'top right',
-                align = 'right top',
+                align = '1 0',
             })
             ugui.button({
                 uid = 2600,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'bottom left',
-                align = 'left bottom',
+                align = '0 1',
             })
             ugui.button({
                 uid = 2700,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'bottom center',
-                align = 'center bottom',
+                align = '0.5 1',
             })
             ugui.button({
                 uid = 2800,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'bottom right',
-                align = 'right bottom',
+                align = '1 1',
             })
             ugui.button({
                 uid = 2900,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'left center',
-                align = 'left center',
+                align = '0 0.5',
             })
             ugui.button({
                 uid = 3000,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'right center',
-                align = 'right center',
+                align = '1 0.5',
             })
             ugui.button({
                 uid = 3100,
                 margin = '0px 0px',
                 size = '50px 23px',
                 text = 'center',
-                align = 'center',
+                align = '0.5',
             })
             ugui.button({
                 uid = 3200,
@@ -296,7 +296,7 @@ emu.atdrawd2d(function()
                 uid = 3500,
                 text = 'half\nheight',
                 size = '23px 0.5',
-                align = '50% 100%',
+                align = '0.5 1',
             })
         end) then
         index = index + 1

@@ -72,20 +72,22 @@ ugui.carrousel_button = function(control, fn)
             uid = label_1_uid,
             text = '[icon:arrow_left]',
             margin = string.format('%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
-            align = '0% 50%',
+            align = '0 0.5',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
+
         ugui.label({
             uid = label_2_uid,
             text = text,
-            align = '50%',
+            align = '0.5',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
+
         ugui.label({
             uid = label_3_uid,
             text = '[icon:arrow_right]',
             margin = string.format('-%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
-            align = '100% 50%',
+            align = '1 0.5',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
         if fn then

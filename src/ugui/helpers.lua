@@ -402,52 +402,15 @@ end
 
 ---Parses and resolves a SmartAlignment.
 ---@param value string
----@param axis '"x"'|'"y"'
 ---@return number
-local function resolve_alignment(value, axis)
+local function resolve_alignment(value)
     value = value:gsub('^%s+', ''):gsub('%s+$', '')
 
-    -- directional aliases
-    if value == 'left' then
-        ugui.internal.assert(axis == 'x', '`left` is only valid on the X axis')
-        return 0
-    end
-
-    if value == 'right' then
-        ugui.internal.assert(axis == 'x', '`right` is only valid on the X axis')
-        return 1
-    end
-
-    if value == 'top' then
-        ugui.internal.assert(axis == 'y', '`top` is only valid on the Y axis')
-        return 0
-    end
-
-    if value == 'bottom' then
-        ugui.internal.assert(axis == 'y', '`bottom` is only valid on the Y axis')
-        return 1
-    end
-
-    if value == 'center' then
-        return 0.5
-    end
-
-    -- percentage
-    do
-        local percent = value:match('^([%-%d%.]+)%%$')
-
-        if percent then
-            return tonumber(percent) / 100
-        end
-    end
-
     -- raw normalized number
-    do
-        local n = tonumber(value)
+    local n = tonumber(value)
 
-        if n then
-            return n
-        end
+    if n then
+        return n
     end
 
     ugui.internal.assert(
@@ -466,20 +429,11 @@ ugui.internal.resolve_alignment2 = function(value)
 
     if not a then
         a = value
-
-        -- directional single-value expansion
-        if value == 'left' or value == 'right' then
-            b = 'top'
-        elseif value == 'top' or value == 'bottom' then
-            b = value
-            a = 'left'
-        else
-            b = value
-        end
+        b = value
     end
 
     return {
-        x = resolve_alignment(a, 'x'),
-        y = resolve_alignment(b, 'y'),
+        x = resolve_alignment(a),
+        y = resolve_alignment(b),
     }
 end

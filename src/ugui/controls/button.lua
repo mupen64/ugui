@@ -44,7 +44,7 @@ ugui.button = function(control, fn)
         ugui.label({
             uid = control.uid + 1,
             text = control.text,
-            align = '50%',
+            align = '0.5',
             color = ugui.standard_styler.params.button.text[visual_state],
         })
         if fn then

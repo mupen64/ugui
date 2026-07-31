@@ -46,46 +46,22 @@
 
 ---@alias SmartAlignment
 ---| "0"
----| "0%"
 ---| "0.5"
----| "50%"
 ---| "1"
----| "100%"
----| "left"
----| "right"
----| "top"
----| "bottom"
----| "center"
 ---| string
 ---An alignment unit that specifies how a control is aligned within its parent.
 ---
----    `0`, `0%` - start of parent
----    `0.5`, `50%` - center of parent
----    `1`, `100%` - end of parent
+---    `0` - start of parent
+---    `0.5` - center of parent
+---    `1` - end of parent
 
 ---@alias SmartAlignment2
 ---| "0"
 ---| "0 0"
----| "0%"
----| "0% 0%"
 ---| "0.5"
 ---| "0.5 0.5"
----| "50%"
----| "50% 50%"
 ---| "1"
 ---| "1 1"
----| "100%"
----| "100% 100%"
----| "left"
----| "left left"
----| "right"
----| "right right"
----| "top"
----| "top top"
----| "bottom"
----| "bottom bottom"
----| "center"
----| "center center"
 ---| string
 ---
 ---A two-dimensional alignment unit that is composed of two SmartAlignments.
@@ -94,11 +70,8 @@
 ---
 ---    `0 0` - top-left corner
 ---    `0` - top-left corner
----    `50%`, `center`, `center center` - center
----    `left`, `left left` - left edge
----    `right`, `right right` - right edge
----    `top`, `top top` - top edge
----    `bottom`, `bottom bottom` - bottom edge
+---    `0.5`, `0.5 0.5` - center
+---    `1 1` - bottom-right corner
 
 ---@alias UID number
 ---Unique identifier for a control. Must be unique within a frame.

@@ -9,7 +9,7 @@ local pages = {
             uid = 100,
             text = '',
             size = '0.3 0.3',
-            align = 'center',
+            align = '0.5',
             padding = '20px',
         }, function()
             ugui.button({
@@ -19,43 +19,43 @@ local pages = {
             ugui.button({
                 uid = 300,
                 text = 'top center',
-                align = 'center top',
+                align = '0.5 0',
             })
             ugui.button({
                 uid = 400,
                 text = 'top right',
-                align = 'right top',
+                align = '1 0',
             })
             ugui.button({
                 uid = 500,
                 text = 'center left',
-                align = 'left center',
+                align = '0 0.5',
             })
             ugui.button({
                 uid = 600,
                 text = 'center center',
-                align = 'center',
+                align = '0.5',
                 padding = '20px',
             })
             ugui.button({
                 uid = 700,
                 text = 'center right',
-                align = 'right center',
+                align = '1 0.5',
             })
             ugui.button({
                 uid = 800,
                 text = 'bottom left',
-                align = 'left bottom',
+                align = '0 1',
             })
             ugui.button({
                 uid = 900,
                 text = 'bottom center',
-                align = 'center bottom',
+                align = '0.5 1',
             })
             ugui.button({
                 uid = 1000,
                 text = 'bottom right',
-                align = 'right bottom',
+                align = '1 1',
             })
         end)
     end,
@@ -63,7 +63,7 @@ local pages = {
         _sl = _sl or 1
         _sl = ugui.listbox({
             uid = 1100,
-            align = 'center',
+            align = '0.5',
             items = {
                 'Item 1',
                 'Item 2',
@@ -78,7 +78,7 @@ local pages = {
         _sl2 = _sl2 or 1
         _sl2 = ugui.listbox({
             uid = 1200,
-            align = 'center',
+            align = '0.5',
             size = '130px 130px',
             horizontal_scroll = true,
             items = {
@@ -104,7 +104,7 @@ local pages = {
         _sl3 = _sl3 or 1
         _sl3 = ugui.combobox({
             uid = 1300,
-            align = 'center',
+            align = '0.5',
             padding = '40px 10px',
             items = {
                 'Item 1',
