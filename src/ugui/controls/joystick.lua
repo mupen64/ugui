@@ -37,11 +37,11 @@ ugui.registry.joystick = {
 
         if ugui.internal.mouse_captured_control == control.uid then
             data.position.x = ugui.internal.clamp(
-                ugui.internal.remap(ugui.internal.environment.mouse_position.x - control.rectangle.x, 0,
-                    control.rectangle.width, -128, 128), -128, 128)
+                ugui.internal.remap(ugui.internal.environment.mouse_position.x - data.render_rect.x, 0,
+                    data.render_rect.width, -128, 128), -128, 128)
             data.position.y = ugui.internal.clamp(
-                ugui.internal.remap(ugui.internal.environment.mouse_position.y - control.rectangle.y, 0,
-                    control.rectangle.height, -128, 128), -128, 128)
+                ugui.internal.remap(ugui.internal.environment.mouse_position.y - data.render_rect.y, 0,
+                    data.render_rect.height, -128, 128), -128, 128)
             if control.x_snap and data.position.x > -control.x_snap and data.position.x < control.x_snap then
                 data.position.x = 0
             end
@@ -55,7 +55,7 @@ ugui.registry.joystick = {
 
         return {
             primary = data.position,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Joystick
@@ -66,8 +66,9 @@ ugui.registry.joystick = {
 
 ---Places a Joystick.
 ---@param control Joystick The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return Vector2, Meta
-ugui.joystick = function(control)
-    local result = ugui.control(control, 'joystick')
+ugui.joystick = function(control, fn)
+    local result = ugui.control(control, 'joystick', fn)
     return result.primary, result.meta
 end

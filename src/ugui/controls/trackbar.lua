@@ -20,12 +20,12 @@ ugui.registry.trackbar = {
         data.value = control.value
 
         if ugui.internal.mouse_captured_control == control.uid then
-            if control.rectangle.width > control.rectangle.height then
-                data.value = (ugui.internal.environment.mouse_position.x - control.rectangle.x) / control.rectangle
+            if data.render_rect.width > data.render_rect.height then
+                data.value = (ugui.internal.environment.mouse_position.x - data.render_rect.x) / data.render_rect
                     .width
             else
-                data.value = (ugui.internal.environment.mouse_position.y - control.rectangle.y) /
-                    control.rectangle.height
+                data.value = (ugui.internal.environment.mouse_position.y - data.render_rect.y) /
+                    data.render_rect.height
             end
         end
 
@@ -35,7 +35,7 @@ ugui.registry.trackbar = {
 
         return {
             primary = data.value,
-            meta = { signal_change = data.signal_change },
+            meta = {signal_change = data.signal_change},
         }
     end,
     ---@param control Trackbar
@@ -46,8 +46,9 @@ ugui.registry.trackbar = {
 
 ---Places a Trackbar.
 ---@param control Trackbar The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return number, Meta # The trackbar's new value.
-ugui.trackbar = function(control)
-    local result = ugui.control(control, 'trackbar')
+ugui.trackbar = function(control, fn)
+    local result = ugui.control(control, 'trackbar', fn)
     return result.primary, result.meta
 end

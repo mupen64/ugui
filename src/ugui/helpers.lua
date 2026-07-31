@@ -72,7 +72,6 @@ ugui.internal.stable_sort = function(t, cmp)
     local function merge(left, right)
         local result = {}
         local i, j = 1, 1
-
         while i <= #left and j <= #right do
             -- If left < right, or they are "equal" (cmp false both ways),
             -- take from the left to preserve stability
@@ -84,7 +83,6 @@ ugui.internal.stable_sort = function(t, cmp)
                 j = j + 1
             end
         end
-
         while i <= #left do
             table.insert(result, left[i])
             i = i + 1
@@ -93,16 +91,21 @@ ugui.internal.stable_sort = function(t, cmp)
             table.insert(result, right[j])
             j = j + 1
         end
-
         return result
     end
 
     local function mergesort(arr)
-        if #arr <= 1 then return arr end
+        if #arr <= 1 then
+            return arr
+        end
         local mid = math.floor(#arr / 2)
         local left, right = {}, {}
-        for i = 1, mid do table.insert(left, arr[i]) end
-        for i = mid + 1, #arr do table.insert(right, arr[i]) end
+        for i = 1, mid do
+            table.insert(left, arr[i])
+        end
+        for i = mid + 1, #arr do
+            table.insert(right, arr[i])
+        end
         return merge(mergesort(left), mergesort(right))
     end
 
@@ -208,4 +211,229 @@ end
 ---@return number # The new limited value.
 ugui.internal.clamp = function(value, min, max)
     return math.max(math.min(value, max), min)
+end
+
+---Traverses a tree node depth-first and invokes a callback function for each node.
+---@param node table The node to traverse.
+---@param callback fun(node: SceneNode): boolean? The callback function to invoke for each node. If the callback returns `false`, the traversal is stopped early.
+---@param reverse boolean? Whether to traverse children in reverse order.
+ugui.internal.foreach_node = function(node, callback, reverse)
+    if reverse then
+        for i = #node.children, 1, -1 do
+            if ugui.internal.foreach_node(node.children[i], callback, reverse) == false then
+                return
+            end
+        end
+        if callback(node) == false then
+            return
+        end
+        return
+    end
+
+    if callback(node) == false then
+        return
+    end
+    for _, child in ipairs(node.children) do
+        if ugui.internal.foreach_node(child, callback) == false then
+            return
+        end
+    end
+end
+
+---Traverses the scene depth-first from the root downwards.
+---@param callback fun(node: SceneNode): boolean? The callback function to invoke for each node. If the callback returns `false`, the traversal is stopped early.
+ugui.internal.foreach_node_from_root = function(callback)
+    ugui.internal.foreach_node(ugui.internal.root, callback)
+end
+
+
+---Recursively sorts a scene tree by Z-index, maintaining stable sort order.
+---@param node SceneNode
+ugui.internal.sort_scene_tree = function(node)
+    -- First, recursively sort all children
+    for _, child in ipairs(node.children) do
+        ugui.internal.sort_scene_tree(child)
+    end
+
+    -- Then sort this node's children by Z-index
+    ugui.internal.stable_sort(node.children, function(a, b)
+        return (a.control.z_index or 0) < (b.control.z_index or 0)
+    end)
+end
+
+---Sorts controls in the scene tree by their Z-index.
+ugui.internal.sort_scene = function()
+    ugui.internal.sort_scene_tree(ugui.internal.root)
+end
+
+---Returns the control at the given point, if any.
+---@param pt Vector2 The point to check for a control.
+---@return Control? The control at the given point, or `nil` if no control is found.
+ugui.internal.control_from_point = function(pt)
+    local result = nil
+    ugui.internal.foreach_node_from_root(function(node)
+        local control = node.control
+        if ugui.internal.is_point_inside_control(pt, control) then
+            result = control
+            return false
+        end
+    end)
+    return result
+end
+
+---Finds a scene node by its control's UID.
+---@param uid UID?
+---@return SceneNode?
+ugui.internal.find_node = function(uid)
+    if uid == nil then return nil end
+    local result = nil
+    ugui.internal.foreach_node_from_root(function(node)
+        if node.control.uid == uid then
+            result = node
+            return false
+        end
+    end)
+    return result
+end
+
+
+---Prints the scene tree for debugging purposes.
+---@param node SceneNode
+ugui.internal.print_tree = function(node)
+    ---@param node SceneNode
+    local function print_tree_impl(node, prefix, is_last)
+        prefix = prefix or ''
+        local connector = is_last and '└─ ' or '├─ '
+
+        local label = ''
+        if node == ugui.internal.root then
+            label = '<root>'
+        end
+        label = label .. ' ' .. node.type .. ' ' .. tostring(node.control.uid)
+
+        print(prefix .. connector .. label)
+        print(prefix .. '      ' .. string.format('rect: (%.0f, %.0f) %.0f x %.0f', node.control.rectangle.x, node.control.rectangle.y, node.control.rectangle.width, node.control.rectangle.height))
+
+        local child_prefix = prefix .. (is_last and '   ' or '│  ')
+
+        local children = node.children or {}
+        for i, child in pairs(children) do
+            print_tree_impl(child, child_prefix, i == #children)
+        end
+    end
+
+    print_tree_impl(node)
+    print('')
+end
+
+---Parses and resolves a SmartUnit.
+---@param expr string
+---@param axis '"x"'|'"y"'
+---@param parent_size number?
+---@param natural_basis number?
+---@return number
+local function resolve_unit(expr, axis, parent_size, natural_basis)
+    local function get_parent_basis()
+        local basis = parent_size
+        ugui.internal.assert(basis ~= nil, 'fractional unit requires parent basis')
+        ---@cast basis number
+
+        return basis
+    end
+
+    local function get_natural_basis()
+        local basis = natural_basis
+        ugui.internal.assert(basis ~= nil, 'auto unit requires natural_size')
+        ---@cast basis number
+
+        return basis
+    end
+
+    local s = expr:gsub('^%s+', ''):gsub('%s+$', '')
+
+    -- auto
+    if s == 'auto' then
+        return get_natural_basis()
+    end
+
+    -- px
+    do
+        local px = s:match('^([%-%d%.]+)px$')
+
+        if px then
+            local value = tonumber(px)
+            ugui.internal.assert(value ~= nil, string.format('invalid pixel SmartUnit: %q', s))
+            ---@cast value number
+            return value
+        end
+    end
+
+    -- parent-relative fraction
+    do
+        local n = tonumber(s)
+
+        if n then
+            return get_parent_basis() * n
+        end
+    end
+
+    ugui.internal.assert(false, string.format('unsupported SmartUnit: %q', s))
+    return 0
+end
+
+---Resolves a SmartUnit2 to a Vector2.
+---@param unit SmartUnit2
+---@param parent_size Vector2?
+---@param natural_size Vector2?
+---@return Vector2
+ugui.internal.resolve_unit2 = function(unit, parent_size, natural_size)
+    local a, b = unit:match('^(%S+)%s+(%S+)$')
+
+    if not a then
+        a = unit
+        b = unit
+    end
+
+    return {
+        x = resolve_unit(a, 'x', parent_size and parent_size.x, natural_size and natural_size.x),
+        y = resolve_unit(b, 'y', parent_size and parent_size.y, natural_size and natural_size.y),
+    }
+end
+
+---Parses and resolves a SmartAlignment.
+---@param value string
+---@return number
+local function resolve_alignment(value)
+    value = value:gsub('^%s+', ''):gsub('%s+$', '')
+
+    -- raw normalized number
+    local n = tonumber(value)
+
+    if n then
+        return n
+    end
+
+    ugui.internal.assert(
+        false,
+        string.format('unsupported SmartAlignment: %q', value)
+    )
+end
+
+---Resolves a SmartAlignment2 to a Vector2.
+---@param value SmartAlignment2?
+---@return Vector2
+ugui.internal.resolve_alignment2 = function(value)
+    value = value or '0'
+
+    local a, b = value:match('^(%S+)%s+(%S+)$')
+
+    if not a then
+        a = value
+        b = value
+    end
+
+    return {
+        x = resolve_alignment(a),
+        y = resolve_alignment(b),
+    }
 end

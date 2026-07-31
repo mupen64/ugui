@@ -23,8 +23,8 @@ ugui.registry.carrousel_button = {
         data.selected_index = control.selected_index
 
         if ugui.internal.clicked_control == control.uid then
-            local relative_x = ugui.internal.environment.mouse_position.x - control.rectangle.x
-            if relative_x > control.rectangle.width / 2 then
+            local relative_x = ugui.internal.environment.mouse_position.x - data.render_rect.x
+            if relative_x > data.render_rect.width / 2 then
                 data.selected_index = data.selected_index + 1
                 if data.selected_index > #control.items then
                     data.selected_index = 1
@@ -57,8 +57,42 @@ ugui.registry.carrousel_button = {
 
 ---Places a CarrouselButton.
 ---@param control CarrouselButton The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new selected index.
-ugui.carrousel_button = function(control)
-    local result = ugui.control(control, 'carrousel_button')
+ugui.carrousel_button = function(control, fn)
+    local label_1_uid<const> = control.uid + 1
+    local label_2_uid<const> = control.uid + 2
+    local label_3_uid<const> = control.uid + 3
+
+    local result = ugui.control(control, 'carrousel_button', function()
+        local visual_state = ugui.get_visual_state(control)
+        local text = control.selected_index and control.items[control.selected_index] or ''
+
+        ugui.label({
+            uid = label_1_uid,
+            text = '[icon:arrow_left]',
+            margin = string.format('%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
+            align = '0 0.5',
+            color = ugui.standard_styler.params.button.text[visual_state],
+        })
+
+        ugui.label({
+            uid = label_2_uid,
+            text = text,
+            align = '0.5',
+            color = ugui.standard_styler.params.button.text[visual_state],
+        })
+
+        ugui.label({
+            uid = label_3_uid,
+            text = '[icon:arrow_right]',
+            margin = string.format('-%dpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
+            align = '1 0.5',
+            color = ugui.standard_styler.params.button.text[visual_state],
+        })
+        if fn then
+            fn()
+        end
+    end)
     return result.primary, result.meta
 end

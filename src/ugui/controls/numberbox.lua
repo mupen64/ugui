@@ -45,7 +45,7 @@ ugui.registry.numberbox = {
                     font_size,
                     font_name).width
 
-                local left = control.rectangle.width / 2 - full_width / 2
+                local left = data.render_rect.width / 2 - full_width / 2
                 positions[#positions + 1] = width + left
             end
 
@@ -64,7 +64,7 @@ ugui.registry.numberbox = {
 
         if ugui.internal.clicked_control == control.uid then
             data.caret_index = get_caret_index_at_relative_x(ugui.internal.environment.mouse_position.x -
-                control.rectangle.x)
+                data.render_rect.x)
         end
 
         if ugui.internal.keyboard_captured_control == control.uid then
@@ -142,11 +142,11 @@ ugui.registry.numberbox = {
         if ugui.internal.keyboard_captured_control == control.uid then
             visual_state = ugui.visual_states.active
         end
-        ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
+        ugui.standard_styler.draw_edit_frame(data.render_rect, visual_state)
 
         BreitbandGraphics.draw_text2({
             text = text,
-            rectangle = control.rectangle,
+            rectangle = data.render_rect,
             color = ugui.standard_styler.params.textbox.text[visual_state],
             font_name = font_name,
             font_size = font_size,
@@ -162,13 +162,13 @@ ugui.registry.numberbox = {
             font_size,
             font_name).width
 
-        local left = control.rectangle.width / 2 - full_width / 2
+        local left = data.render_rect.width / 2 - full_width / 2
 
         local selected_char_rect = {
-            x = control.rectangle.x + left + text_width_up_to_caret,
-            y = control.rectangle.y,
+            x = data.render_rect.x + left + text_width_up_to_caret,
+            y = data.render_rect.y,
             width = font_size / 2,
-            height = control.rectangle.height,
+            height = data.render_rect.height,
         }
 
         if ugui.internal.keyboard_captured_control == control.uid then
@@ -176,7 +176,7 @@ ugui.registry.numberbox = {
             BreitbandGraphics.push_clip(selected_char_rect)
             BreitbandGraphics.draw_text2({
                 text = text,
-                rectangle = control.rectangle,
+                rectangle = data.render_rect,
                 color = BreitbandGraphics.invert_color(ugui.standard_styler.params.textbox.text[visual_state]),
                 font_name = font_name,
                 font_size = font_size,
@@ -189,29 +189,30 @@ ugui.registry.numberbox = {
 
 ---Places a NumberBox.
 ---@param control NumberBox The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return integer, Meta # The new value.
-ugui.numberbox = function(control)
-    local _ = ugui.control(control, 'numberbox')
+ugui.numberbox = function(control, fn)
+    local _ = ugui.control(control, 'numberbox', fn)
     local data = ugui.internal.control_data[control.uid]
 
     if control.show_negative then
-        local negative_button_size = control.rectangle.width / 8
+        local negative_button_size = data.render_rect.width / 8
 
-        control.rectangle = {
-            x = control.rectangle.x + negative_button_size,
-            y = control.rectangle.y,
-            width = control.rectangle.width - negative_button_size,
-            height = control.rectangle.height,
+        data.render_rect = {
+            x = data.render_rect.x + negative_button_size,
+            y = data.render_rect.y,
+            width = data.render_rect.width - negative_button_size,
+            height = data.render_rect.height,
         }
 
         if ugui.button({
                 uid = control.uid + 1,
                 is_enabled = true,
                 rectangle = {
-                    x = control.rectangle.x - negative_button_size,
-                    y = control.rectangle.y,
+                    x = data.render_rect.x - negative_button_size,
+                    y = data.render_rect.y,
                     width = negative_button_size,
-                    height = control.rectangle.height,
+                    height = data.render_rect.height,
                 },
                 text = data.value >= 0 and '+' or '-',
             }) then

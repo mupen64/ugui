@@ -43,8 +43,20 @@ ugui.registry.toggle_button = {
 
 ---Places a ToggleButton.
 ---@param control ToggleButton The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return boolean, Meta # The new check state.
-ugui.toggle_button = function(control)
-    local result = ugui.control(control, 'toggle_button')
+ugui.toggle_button = function(control, fn)
+    local result = ugui.control(control, 'toggle_button', function()
+        local visual_state = ugui.get_visual_state(control)
+        ugui.label({
+            uid = control.uid + 1,
+            text = control.text,
+            align = '0.5',
+            color = ugui.standard_styler.params.button.text[visual_state],
+        })
+        if fn then
+            fn()
+        end
+    end)
     return result.primary, result.meta
 end

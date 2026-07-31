@@ -67,14 +67,41 @@ ugui.registry.combobox = {
 ---
 ---When preview_change is set, `meta.signal_change == ugui.signal_change_states.ended` may be used to determine when the combobox was closed to confirm the new selection.
 ---@param control ComboBox The control table.
----@return integer selected_index, Meta meta The new selected index and metadata.
-ugui.combobox = function(control)
-    local result = ugui.control(control, 'combobox')
-    local data = ugui.internal.control_data[control.uid]
-
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
+---@return integer, Meta # The new selected index.
+ugui.combobox = function(control, fn)
     local textbox_uid<const> = control.uid + 1
     local button_uid<const> = control.uid + 2
-    local listbox_uid<const> = control.uid + 3
+    local listbox_uid<const> = control.uid + 4
+    local label_1_uid<const> = control.uid + 7
+    local label_2_uid<const> = control.uid + 8
+
+    local result = ugui.control(control, 'combobox', function()
+        local visual_state = ugui.get_visual_state(control)
+
+        local data = ugui.internal.control_data[control.uid]
+        local text = control.selected_index and control.items[control.selected_index] or ''
+
+        ugui.label({
+            uid = label_1_uid,
+            text = text,
+            margin = string.format('%fpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
+            align = '0 0.5',
+            color = ugui.standard_styler.params.button.text[visual_state],
+        })
+
+        ugui.label({
+            uid = label_2_uid,
+            text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
+            margin = string.format('-%fpx 0', ugui.standard_styler.params.textbox.padding.x * 2),
+            align = '1 0.5',
+            color = ugui.standard_styler.params.button.text[visual_state],
+        })
+        if fn then
+            fn()
+        end
+    end)
+    local data = ugui.internal.control_data[control.uid]
 
     -- listbox_uid + 2 for the scrollbars
     local highest_owned_uid<const> = control.uid + 5
@@ -87,10 +114,10 @@ ugui.combobox = function(control)
         local search_text = ugui.textbox({
             uid = textbox_uid,
             rectangle = {
-                x = control.rectangle.x,
-                y = control.rectangle.y,
-                width = control.rectangle.width - button_size,
-                height = control.rectangle.height,
+                x = data.render_rect.x,
+                y = data.render_rect.y,
+                width = data.render_rect.width - button_size,
+                height = data.render_rect.height,
             },
             is_enabled = control.is_enabled,
             text = current_text,
@@ -99,10 +126,10 @@ ugui.combobox = function(control)
         if ugui.button({
                 uid = button_uid,
                 rectangle = {
-                    x = control.rectangle.x + control.rectangle.width - button_size,
-                    y = control.rectangle.y,
+                    x = data.render_rect.x + data.render_rect.width - button_size,
+                    y = data.render_rect.y,
                     width = button_size,
-                    height = control.rectangle.height,
+                    height = data.render_rect.height,
                 },
                 is_enabled = control.is_enabled,
                 text = data.open and '[icon:arrow_up]' or '[icon:arrow_down]',
@@ -149,31 +176,12 @@ ugui.combobox = function(control)
             data.filtered_to_original = nil
         end
 
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-
-        local width = control.rectangle.width
-        if control.rectangle.x + width > ugui.internal.environment.window_size.x then
-            width = ugui.internal.environment.window_size.x - control.rectangle.x
-        end
-
-        local height = content_bounds.height
-        if control.rectangle.y + height > ugui.internal.environment.window_size.y then
-            height = ugui.internal.environment.window_size.y - control.rectangle.y -
-                ugui.standard_styler.params.listbox_item.height * 2
-        end
-
-        local list_rect = {
-            x = control.rectangle.x,
-            y = control.rectangle.y + control.rectangle.height,
-            width = width,
-            height = height,
-        }
-
         local restore = ugui.internal.keyboard_captured_control
         ugui.internal.keyboard_captured_control = listbox_uid
         local listbox = {
             uid = listbox_uid,
-            rectangle = list_rect,
+            margin = string.format('%fpx %fpx', data.render_rect.x, data.render_rect.y + data.render_rect.height),
+            size = string.format('%fpx auto', data.render_rect.width), -- FIXME: This needs overflow prevention
             items = items_to_show,
             selected_index = data.selected_index,
             plaintext = control.plaintext,

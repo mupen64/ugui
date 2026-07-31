@@ -4,11 +4,19 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 --
 
----@alias SceneEntry { control: Control, type: ControlType }
+---@class SceneNode
+---@field public control Control
+---@field public type ControlType
+---@field public parent SceneNode?
+---@field public children SceneNode[]
 
 ugui.internal = {
-    ---@type SceneEntry[]
-    scene = {},
+    ---@type SceneNode
+    root = nil,
+
+    ---@type SceneNode
+    ---The current parent node for controls being placed. Reset to the root node each frame.
+    current_parent = nil,
 
     ---@type table<UID, ControlType>
     control_types = {},
@@ -63,31 +71,26 @@ ugui.internal = {
     ---Cache of nineslice drawings. Only used after calling `ugui.apply_nineslice`.
     nineslice_draw_cache = {},
 
-    ---Sorts controls stably in the scene by their Z-index.
-    sort_scene = function()
-        ugui.internal.stable_sort(ugui.internal.scene, function(a, b)
-            return (a.control.z_index or 0) < (b.control.z_index or 0)
-        end)
-    end,
-
     ---Dispatches events related to controls in the scene.
     dispatch_events = function()
-        for _, value in pairs(ugui.internal.scene) do
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            local registry_entry = ugui.registry[node.type]
+
             local existed_in_previous_frame = false
             for uid, _ in pairs(ugui.internal.previous_uids) do
-                if value.control.uid == uid then
+                if control.uid == uid then
                     existed_in_previous_frame = true
                     break
                 end
             end
 
             if not existed_in_previous_frame then
-                local registry_entry = ugui.registry[value.type]
                 if registry_entry.added then
-                    registry_entry.added(value.control, ugui.internal.control_data[value.control.uid])
+                    registry_entry.added(control, ugui.internal.control_data[control.uid])
                 end
             end
-        end
+        end)
     end,
 
 
@@ -229,19 +232,21 @@ ugui.internal = {
         if ugui.internal.hovered_control == nil then
             return
         end
+
         if (os.clock() - ugui.internal.hover_start_time) < ugui.standard_styler.params.tooltip.delay then
             return
         end
 
-        -- Find hovered control
-        for _, entry in pairs(ugui.internal.scene) do
-            if entry.control.uid == ugui.internal.hovered_control then
-                ugui.standard_styler.draw_tooltip(entry.control, {
-                    x = ugui.internal.environment.mouse_position.x,
-                    y = ugui.internal.environment.mouse_position.y,
-                })
-            end
+        local hovered_node = ugui.internal.find_node(ugui.internal.hovered_control)
+
+        if not hovered_node then
+            return
         end
+
+        ugui.standard_styler.draw_tooltip(hovered_node.control, {
+            x = ugui.internal.environment.mouse_position.x,
+            y = ugui.internal.environment.mouse_position.y,
+        })
     end,
 
     ---Parses rich text into content segments.
@@ -309,35 +314,35 @@ ugui.internal = {
                 point.y <= rectangle.y + rectangle.height
         end
 
+        local function traverse_tree_reversed(node, callback)
+            for i = #node.children, 1, -1 do
+                traverse_tree_reversed(node.children[i], callback)
+            end
+
+            callback(node)
+        end
+
         ---@type Control?
         local clicked_control = nil
 
-        ---@type SceneEntry?
+        ---@type SceneNode?
         local mouse_captured_control = nil
-        for i = 1, #ugui.internal.scene, 1 do
-            local entry = ugui.internal.scene[i]
-            if entry.control.uid == ugui.internal.mouse_captured_control then
-                mouse_captured_control = entry
-            end
+        if ugui.internal.mouse_captured_control then
+            mouse_captured_control = ugui.internal.find_node(ugui.internal.mouse_captured_control)
         end
 
-        ---@type SceneEntry?
+        ---@type SceneNode?
         local keyboard_captured_control = nil
-        for i = 1, #ugui.internal.scene, 1 do
-            local entry = ugui.internal.scene[i]
-            if entry.control.uid == ugui.internal.keyboard_captured_control then
-                keyboard_captured_control = entry
-            end
+        if ugui.internal.keyboard_captured_control then
+            keyboard_captured_control = ugui.internal.find_node(ugui.internal.keyboard_captured_control)
         end
-
 
         local prev_hovered_control = ugui.internal.hovered_control
         ugui.internal.hovered_control = nil
 
-        for i = #ugui.internal.scene, 1, -1 do
-            local entry = ugui.internal.scene[i]
-            local control = entry.control
-            local registry_entry = ugui.registry[entry.type]
+        traverse_tree_reversed(ugui.internal.root, function(node)
+            local control = node.control
+            local registry_entry = ugui.registry[node.type]
 
             local effective_hittestable = ugui.internal.compute_prop(control, registry_entry, 'hittestable', function() return true end)
 
@@ -346,8 +351,8 @@ ugui.internal = {
                 if ugui.internal.is_mouse_just_down() then
                     if is_point_inside_rectangle(ugui.internal.mouse_down_position, control.rectangle) then
                         clicked_control = control
-                        keyboard_captured_control = entry
-                        mouse_captured_control = entry
+                        keyboard_captured_control = node
+                        mouse_captured_control = node
                     end
                 end
             end
@@ -362,7 +367,7 @@ ugui.internal = {
                     end
                 end
             end
-        end
+        end)
 
         -- Clear the mouse captured control if we released the mouse
         if not ugui.internal.environment.is_primary_down then
@@ -386,12 +391,9 @@ ugui.internal = {
         end
 
         -- Clear hovered control if it's disabled
-        for i = 1, #ugui.internal.scene, 1 do
-            local control = ugui.internal.scene[i].control
-            if control.uid == ugui.internal.hovered_control
-                and control.is_enabled == false then
-                ugui.internal.hovered_control = nil
-            end
+        local hovered_node = ugui.internal.hovered_control and ugui.internal.find_node(ugui.internal.hovered_control) or nil
+        if hovered_node and hovered_node.control.is_enabled == false then
+            ugui.internal.hovered_control = nil
         end
 
         -- Clear mouse captured control if it's disabled
@@ -405,8 +407,135 @@ ugui.internal = {
         end
 
         ugui.internal.mouse_captured_control = mouse_captured_control and mouse_captured_control.control.uid or nil
-        ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or
-            nil
+        ugui.internal.keyboard_captured_control = keyboard_captured_control and keyboard_captured_control.control.uid or nil
         ugui.internal.clicked_control = clicked_control and clicked_control.uid or nil
+    end,
+
+    ---Measures the specified node.
+    ---@param node SceneNode
+    ---@return Vector2
+    measure = function(node)
+        local registry_entry = ugui.registry[node.type]
+        if registry_entry.measure then
+            return registry_entry.measure(node)
+        end
+        return ugui.internal.measure_fit_biggest_child(node)
+    end,
+
+    ---Default measure implementation that fits the biggest child node recursively.
+    ---@param node SceneNode
+    ---@return Vector2
+    measure_fit_biggest_child = function(node)
+        local biggest = {x = 0, y = 0}
+        for _, child in pairs(node.children) do
+            local size = ugui.internal.measure(child)
+            if size.x > biggest.x or size.y > biggest.y then
+                biggest = size
+            end
+        end
+        return biggest
+    end,
+
+    ---Performs scene layout.
+    layout = function()
+        ugui.internal.foreach_node_from_root(function(node)
+            ugui.internal.control_data[node.control.uid].natural_size = ugui.internal.measure(node)
+        end)
+
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            local data = ugui.internal.control_data[control.uid]
+            local parent_size = node.parent and {
+                x = node.parent.control.rectangle.width,
+                y = node.parent.control.rectangle.height,
+            }
+
+            if control.margin then
+                local pos = ugui.internal.resolve_unit2(control.margin, parent_size, data.natural_size)
+                control.rectangle.x = pos.x
+                control.rectangle.y = pos.y
+            end
+            if control.size then
+                local size = ugui.internal.resolve_unit2(control.size, parent_size, data.natural_size)
+                control.rectangle.width = size.x
+                control.rectangle.height = size.y
+            end
+
+            if control.padding then
+                data.computed_padding = ugui.internal.resolve_unit2(control.padding, parent_size, data.natural_size)
+                control.rectangle.width = control.rectangle.width + data.computed_padding.x * 2
+                control.rectangle.height = control.rectangle.height + data.computed_padding.y * 2
+            else
+                data.computed_padding = { x = 0, y = 0 }
+            end
+        end)
+
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            local parent = node.parent
+
+            local parent_rect = parent and parent.control.rectangle or {x = 0, y = 0, width = 0, height = 0}
+            local parent_padding = {x = 0, y = 0}
+
+            if parent and parent.control.padding then
+                local parent_data = ugui.internal.control_data[parent.control.uid]
+                local grandparent_size = parent.parent and {
+                        x = parent.parent.control.rectangle.width,
+                        y = parent.parent.control.rectangle.height,
+                }
+                parent_padding = ugui.internal.resolve_unit2(parent.control.padding, grandparent_size,
+                    parent_data.natural_size)
+                parent_padding.x = parent_padding.x * 0.5
+                parent_padding.y = parent_padding.y * 0.5
+            end
+
+            local min_x<const> = parent_rect.x + parent_padding.x
+            local max_x<const> = min_x + parent_rect.width - parent_padding.x * 2 - control.rectangle.width
+
+            local min_y<const> = parent_rect.y + parent_padding.y
+            local max_y<const> = min_y + parent_rect.height - parent_padding.y * 2 - control.rectangle.height
+
+            local align = ugui.internal.resolve_alignment2(control.align)
+            local x_offset<const> = ugui.internal.remap(align.x, 0, 1, min_x, max_x)
+            local y_offset<const> = ugui.internal.remap(align.y, 0, 1, min_y, max_y)
+
+            control.rectangle.x = control.rectangle.x + x_offset
+            control.rectangle.y = control.rectangle.y + y_offset
+        end)
+
+        ugui.internal.foreach_node_from_root(function(node)
+            local data = ugui.internal.control_data[node.control.uid]
+            data.render_rect = {x = node.control.rectangle.x, y = node.control.rectangle.y, width = node.control.rectangle.width, height = node.control.rectangle.height}
+        end)
+    end,
+
+    render = function()
+        ugui.internal.foreach_node_from_root(function(node)
+            local control = node.control
+            local type = node.type
+
+            local data = ugui.internal.control_data[node.control.uid]
+            local render_rect = data.render_rect
+
+            local entry = ugui.registry[type]
+
+            if entry.draw then
+                local revert_styler_mixin = ugui.internal.apply_styler_mixin(control)
+                entry.draw(control)
+                revert_styler_mixin()
+            end
+
+            if ugui.DEBUG then
+                BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 0), '#FF0000', 1)
+                -- BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle({x = render_rect.x, y = render_rect.y, width = data.natural_size.x, height = data.natural_size.y}, 0), '#0000FF', 4)
+
+                if ugui.internal.keyboard_captured_control == control.uid then
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 4), '#000000', 2)
+                end
+                if ugui.internal.mouse_captured_control == control.uid then
+                    BreitbandGraphics.draw_rectangle(BreitbandGraphics.inflate_rectangle(render_rect, 8), '#FF0000', 2)
+                end
+            end
+        end)
     end,
 }

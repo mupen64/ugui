@@ -14,75 +14,95 @@ for i = 1, 100, 1 do
     items[#items + 1] = 'Item ' .. i
 end
 
+ugui.DEBUG = true
+
 emu.atdrawd2d(function()
     begin_frame()
 
     if ugui.button({
-            uid = 5,
-            rectangle = {x = 10, y = 10, width = 600, height = 400},
+            uid = 100,
+            margin = '10px 10px',
+            size = '600px 400px',
             text = 'Hello, world!',
         }) then
         print('1')
     end
     if ugui.button({
-            uid = 15,
-            rectangle = {x = 80, y = 80, width = 100, height = 50},
+            uid = 200,
+            margin = (80 + math.sin(os.clock() * 5) * 10) .. 'px ' .. (80 + math.cos(os.clock() * 5) * 10) .. 'px',
+            size = '100px 50px',
             text = tostring(index),
-        }) then
+        }, function()
+            ugui.button({
+                uid = 300,
+                margin = '10px 10px',
+                size = '20px 20px',
+                text = '😀',
+            })
+        end) then
         index = index + 1
     end
     if ugui.button({
-            uid = 25,
-            rectangle = {x = 80, y = 140, width = 100, height = 30},
+            uid = 400,
+            margin = '80px 140px',
+            size = '100px 30px',
             text = 'Hello, world!',
             is_enabled = false,
         }) then
         print('3')
     end
     checked = ugui.toggle_button({
-        uid = 35,
-        rectangle = {x = 80, y = 200, width = 200, height = 50},
+        uid = 500,
+        margin = '80px 200px',
+        size = '200px 50px',
         text = 'Hello, world!',
         is_checked = checked,
     })
     text = ugui.textbox({
-        uid = 45,
-        rectangle = {x = 20, y = 20, width = 100, height = 20},
+        uid = 600,
+        margin = '20px 20px',
+        size = '100px 20px',
         text = text,
     })
     position = ugui.joystick({
-        uid = 55,
-        rectangle = {x = 20, y = 200, width = 150, height = 150},
+        uid = 700,
+        margin = '20px 200px',
+        size = '150px 150px',
         position = position,
     })
 
     index = ugui.listbox({
-        uid = 65,
-        rectangle = {x = 20, y = 300, width = 120, height = 200},
+        uid = 800,
+        margin = '20px 300px',
+        size = '120px 200px',
         items = items,
         selected_index = index,
     })
     value = ugui.scrollbar({
-        uid = 75,
-        rectangle = {x = 230, y = 10, width = 20, height = 300},
+        uid = 900,
+        margin = '230px 10px',
+        size = '20px 300px',
         value = value,
         ratio = 0.2,
     })
     value = ugui.scrollbar({
-        uid = 85,
-        rectangle = {x = 280, y = 10, width = 300, height = 20},
+        uid = 1000,
+        margin = '280px 10px',
+        size = '300px 20px',
         value = value,
         ratio = 0.2,
     })
     index = ugui.combobox({
-        uid = 95,
-        rectangle = {x = 200, y = 300, width = 160, height = 23},
+        uid = 1100,
+        margin = '200px 300px',
+        size = '160px 23px',
         items = items,
         selected_index = index,
     })
     ugui.joystick({
-        uid = 105,
-        rectangle = {x = 200, y = 350, width = 150, height = 150},
+        uid = 1200,
+        margin = '200px 350px',
+        size = '150px 150px',
         position = {
             x = math.sin(os.clock() / 2) * 50,
             y = math.cos(os.clock() / 2) * 50,
@@ -94,23 +114,26 @@ emu.atdrawd2d(function()
         },
     })
     ugui.joystick({
-        uid = 115,
-        rectangle = {x = 355, y = 350, width = 150, height = 150},
+        uid = 1300,
+        margin = '355px 350px',
+        size = '150px 150px',
         position = {
             x = math.sin(os.clock() / 2) * 50,
             y = math.cos(os.clock() / 2) * 50,
         },
     })
     index = ugui.carrousel_button({
-        uid = 125,
-        rectangle = {x = 380, y = 300, width = 160, height = 23},
+        uid = 1400,
+        margin = '380px 300px',
+        size = '160px 23px',
         items = items,
         selected_index = index,
     })
 
     num = ugui.numberbox({
-        uid = 135,
-        rectangle = {x = 350, y = 50, width = 160, height = 23},
+        uid = 1500,
+        margin = '350px 50px',
+        size = '160px 23px',
         value = num,
         places = 4,
     })
@@ -123,8 +146,9 @@ emu.atdrawd2d(function()
         font_size = ugui.standard_styler.params.font_size,
     })
     num2 = ugui.numberbox({
-        uid = 145,
-        rectangle = {x = 350, y = 75, width = 160, height = 23},
+        uid = 1600,
+        margin = '350px 75px',
+        size = '160px 23px',
         value = num2,
         places = 4,
         show_negative = true,
@@ -138,40 +162,144 @@ emu.atdrawd2d(function()
         font_size = ugui.standard_styler.params.font_size,
     })
     ugui.label({
-        uid = 155,
-        rectangle = {x = 350, y = 150, width = 160, height = 23},
+        uid = 1700,
+        margin = '350px 150px',
+        size = '160px 23px',
         text = 'Hello World!',
         color = BreitbandGraphics.colors.black,
         font_name = 'Wingdings',
         font_size = 24,
     })
     ugui.label({
-        uid = 165,
-        rectangle = {x = 350, y = 180, width = 160, height = 23},
+        uid = 1800,
+        margin = '350px 180px',
+        size = '160px 23px',
         text = 'Hello World!',
         color = BreitbandGraphics.colors.black,
         font_name = 'Consolas',
         font_size = 24,
-        hittestable = true
+        hittestable = true,
     })
     index = ugui.combobox({
-        uid = 175,
-        rectangle = {x = 350, y = 230, width = 160, height = 23},
+        uid = 1900,
+        margin = '350px 230px',
+        size = '160px 23px',
         items = items,
         selected_index = index,
         editable = true,
     })
     ugui.listbox({
-        uid = 185,
-        rectangle = {x = 560, y = 230, width = 160, height = 160},
+        uid = 2000,
+        margin = '560px 230px',
+        size = '160px 160px',
         items = {},
         selected_index = 1,
     })
     ugui.listbox({
-        uid = 195,
-        rectangle = {x = 560, y = 360, width = 160, height = 160},
+        uid = 2100,
+        margin = '560px 360px',
+        size = '160px 160px',
         items = {'a'},
         selected_index = nil,
     })
+    if ugui.button({
+            uid = 2200,
+            margin = '620px 10px',
+            size = '200px 200px',
+            text = '',
+        }, function()
+            ugui.button({
+                uid = 2300,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'top left',
+            })
+            ugui.button({
+                uid = 2400,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'top center',
+                align = '0.5 0',
+            })
+            ugui.button({
+                uid = 2500,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'top right',
+                align = '1 0',
+            })
+            ugui.button({
+                uid = 2600,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'bottom left',
+                align = '0 1',
+            })
+            ugui.button({
+                uid = 2700,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'bottom center',
+                align = '0.5 1',
+            })
+            ugui.button({
+                uid = 2800,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'bottom right',
+                align = '1 1',
+            })
+            ugui.button({
+                uid = 2900,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'left center',
+                align = '0 0.5',
+            })
+            ugui.button({
+                uid = 3000,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'right center',
+                align = '1 0.5',
+            })
+            ugui.button({
+                uid = 3100,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'center',
+                align = '0.5',
+            })
+            ugui.button({
+                uid = 3200,
+                margin = '0px 0px',
+                size = '50px 23px',
+                text = 'smooth',
+                align = (math.sin(os.clock() * 2) + 1) / 2 .. ' ' .. (math.cos(os.clock() * 2) + 1) / 2,
+            })
+        end) then
+        index = index + 1
+    end
+    if ugui.button({
+            uid = 3300,
+            margin = '650px 220px',
+            size = '200px',
+            text = '',
+            is_enabled = false,
+        }, function()
+            ugui.button({
+                uid = 3400,
+                text = 'half width',
+                size = '0.5 23px',
+            })
+            ugui.button({
+                uid = 3500,
+                text = 'half\nheight',
+                size = '23px 0.5',
+                align = '0.5 1',
+            })
+        end) then
+        index = index + 1
+    end
     end_frame()
 end)

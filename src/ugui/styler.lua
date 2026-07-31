@@ -491,29 +491,26 @@ ugui.standard_styler = {
         end
     end,
 
-    ---Draws a raised frame with the specified parameters.
-    ---@param control Control The control table.
-    ---@param visual_state VisualState The control's visual state.
-    draw_raised_frame = function(control, visual_state)
-        BreitbandGraphics.fill_rectangle(control.rectangle,
+    ---@param rectangle Rectangle
+    ---@param visual_state VisualState
+    draw_raised_frame = function(rectangle, visual_state)
+        BreitbandGraphics.fill_rectangle(rectangle,
             ugui.standard_styler.params.button.border[visual_state])
-        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, -1),
+        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(rectangle, -1),
             ugui.standard_styler.params.button.back[visual_state])
     end,
 
-    ---Draws an edit frame with the specified parameters.
-    ---@param control Control The control table.
-    ---@param visual_state VisualState The control's visual state.
-    draw_edit_frame = function(control, rectangle, visual_state)
-        BreitbandGraphics.fill_rectangle(control.rectangle,
+    ---@param rectangle Rectangle
+    ---@param visual_state VisualState
+    draw_edit_frame = function(rectangle, visual_state)
+        BreitbandGraphics.fill_rectangle(rectangle,
             ugui.standard_styler.params.textbox.border[visual_state])
-        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(control.rectangle, -1),
+        BreitbandGraphics.fill_rectangle(BreitbandGraphics.inflate_rectangle(rectangle, -1),
             ugui.standard_styler.params.textbox.back[visual_state])
     end,
 
-    ---Draws a list frame with the specified parameters.
-    ---@param rectangle Rectangle The control bounds.
-    ---@param visual_state VisualState The control's visual state.
+    ---@param rectangle Rectangle
+    ---@param visual_state VisualState
     draw_list_frame = function(rectangle, visual_state)
         BreitbandGraphics.fill_rectangle(rectangle,
             ugui.standard_styler.params.listbox.border[visual_state])
@@ -593,8 +590,9 @@ ugui.standard_styler = {
     ---@param control ScrollBar
     ---@param thumb_rectangle Rectangle The scrollbar thumb's bounds.
     draw_scrollbar = function(control, thumb_rectangle)
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
         local visual_state = ugui.get_visual_state(control)
-        BreitbandGraphics.fill_rectangle(control.rectangle,
+        BreitbandGraphics.fill_rectangle(render_rect,
             ugui.standard_styler.params.scrollbar.back[visual_state])
         BreitbandGraphics.fill_rectangle(thumb_rectangle,
             ugui.standard_styler.params.scrollbar.thumb[visual_state])
@@ -630,35 +628,38 @@ ugui.standard_styler = {
     ---@param control ListBox The control table.
     ---@param rectangle Rectangle The list item's bounds.
     draw_list = function(control, rectangle)
+        local node = ugui.internal.find_node(control.uid)
+        ---@cast node SceneNode
+
+        local natural_size = ugui.internal.control_data[node.control.uid].natural_size
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
+        local render_rect = data.render_rect
 
         ugui.standard_styler.draw_list_frame(rectangle, visual_state)
 
-        local content_bounds = ugui.standard_styler.get_desired_listbox_content_bounds(control)
-        -- item y position:
-        -- y = (20 * (i - 1)) - (scroll_y * ((20 * #control.items) - control.rectangle.height))
+
         local scroll_x = data.scroll_x and data.scroll_x or 0
         local scroll_y = data.scroll_y and data.scroll_y or 0
 
         local index_begin = (scroll_y *
-                (content_bounds.height - rectangle.height)) /
+                (natural_size.y - rectangle.height)) /
             ugui.standard_styler.params.listbox_item.height
 
         local index_end = (rectangle.height + (scroll_y *
-                (content_bounds.height - rectangle.height))) /
+                (natural_size.y - rectangle.height))) /
             ugui.standard_styler.params.listbox_item.height
 
         index_begin = ugui.internal.clamp(math.floor(index_begin), 1, #control.items)
         index_end = ugui.internal.clamp(math.ceil(index_end), 1, #control.items)
 
-        local x_offset = math.max((content_bounds.width - control.rectangle.width) * scroll_x, 0)
+        local x_offset = math.max((natural_size.x - render_rect.width) * scroll_x, 0)
 
         BreitbandGraphics.push_clip(BreitbandGraphics.inflate_rectangle(rectangle, -1))
 
         for i = index_begin, index_end, 1 do
             local y_offset = (ugui.standard_styler.params.listbox_item.height * (i - 1)) -
-                (scroll_y * (content_bounds.height - rectangle.height))
+                (scroll_y * (natural_size.y - rectangle.height))
 
             local item_visual_state = ugui.visual_states.normal
             if control.is_enabled == false then
@@ -672,7 +673,7 @@ ugui.standard_styler = {
             ugui.standard_styler.draw_list_item(control, control.items[i], {
                 x = rectangle.x - x_offset,
                 y = rectangle.y + y_offset,
-                width = math.max(content_bounds.width, control.rectangle.width),
+                width = math.max(natural_size.x, render_rect.width),
                 height = ugui.standard_styler.params.listbox_item.height,
             }, item_visual_state)
         end
@@ -784,7 +785,7 @@ ugui.standard_styler = {
         end
         local rectangle = {x = position.x, y = position.y, width = 0, height = 0}
         local size = ugui.standard_styler.compute_rich_text(text, control.plaintext,
-        ugui.standard_styler.params.font_name, ugui.standard_styler.params.font_size).size
+            ugui.standard_styler.params.font_name, ugui.standard_styler.params.font_size).size
         rectangle.width = size.x
         rectangle.height = math.max(size.y, ugui.standard_styler.params.menu_item.height)
         rectangle.y = rectangle.y + rectangle.height
@@ -841,9 +842,8 @@ ugui.standard_styler = {
             visual_state = ugui.visual_states.active
         end
 
-        ugui.standard_styler.draw_raised_frame(control, visual_state)
-        ugui.standard_styler.draw_rich_text(control.rectangle, nil, nil, control.text,
-            ugui.standard_styler.params.button.text[visual_state], visual_state, control.plaintext)
+        local data = ugui.internal.control_data[control.uid]
+        ugui.standard_styler.draw_raised_frame(data.render_rect, visual_state)
     end,
 
     ---Draws a ToggleButton with the specified parameters.
@@ -859,29 +859,13 @@ ugui.standard_styler = {
         local copy = ugui.internal.deep_clone(control)
         copy.text = control.items and control.items[control.selected_index] or ''
         ugui.standard_styler.draw_button(copy)
-
-        local visual_state = ugui.get_visual_state(control)
-
-        -- draw the arrows
-        ugui.standard_styler.draw_icon({
-            x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x,
-            y = control.rectangle.y,
-            width = ugui.standard_styler.params.icon_size,
-            height = control.rectangle.height,
-        }, ugui.standard_styler.params.button.text[visual_state], visual_state, 'arrow_left')
-        ugui.standard_styler.draw_icon({
-            x = control.rectangle.x + control.rectangle.width - ugui.standard_styler.params.textbox.padding.x -
-                ugui.standard_styler.params.icon_size,
-            y = control.rectangle.y,
-            width = ugui.standard_styler.params.icon_size,
-            height = control.rectangle.height,
-        }, ugui.standard_styler.params.button.text[visual_state], visual_state, 'arrow_right')
     end,
 
     ---Draws a TextBox with the specified parameters.
     ---@param control TextBox The control table.
     draw_textbox = function(control)
         local data = ugui.internal.control_data[control.uid]
+        local render_rect = data.render_rect
         local visual_state = ugui.get_visual_state(control)
         local text = control.text
         local scrolled_text = control.text:sub(data.scroll_offset)
@@ -891,8 +875,8 @@ ugui.standard_styler = {
             visual_state = ugui.visual_states.active
         end
 
-        ugui.standard_styler.draw_edit_frame(control, control.rectangle, visual_state)
-        BreitbandGraphics.push_clip(control.rectangle)
+        ugui.standard_styler.draw_edit_frame(render_rect, visual_state)
+        BreitbandGraphics.push_clip(render_rect)
 
         local should_visualize_selection =
             control.is_enabled ~= false
@@ -901,7 +885,7 @@ ugui.standard_styler = {
 
         local string_to_caret = text:sub(data.scroll_offset, data.caret_index - 1)
         local string_to_caret_width = BreitbandGraphics.get_text_size(string_to_caret, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name).width
-        local caret_x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_caret_width
+        local caret_x = render_rect.x + ugui.standard_styler.params.textbox.padding.x + string_to_caret_width
         local string_to_selection_start
         local string_to_selection_end
         local string_to_selection_start_width
@@ -917,14 +901,14 @@ ugui.standard_styler = {
             string_to_selection_start_width = BreitbandGraphics.get_text_size(string_to_selection_start, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name).width
             string_to_selection_end_width = BreitbandGraphics.get_text_size(string_to_selection_end, ugui.standard_styler.params.font_size, ugui.standard_styler.params.font_name).width
 
-            selection_start_x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_start_width
-            selection_end_x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_end_width
+            selection_start_x = render_rect.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_start_width
+            selection_end_x = render_rect.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_end_width
         end
 
         if should_visualize_selection then
             BreitbandGraphics.fill_rectangle({
-                    x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_start_width,
-                    y = control.rectangle.y,
+                    x = render_rect.x + ugui.standard_styler.params.textbox.padding.x + string_to_selection_start_width,
+                    y = render_rect.y,
                     width = string_to_selection_end_width - string_to_selection_start_width,
                     height = caret_height,
                 },
@@ -932,10 +916,10 @@ ugui.standard_styler = {
         end
 
         local text_rect = {
-            x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x,
-            y = control.rectangle.y,
+            x = render_rect.x + ugui.standard_styler.params.textbox.padding.x,
+            y = render_rect.y,
             width = 9999,
-            height = control.rectangle.height,
+            height = render_rect.height,
         }
 
         BreitbandGraphics.draw_text2({
@@ -952,9 +936,9 @@ ugui.standard_styler = {
         if should_visualize_selection then
             BreitbandGraphics.push_clip({
                 x = selection_start_x,
-                y = control.rectangle.y,
+                y = render_rect.y,
                 width = selection_end_x - selection_start_x,
-                height = control.rectangle.height,
+                height = render_rect.height,
             })
 
             BreitbandGraphics.draw_text2({
@@ -975,10 +959,10 @@ ugui.standard_styler = {
         if visual_state == ugui.visual_states.active and math.floor(os.clock() * 2) % 2 == 0 and not should_visualize_selection then
             BreitbandGraphics.draw_line({
                 x = caret_x,
-                y = control.rectangle.y + 3,
+                y = render_rect.y + 3,
             }, {
                 x = caret_x,
-                y = control.rectangle.y + caret_height - 3,
+                y = render_rect.y + caret_height - 3,
             }, {
                 r = 0,
                 g = 0,
@@ -993,41 +977,46 @@ ugui.standard_styler = {
     ---@param control Joystick The control table.
     draw_joystick = function(control)
         local visual_state = ugui.get_visual_state(control)
+        local data = ugui.internal.control_data[control.uid]
+
         local x = control.position and control.position.x or 0
         local y = control.position and control.position.y or 0
         local mag = control.mag or 0
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
 
         -- joystick has no hover or active states
         if not (visual_state == ugui.visual_states.disabled) then
             visual_state = ugui.visual_states.normal
         end
 
-        ugui.standard_styler.draw_raised_frame(control, visual_state)
-        ugui.standard_styler.draw_joystick_inner(control.rectangle, visual_state, {
+        ugui.standard_styler.draw_raised_frame(data.render_rect, visual_state)
+        ugui.standard_styler.draw_joystick_inner(render_rect, visual_state, {
             x = ugui.internal.remap(ugui.internal.clamp(x, -128, 128), -128, 128,
-                control.rectangle.x, control.rectangle.x + control.rectangle.width),
+                render_rect.x, render_rect.x + render_rect.width),
             y = ugui.internal.remap(ugui.internal.clamp(y, -128, 128), -128, 128,
-                control.rectangle.y, control.rectangle.y + control.rectangle.height),
+                render_rect.y, render_rect.y + render_rect.height),
             r = ugui.internal.remap(ugui.internal.clamp(mag, 0, 128), 0, 128, 0,
-                math.min(control.rectangle.width, control.rectangle.height)),
+                math.min(render_rect.width, render_rect.height)),
         })
     end,
     draw_track = function(control, visual_state, is_horizontal)
         local track_rectangle = {}
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
+
         if not is_horizontal then
             track_rectangle = {
-                x = control.rectangle.x + control.rectangle.width / 2 -
+                x = render_rect.x + render_rect.width / 2 -
                     ugui.standard_styler.params.trackbar.track_thickness / 2,
-                y = control.rectangle.y,
+                y = render_rect.y,
                 width = ugui.standard_styler.params.trackbar.track_thickness,
-                height = control.rectangle.height,
+                height = render_rect.height,
             }
         else
             track_rectangle = {
-                x = control.rectangle.x,
-                y = control.rectangle.y + control.rectangle.height / 2 -
+                x = render_rect.x,
+                y = render_rect.y + render_rect.height / 2 -
                     ugui.standard_styler.params.trackbar.track_thickness / 2,
-                width = control.rectangle.width,
+                width = render_rect.width,
                 height = ugui.standard_styler.params.trackbar.track_thickness,
             }
         end
@@ -1045,23 +1034,25 @@ ugui.standard_styler = {
     ---@param value number The trackbar's value.
     draw_thumb = function(control, visual_state, is_horizontal, value)
         local head_rectangle = {}
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
+
         local effective_bar_height = math.min(
-            (is_horizontal and control.rectangle.height or control.rectangle.width) * 2,
+            (is_horizontal and render_rect.height or render_rect.width) * 2,
             ugui.standard_styler.params.trackbar.bar_height)
         if not is_horizontal then
             head_rectangle = {
-                x = control.rectangle.x + control.rectangle.width / 2 -
+                x = render_rect.x + render_rect.width / 2 -
                     effective_bar_height / 2,
-                y = control.rectangle.y + (value * control.rectangle.height) -
+                y = render_rect.y + (value * render_rect.height) -
                     ugui.standard_styler.params.trackbar.bar_width / 2,
                 width = effective_bar_height,
                 height = ugui.standard_styler.params.trackbar.bar_width,
             }
         else
             head_rectangle = {
-                x = control.rectangle.x + (value * control.rectangle.width) -
+                x = render_rect.x + (value * render_rect.width) -
                     ugui.standard_styler.params.trackbar.bar_width / 2,
-                y = control.rectangle.y + control.rectangle.height / 2 -
+                y = render_rect.y + render_rect.height / 2 -
                     effective_bar_height / 2,
                 width = ugui.standard_styler.params.trackbar.bar_width,
                 height = effective_bar_height,
@@ -1076,12 +1067,13 @@ ugui.standard_styler = {
     draw_trackbar = function(control)
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
 
         if ugui.internal.mouse_captured_control == control.uid and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
         end
 
-        local is_horizontal = control.rectangle.width > control.rectangle.height
+        local is_horizontal = render_rect.width > render_rect.height
 
         ugui.standard_styler.draw_track(control, visual_state, is_horizontal)
         ugui.standard_styler.draw_thumb(control, visual_state, is_horizontal, data.value)
@@ -1092,62 +1084,18 @@ ugui.standard_styler = {
     draw_combobox = function(control)
         local visual_state = ugui.get_visual_state(control)
         local data = ugui.internal.control_data[control.uid]
-        local selected_item = data.selected_index == nil and '' or control.items[data.selected_index]
 
         if data.open and control.is_enabled ~= false then
             visual_state = ugui.visual_states.active
         end
 
-        ugui.standard_styler.draw_raised_frame(control, visual_state)
-
-        local text_color = ugui.standard_styler.params.button.text[visual_state]
-
-        local text_rect = {
-            x = control.rectangle.x + ugui.standard_styler.params.textbox.padding.x * 2,
-            y = control.rectangle.y,
-            width = control.rectangle.width,
-            height = control.rectangle.height,
-        }
-
-        ugui.standard_styler.draw_rich_text(text_rect, BreitbandGraphics.alignment.start, nil, selected_item, text_color,
-            visual_state, control.plaintext)
-        ugui.standard_styler.draw_icon({
-            x = control.rectangle.x + control.rectangle.width - ugui.standard_styler.params.icon_size -
-                ugui.standard_styler.params.textbox.padding.x * 2,
-            y = control.rectangle.y,
-            width = ugui.standard_styler.params.icon_size,
-            height = control.rectangle.height,
-        }, text_color, visual_state, 'arrow_down')
+        ugui.standard_styler.draw_raised_frame(data.render_rect, visual_state)
     end,
 
     ---Draws a ListBox with the specified parameters.
     ---@param control ListBox The control table.
     draw_listbox = function(control)
-        ugui.standard_styler.draw_list(control, control.rectangle)
-    end,
-
-    ---Gets the desired bounds of a listbox's content.
-    ---@param control table A table abiding by the ugui control contract
-    ---@return _ table A rectangle specifying the desired bounds of the content as `{x = 0, y = 0, width: number, height: number}`.
-    get_desired_listbox_content_bounds = function(control)
-        -- Since horizontal content bounds measuring is expensive, we only do this if explicitly enabled.
-        local max_width = 0
-        if control.horizontal_scroll == true then
-            for _, value in pairs(control.items) do
-                local width = BreitbandGraphics.get_text_size(value, ugui.standard_styler.params.font_size,
-                    ugui.standard_styler.params.font_name).width
-
-                if width > max_width then
-                    max_width = width
-                end
-            end
-        end
-
-        return {
-            x = 0,
-            y = 0,
-            width = max_width,
-            height = ugui.standard_styler.params.listbox_item.height * (control.items and #control.items or 0),
-        }
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
+        ugui.standard_styler.draw_list(control, render_rect)
     end,
 }

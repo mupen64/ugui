@@ -39,15 +39,25 @@ ugui.registry.label = {
     end,
     ---@param control Label
     draw = function(control)
+        local render_rect = ugui.internal.control_data[control.uid].render_rect
         local visual_state = ugui.get_visual_state(control)
-        ugui.standard_styler.draw_rich_text(control.rectangle, control.align_x, control.align_y, control.text, control.color, visual_state, control.plaintext, control.font_name, control.font_size)
+        ugui.standard_styler.draw_rich_text(render_rect, control.align_x, control.align_y, control.text, control.color, visual_state, control.plaintext, control.font_name, control.font_size)
+    end,
+    measure = function(node)
+        local control = node.control
+        ---@cast control Label
+
+        local font_name = control.font_name or ugui.standard_styler.params.font_name
+        local font_size = control.font_size or ugui.standard_styler.params.font_size
+        return ugui.standard_styler.compute_rich_text(control.text, control.plaintext, font_name, font_size).size
     end,
 }
 
 ---Places a Label.
 ---@param control Label The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return nil, Meta # Nothing.
-ugui.label = function(control)
-    local result = ugui.control(control, 'label')
+ugui.label = function(control, fn)
+    local result = ugui.control(control, 'label', fn)
     return result.primary, result.meta
 end

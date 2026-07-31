@@ -15,9 +15,10 @@
 
 ---Places a TabControl.
 ---@param control TabControl The control table.
+---@param fn fun()? The function to immediately invoke upon placing the control. In the function's context, any placed controls will be parented to this control.
 ---@return TabControlResult, Meta # The result.
-ugui.tabcontrol = function(control)
-    local _ = ugui.control(control, '')
+ugui.tabcontrol = function(control, fn)
+    local _ = ugui.control(control, '', fn)
     local data = ugui.internal.control_data[control.uid]
 
     if data.scroll_x == nil then
@@ -51,7 +52,7 @@ ugui.tabcontrol = function(control)
         end
 
         local _, meta = ugui.toggle_button({
-            uid = control.uid + i,
+            uid = control.uid + i * 2,
             is_enabled = control.is_enabled,
             rectangle = {
                 x = control.rectangle.x + x,
@@ -81,5 +82,5 @@ ugui.tabcontrol = function(control)
             width = control.rectangle.width,
             height = control.rectangle.height - y - ugui.standard_styler.params.tabcontrol.rail_size,
         },
-    }, { signal_change = data.signal_change }
+    }, {signal_change = data.signal_change}
 end
