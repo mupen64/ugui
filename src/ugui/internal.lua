@@ -433,20 +433,6 @@ ugui.internal = {
                 biggest = size
             end
         end
-
-        local control = node.control
-        local data = ugui.internal.control_data[control.uid]
-        local parent_size = node.parent and {
-            x = node.parent.control.rectangle.width,
-            y = node.parent.control.rectangle.height,
-        }
-
-        if control.padding then
-            local padding = ugui.internal.resolve_unit2(control.padding, parent_size, data.natural_size)
-            biggest.x = biggest.x + padding.x * 2
-            biggest.y = biggest.y + padding.y * 2
-        end
-
         return biggest
     end,
 
@@ -474,6 +460,14 @@ ugui.internal = {
                 control.rectangle.width = size.x
                 control.rectangle.height = size.y
             end
+
+            if control.padding then
+                data.computed_padding = ugui.internal.resolve_unit2(control.padding, parent_size, data.natural_size)
+                control.rectangle.width = control.rectangle.width + data.computed_padding.x * 2
+                control.rectangle.height = control.rectangle.height + data.computed_padding.y * 2
+            else
+                data.computed_padding = { x = 0, y = 0 }
+            end
         end)
 
         ugui.internal.foreach_node_from_root(function(node)
@@ -486,10 +480,13 @@ ugui.internal = {
             if parent and parent.control.padding then
                 local parent_data = ugui.internal.control_data[parent.control.uid]
                 local grandparent_size = parent.parent and {
-                    x = parent.parent.control.rectangle.width,
-                    y = parent.parent.control.rectangle.height,
+                        x = parent.parent.control.rectangle.width,
+                        y = parent.parent.control.rectangle.height,
                 }
-                parent_padding = ugui.internal.resolve_unit2(parent.control.padding, grandparent_size, parent_data.natural_size)
+                parent_padding = ugui.internal.resolve_unit2(parent.control.padding, grandparent_size,
+                    parent_data.natural_size)
+                parent_padding.x = parent_padding.x * 0.5
+                parent_padding.y = parent_padding.y * 0.5
             end
 
             local min_x<const> = parent_rect.x + parent_padding.x
