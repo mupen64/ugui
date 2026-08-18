@@ -1,3 +1,6 @@
+> [!NOTE]
+> This repository has moved to [Codeberg](https://codeberg.org/mupen64/ugui).
+
 <p align="center">
   <img width="128" align="center" src="https://github.com/mupen64/ugui/blob/main/assets/ugui.png?raw=true">
 </p>
